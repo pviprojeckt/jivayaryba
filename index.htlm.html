@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Живая Рыба PRO</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        
+        html, body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            background-color: #07090b; /* Ультра-глубокий угольный фон из видео */
+            color: #f8fafc;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+        }
+
+        /* Премиальный Glassmorphism в стиле топовых TG Mini Apps */
+        .glass-panel { 
+            background: linear-gradient(135deg, rgba(17, 24, 32, 0.85) 0%, rgba(10, 14, 19, 0.95) 100%); 
+            backdrop-filter: blur(28px); 
+            -webkit-backdrop-filter: blur(28px); 
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.8);
+        }
+
+        .glass-element {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .tap-scale { transition: transform 0.12s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .tap-scale:active { transform: scale(0.95); }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 4px; }
+    </style>
+</head>
+<body class="flex flex-col justify-between selection:bg-[#789591] selection:text-slate-950">
+
+    <!-- Шапка -->
+    <header class="bg-[#07090b]/90 backdrop-blur-2xl border-b border-slate-800/60 shrink-0 px-5 py-3.5 z-40">
+        <div class="max-w-md mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/60 flex items-center justify-center text-xl shadow-inner">🐟</div>
+                <div>
+                    <h1 class="font-extrabold text-xs tracking-wider text-slate-100 uppercase">Живая Рыба PRO</h1>
+                    <div class="flex items-center space-x-1.5 mt-0.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-lg shadow-emerald-500/50"></span>
+                        <span class="text-[10px] text-emerald-400 font-bold uppercase tracking-wide">Смена активна</span>
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2.5">
+                <div class="glass-element text-emerald-400 px-3.5 py-2 rounded-2xl text-xs font-extrabold flex items-center space-x-2 shadow-lg">
+                    <span class="text-[10px] text-slate-400 font-medium">Чай:</span>
+                    <span id="headerTipSum">0 ₽</span>
+                </div>
+                <button onclick="resetAllTimers()" class="glass-element hover:bg-slate-800 text-slate-300 p-2.5 rounded-2xl text-xs tap-scale shadow" title="Сбросить таймеры">🔄</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Основной контейнер со скроллом -->
+    <main id="mainScrollContainer" class="max-w-md w-full mx-auto p-4 space-y-4 overflow-y-auto flex-1 pb-32">
+
+        <!-- ВКЛАДКА 1: Зал -->
+        <div id="tabHall" class="tab-content space-y-4">
+            <div id="hallGridView" class="space-y-4">
+                <div class="flex justify-between items-center px-1">
+                    <h2 class="text-xs font-bold uppercase tracking-widest text-slate-400">🗺 Зал ресторана (15 столов)</h2>
+                    <button onclick="filterAttention()" id="attentionFilterBtn" class="text-xs glass-element hover:bg-slate-800 px-3.5 py-2 rounded-2xl text-slate-300 transition font-bold shadow">
+                        ⚠️ Внимание (<span id="attentionCount">0</span>)
+                    </button>
+                </div>
+                <div id="tablesGrid" class="grid grid-cols-3 gap-3"></div>
+            </div>
+
+            <!-- КАРТОЧКА АКТИВНОГО СТОЛА -->
+            <div id="activeTableCard" class="glass-panel rounded-[36px] p-5 shadow-2xl space-y-4 hidden border border-slate-700/50">
+                <div class="flex justify-between items-center border-b border-slate-800/80 pb-3.5">
+                    <div>
+                        <div class="flex items-center space-x-2.5">
+                            <h3 id="currentTableName" class="text-lg font-extrabold text-slate-100 tracking-wide">Стол 1</h3>
+                            <span id="tableTimerBadge" class="text-[10px] px-3 py-1 rounded-full font-mono font-extrabold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow hidden">0 мин</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 mt-1 font-semibold" id="tableGuestsCountInfo">Гостей: 2</p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="backToHallGrid()" class="glass-element text-slate-300 font-bold px-3.5 py-2 rounded-2xl text-xs tap-scale shadow">← Назад</button>
+                        <button onclick="markTableVisited()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-2 rounded-2xl text-xs font-extrabold tap-scale shadow-lg">👁️ Был</button>
+                    </div>
+                </div>
+
+                <!-- БЛОК РЕДАКТИРОВАНИЯ И МЕНЮ -->
+                <div id="orderEditingSection" class="space-y-4">
+                    <div class="space-y-2 bg-slate-950/60 p-3.5 rounded-[24px] border border-slate-800/80 shadow-inner">
+                        <div class="flex justify-between items-center">
+                            <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Гость для заказа (клик ✏️ для приметы):</span>
+                        </div>
+                        <div id="guestsListBtns" class="flex flex-wrap gap-1.5 mt-1"></div>
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Курс подачи блюд:</span>
+                        <div class="grid grid-cols-4 gap-1.5">
+                            <button onclick="setCourseActive('⚡ Сразу')" id="courseBtn_Сразу" class="course-active-btn bg-slate-100 text-slate-950 py-2.5 rounded-2xl text-[11px] font-extrabold shadow-md">⚡ Сразу</button>
+                            <button onclick="setCourseActive('1 курс')" id="courseBtn_1к" class="course-active-btn glass-element text-slate-300 py-2.5 rounded-2xl text-[11px] font-semibold">1к Закуски</button>
+                            <button onclick="setCourseActive('2 курс')" id="courseBtn_2к" class="course-active-btn glass-element text-slate-300 py-2.5 rounded-2xl text-[11px] font-semibold">2к Супы</button>
+                            <button onclick="setCourseActive('3 курс')" id="courseBtn_3к" class="course-active-btn glass-element text-slate-300 py-2.5 rounded-2xl text-[11px] font-semibold">3к Горячее</button>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3 pt-1 border-t border-slate-800/80">
+                        <div class="relative">
+                            <input type="text" id="menuSearch" placeholder="🔍 Т9: введите название блюда или напитка..." oninput="renderMenuDirect()" class="w-full glass-element border-slate-800 focus:border-slate-500 rounded-2xl px-4 py-3 text-xs text-slate-100 outline-none placeholder-slate-500 shadow-inner">
+                        </div>
+
+                        <div id="menuCategories" class="flex space-x-1.5 overflow-x-auto pb-1 text-xs">
+                            <button onclick="filterCat('all')" class="cat-tab bg-slate-100 text-slate-950 px-3.5 py-2 rounded-2xl font-extrabold whitespace-nowrap shadow">Все</button>
+                            <button onclick="filterCat('Закуски')" class="cat-tab glass-element text-slate-300 px-3.5 py-2 rounded-2xl whitespace-nowrap font-medium">Закуски</button>
+                            <button onclick="filterCat('Хоспер')" class="cat-tab glass-element text-slate-300 px-3.5 py-2 rounded-2xl whitespace-nowrap font-medium">🔥 Хоспер</button>
+                            <button onclick="filterCat('Салаты')" class="cat-tab glass-element text-slate-300 px-3.5 py-2 rounded-2xl whitespace-nowrap font-medium">Салаты</button>
+                            <button onclick="filterCat('Супы')" class="cat-tab glass-element text-slate-300 px-3.5 py-2 rounded-2xl whitespace-nowrap font-medium">Супы</button>
+                            <button onclick="filterCat('Горячее')" class="cat-tab glass-element text-slate-300 px-3.5 py-2 rounded-2xl whitespace-nowrap font-medium">Горячее</button>
+                            <button onclick="filterCat('Пицца')" class="cat-tab glass-element text-slate-300 px-3.5 py-2 rounded-2xl whitespace-nowrap font-medium">Пицца</button>
+                            <button onclick="filterCat('Гарниры')" class="cat-tab glass-element text-slate-300 px-3.5 py-2 rounded-2xl whitespace-nowrap font-medium">Гарниры</button>
+                            <button onclick="filterCat('Десерты')" class="cat-tab glass-element text-slate-300 px-3.5 py-2 rounded-2xl whitespace-nowrap font-medium">Десерты</button>
+                            <button onclick="filterCat('Бар')" class="cat-tab glass-element text-sky-400 border border-sky-500/30 px-3.5 py-2 rounded-2xl whitespace-nowrap font-bold">🍸 Бар и Напитки</button>
+                        </div>
+
+                        <div id="directMenuList" class="space-y-2 max-h-60 overflow-y-auto pr-1"></div>
+                    </div>
+                </div>
+
+                <!-- КНОПКА ДОЗАКАЗА -->
+                <div id="showMenuToggleBtnContainer" class="hidden">
+                    <button onclick="toggleOrderReviewMode(false)" class="w-full glass-element bg-slate-800/50 border border-slate-700 text-slate-200 font-extrabold py-3.5 rounded-2xl text-xs tap-scale flex items-center justify-center space-x-2 shadow-lg">
+                        <span>➕</span>
+                        <span>Добавить еще позиции в заказ</span>
+                    </button>
+                </div>
+
+                <!-- СОСТАВ ЗАКАЗА -->
+                <div class="pt-3 border-t border-slate-800/80 space-y-3">
+                    <div class="flex justify-between items-center text-xs px-3 bg-slate-950/70 p-3 rounded-2xl border border-slate-800 shadow">
+                        <span class="font-bold text-slate-400 uppercase tracking-wide">Сумма заказа:</span>
+                        <span id="currentTableTotal" class="font-extrabold text-slate-100 text-base">0 ₽</span>
+                    </div>
+                    
+                    <div id="currentTableItems" class="space-y-2 max-h-[50vh] overflow-y-auto pr-1 text-xs">
+                        <p class="text-slate-500 italic text-center py-4">Стол пустой</p>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2.5 pt-2">
+                        <button onclick="saveTableToWork()" class="bg-slate-100 hover:bg-white text-slate-950 font-extrabold py-4 rounded-2xl text-xs shadow-xl tap-scale flex items-center justify-center space-x-1.5">
+                            <span>💾</span>
+                            <span>Сохранить в работу</span>
+                        </button>
+                        <button onclick="openCheckoutModal()" class="bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-extrabold py-4 rounded-2xl text-xs shadow-xl tap-scale flex items-center justify-center space-x-1.5">
+                            <span>✅</span>
+                            <span>Закрыть стол</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ВКЛАДКА 2: Мои столы -->
+        <div id="tabMyTables" class="tab-content space-y-3 hidden">
+            <div class="flex justify-between items-center px-1">
+                <h2 class="text-xs font-bold uppercase tracking-widest text-slate-400">⚡ Мои столы в работе</h2>
+                <span id="activeTablesCountBadge" class="text-[10px] glass-element text-slate-300 px-3 py-1 rounded-full font-bold">0 в работе</span>
+            </div>
+            <div id="myActiveTablesList" class="space-y-3"></div>
+        </div>
+
+        <!-- ВКЛАДКА 3: История и Календарь смен -->
+        <div id="tabHistory" class="tab-content space-y-4 hidden">
+            <div class="glass-panel rounded-3xl p-4 flex justify-between items-center shadow-lg border border-slate-700/50 bg-gradient-to-r from-slate-900 to-slate-950">
+                <div>
+                    <h3 class="text-xs font-extrabold uppercase tracking-widest text-slate-200">📅 Текущая смена</h3>
+                    <p class="text-[10px] text-slate-400 mt-0.5">Архивировать день и начать с нуля</p>
+                </div>
+                <button onclick="finishCurrentShift()" class="bg-amber-500/15 text-amber-400 border border-amber-500/30 hover:bg-amber-500/25 px-3.5 py-2 rounded-2xl text-xs font-extrabold tap-scale shadow">🏁 Завершить смену</button>
+            </div>
+
+            <div class="glass-panel rounded-3xl p-4 space-y-3 shadow-lg">
+                <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400">📂 Архив прошлых смен</h3>
+                <div id="shiftArchiveList" class="space-y-2 max-h-56 overflow-y-auto pr-1 text-xs">
+                    <p class="text-slate-500 text-center py-4 italic">Нет сохраненных смен в архиве</p>
+                </div>
+            </div>
+
+            <div class="glass-panel rounded-3xl p-4 space-y-3 shadow-lg border border-slate-700/50">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="text-xs font-extrabold uppercase tracking-widest text-slate-200">🎯 Цель по чаевым на смену</h3>
+                        <p id="tipGoalSubtitle" class="text-[10px] text-slate-400 mt-0.5">Заработано 0 ₽ из 3000 ₽</p>
+                    </div>
+                    <button onclick="openEditGoalModal()" class="text-xs glass-element bg-slate-800 text-slate-300 border border-slate-700 px-3 py-1.5 rounded-xl font-bold tap-scale">Изменить цель</button>
+                </div>
+                <div class="w-full bg-slate-950 h-3 rounded-full overflow-hidden p-0.5 border border-slate-800">
+                    <div id="tipGoalProgressBar" class="bg-gradient-to-r from-slate-400 to-slate-100 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+                <div id="tipGoalMessage" class="text-[11px] text-slate-300 font-medium text-center italic">Поставь цель и вперед к победе! 🚀</div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div class="glass-panel p-4 rounded-3xl space-y-1 shadow-lg">
+                    <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Всего чаевых</p>
+                    <p id="statsTotalTips" class="text-2xl font-extrabold text-slate-100">0 ₽</p>
+                </div>
+                <div class="glass-panel p-4 rounded-3xl space-y-1 shadow-lg">
+                    <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Закрыто столов</p>
+                    <p id="statsTotalTables" class="text-2xl font-extrabold text-slate-100">0</p>
+                </div>
+            </div>
+
+            <div class="glass-panel rounded-3xl p-4 space-y-3 shadow-lg">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400">Столы за смену (тап для просмотра)</h3>
+                    <button onclick="openManualTipModal()" class="text-xs glass-element text-slate-300 border border-slate-700 px-3 py-1.5 rounded-2xl font-extrabold tap-scale">＋ Чай переводом</button>
+                </div>
+                <div id="closedTablesHistory" class="space-y-2 max-h-72 overflow-y-auto pr-1 text-xs">
+                    <p class="text-slate-500 text-center py-6 italic">Нет закрытых столов за текущую смену</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ВКЛАДКА 4: Стоп-лист -->
+        <div id="tabStopList" class="tab-content space-y-4 hidden">
+            <div class="flex justify-between items-center px-1">
+                <h2 class="text-xs font-bold uppercase tracking-widest text-rose-400">🛑 Стоп-лист</h2>
+                <span id="stopListCountBadge" class="text-[10px] glass-element text-rose-400 px-3 py-1 rounded-full font-bold">0 в стопе</span>
+            </div>
+            <div class="glass-panel rounded-3xl p-3.5 space-y-3">
+                <input type="text" id="stopListSearch" placeholder="🔍 Найти блюдо или напиток в стоп-лист..." oninput="renderStopList()" class="w-full bg-slate-950/80 border border-slate-800 rounded-2xl px-4 py-3 text-xs text-slate-100 outline-none">
+                <div id="stopListContainer" class="space-y-2 max-h-[60vh] overflow-y-auto pr-1"></div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Плавающая нижняя панель в стиле GX Planner -->
+    <nav class="bg-[#07090b]/90 backdrop-blur-2xl border-t border-slate-800/60 shrink-0 fixed bottom-0 left-0 right-0 z-50 px-4 py-3 shadow-2xl">
+        <div class="max-w-md mx-auto glass-panel rounded-[28px] p-1.5 grid grid-cols-4 gap-1 border border-slate-700/50 shadow-2xl">
+            <button onclick="switchTab('hall')" id="navBtnHall" class="flex flex-col items-center justify-center py-2.5 rounded-2xl text-slate-950 font-extrabold bg-slate-100 border border-slate-200 transition tap-scale shadow">
+                <span class="text-base">🗺️</span>
+                <span class="text-[9px] mt-0.5 tracking-wide">Зал</span>
+            </button>
+            <button onclick="switchTab('myTables')" id="navBtnMyTables" class="flex flex-col items-center justify-center py-2.5 rounded-2xl text-slate-400 font-medium hover:bg-slate-800/50 transition tap-scale">
+                <span class="text-base">🍽️</span>
+                <span class="text-[9px] mt-0.5 tracking-wide">Столы</span>
+            </button>
+            <button onclick="switchTab('history')" id="navBtnHistory" class="flex flex-col items-center justify-center py-2.5 rounded-2xl text-slate-400 font-medium hover:bg-slate-800/50 transition tap-scale">
+                <span class="text-base">📊</span>
+                <span class="text-[9px] mt-0.5 tracking-wide">История</span>
+            </button>
+            <button onclick="switchTab('stopList')" id="navBtnStopList" class="flex flex-col items-center justify-center py-2.5 rounded-2xl text-slate-400 font-medium hover:bg-slate-800/50 transition tap-scale">
+                <span class="text-base">🛑</span>
+                <span class="text-[9px] mt-0.5 tracking-wide">Стоп</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- МОДАЛКА ГОСТЕЙ -->
+    <div id="guestsSelectModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-panel rounded-[32px] max-w-xs w-full p-6 space-y-4 shadow-2xl border border-slate-700/50">
+            <div class="flex justify-between items-center">
+                <h3 id="guestsModalTitle" class="font-extrabold text-sm text-slate-100">Количество гостей</h3>
+                <button onclick="closeGuestsModal()" class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs">✕</button>
+            </div>
+            <div class="grid grid-cols-4 gap-2">
+                <button onclick="confirmGuestsCount(1)" class="glass-element hover:bg-slate-800 py-3 rounded-2xl font-extrabold text-xs tap-scale">1</button>
+                <button onclick="confirmGuestsCount(2)" class="glass-element hover:bg-slate-800 py-3 rounded-2xl font-extrabold text-xs tap-scale">2</button>
+                <button onclick="confirmGuestsCount(3)" class="glass-element hover:bg-slate-800 py-3 rounded-2xl font-extrabold text-xs tap-scale">3</button>
+                <button onclick="confirmGuestsCount(4)" class="glass-element hover:bg-slate-800 py-3 rounded-2xl font-extrabold text-xs tap-scale">4</button>
+                <button onclick="confirmGuestsCount(5)" class="glass-element hover:bg-slate-800 py-3 rounded-2xl font-extrabold text-xs tap-scale">5</button>
+                <button onclick="confirmGuestsCount(6)" class="glass-element hover:bg-slate-800 py-3 rounded-2xl font-extrabold text-xs tap-scale">6</button>
+                <button onclick="confirmGuestsCount(8)" class="glass-element hover:bg-slate-800 py-3 rounded-2xl font-extrabold text-xs tap-scale">8</button>
+                <button onclick="confirmGuestsCount(10)" class="glass-element hover:bg-slate-800 py-3 rounded-2xl font-extrabold text-xs tap-scale">10</button>
+            </div>
+            <div class="pt-2 border-t border-slate-800 space-y-2">
+                <div class="flex space-x-2">
+                    <input type="number" id="customGuestsInput" placeholder="Свой ввод (кол-во)..." class="flex-1 bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs text-slate-100 outline-none">
+                    <button onclick="submitCustomGuests()" class="bg-slate-100 text-slate-950 font-extrabold px-5 py-3 rounded-2xl text-xs tap-scale">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- МОДАЛКА ПРОСМОТРА ИСТОРИИ ЗАКРЫТОГО СТОЛА -->
+    <div id="historyDetailModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-panel rounded-[32px] max-w-sm w-full p-6 space-y-4 shadow-2xl border border-slate-700/50 max-h-[85vh] flex flex-col">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <div>
+                    <h3 id="historyModalTableName" class="font-extrabold text-sm text-slate-100">Стол</h3>
+                    <p id="historyModalTime" class="text-[10px] text-slate-400">Время закрытия</p>
+                </div>
+                <button onclick="closeHistoryDetailModal()" class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs">✕</button>
+            </div>
+            <div class="space-y-2 overflow-y-auto flex-1 pr-1 text-xs" id="historyModalItemsList"></div>
+            <div class="pt-3 border-t border-slate-800 space-y-1.5 text-xs">
+                <div class="flex justify-between text-slate-400"><span>Сумма чека:</span><span id="historyModalSubtotal" class="font-bold text-slate-200">0 ₽</span></div>
+                <div class="flex justify-between text-emerald-400 font-bold"><span>Чаевые (<span id="historyModalTipType">Нал</span>):</span><span id="historyModalTip">0 ₽</span></div>
+            </div>
+            <button onclick="closeHistoryDetailModal()" class="w-full bg-slate-800 text-slate-300 font-bold py-3 rounded-2xl text-xs">Закрыть</button>
+        </div>
+    </div>
+
+    <!-- МОДАЛКА ХОСПЕРА -->
+    <div id="hospersModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-panel rounded-[32px] max-w-xs w-full p-6 space-y-4 shadow-2xl border border-slate-700/50">
+            <h3 id="hosperItemTitle" class="font-extrabold text-sm text-slate-100">Выберите вес</h3>
+            <div class="grid grid-cols-3 gap-2">
+                <button onclick="selectHosperWeight(100)" class="glass-element py-3.5 rounded-2xl font-extrabold text-xs tap-scale">100 г</button>
+                <button onclick="selectHosperWeight(200)" class="glass-element py-3.5 rounded-2xl font-extrabold text-xs tap-scale">200 г</button>
+                <button onclick="selectHosperWeight(250)" class="glass-element py-3.5 rounded-2xl font-extrabold text-xs tap-scale">250 г</button>
+                <button onclick="selectHosperWeight(300)" class="glass-element py-3.5 rounded-2xl font-extrabold text-xs tap-scale">300 г</button>
+                <button onclick="selectHosperWeight(400)" class="glass-element py-3.5 rounded-2xl font-extrabold text-xs tap-scale">400 г</button>
+                <button onclick="selectHosperWeight(500)" class="glass-element py-3.5 rounded-2xl font-extrabold text-xs tap-scale">500 г</button>
+            </div>
+            <div class="pt-2 border-t border-slate-800 space-y-2">
+                <div class="flex space-x-2">
+                    <input type="number" id="customWeightInput" placeholder="Точный вес (грамм)..." class="flex-1 bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs text-slate-100 outline-none">
+                    <button onclick="submitCustomWeight()" class="bg-slate-100 text-slate-950 font-extrabold px-5 py-3 rounded-2xl text-xs tap-scale">OK</button>
+                </div>
+            </div>
+            <button onclick="closeHosperModal()" class="w-full glass-element text-slate-300 py-3 rounded-2xl text-xs font-bold tap-scale">Отмена</button>
+        </div>
+    </div>
+
+    <!-- МОДАЛКА ЗАКРЫТИЯ СТОЛА -->
+    <div id="checkoutModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-panel rounded-[32px] max-w-sm w-full p-6 space-y-4 shadow-2xl border border-slate-700/50">
+            <div class="flex justify-between items-center">
+                <h3 id="checkoutModalTitle" class="font-extrabold text-sm text-emerald-400">Закрытие стола</h3>
+                <button onclick="closeCheckoutModal()" class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs">✕</button>
+            </div>
+            <div class="bg-slate-950/80 p-3.5 rounded-2xl flex justify-between text-xs border border-slate-800">
+                <span class="text-slate-400">Сумма заказа:</span>
+                <span id="checkoutModalSubtotal" class="font-extrabold text-slate-100">0 ₽</span>
+            </div>
+            <div class="space-y-2">
+                <label class="text-xs font-bold text-slate-300">Чаевые:</label>
+                <div class="grid grid-cols-4 gap-1.5">
+                    <button onclick="setTipPercent(0)" class="glass-element py-2.5 rounded-xl text-xs font-bold tap-scale">0</button>
+                    <button onclick="setTipPercent(5)" class="glass-element py-2.5 rounded-xl text-xs font-bold tap-scale">5%</button>
+                    <button onclick="setTipPercent(10)" class="glass-element py-2.5 rounded-xl text-xs font-bold tap-scale">10%</button>
+                    <button onclick="setTipPercent(15)" class="glass-element py-2.5 rounded-xl text-xs font-bold tap-scale">15%</button>
+                </div>
+                <input type="number" id="customTipInput" placeholder="Свой чай (₽)..." oninput="updateCustomTip(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs outline-none">
+            </div>
+            <div class="space-y-1.5">
+                <label class="text-xs font-bold text-slate-300">Способ оплаты:</label>
+                <div class="grid grid-cols-3 gap-2">
+                    <button onclick="setTipType('Нал')" id="tipTypeNal" class="bg-emerald-600 text-white py-2.5 rounded-xl text-xs font-extrabold tap-scale shadow">💵 Нал</button>
+                    <button onclick="setTipType('Перевод')" id="tipTypeCard" class="glass-element text-slate-300 py-2.5 rounded-xl text-xs font-extrabold tap-scale">💳 Карта</button>
+                    <button onclick="setTipType('СБП')" id="tipTypeSbp" class="glass-element text-slate-300 py-2.5 rounded-xl text-xs font-extrabold tap-scale">📱 СБП</button>
+                </div>
+            </div>
+            <button onclick="confirmTableCheckout()" class="w-full bg-gradient-to-r from-slate-100 to-slate-300 text-slate-950 font-extrabold py-3.5 rounded-2xl text-xs shadow-xl tap-scale">💾 Сохранить и освободить</button>
+        </div>
+    </div>
+
+    <!-- СКРИПТЫ -->
+    <script>
+        if (window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.ready();
+            window.Telegram.WebApp.expand();
+            if (window.Telegram.WebApp.requestFullscreen) {
+                window.Telegram.WebApp.requestFullscreen();
+            }
+        }
+
+        const menuItems = [
+            { name: "Хлебная корзина", price: 390, cat: "Закуски" },
+            { name: "Чесночные гренки из бородинского хлеба", price: 390, cat: "Закуски" },
+            { name: "Грузди со сметаной", price: 890, cat: "Закуски" },
+            { name: "Халуми с соусом из печеного перца", price: 890, cat: "Закуски" },
+            { name: "Хачапури на шампуре", price: 790, cat: "Закуски" },
+            { name: "Сырные шарики", price: 490, cat: "Закуски" },
+            { name: "Эклер с риетом из копченой форели и огурцом", price: 790, cat: "Закуски" },
+            { name: "Тартар из форели с ферментированным чесноком и крем-авокадо", price: 990, cat: "Закуски" },
+            { name: "Сельдь с картофелем и маринованным луком", price: 590, cat: "Закуски" },
+            { name: "Паштет из цыпленка с домашним брусничным вареньем", price: 590, cat: "Закуски" },
+            { name: "Стейк осетра на кости", price: 890, cat: "Хоспер", isHosper: true },
+            { name: "Шашлык из осетра", price: 990, cat: "Хоспер", isHosper: true },
+            { name: "Стейк форели на кости", price: 790, cat: "Хоспер", isHosper: true },
+            { name: "Шашлык из филе бедра", price: 390, cat: "Хоспер", isHosper: true },
+            { name: "Шашлык из свиной корейки", price: 390, cat: "Хоспер", isHosper: true },
+            { name: "Ребра свиные горячего копчения", price: 490, cat: "Хоспер", isHosper: true },
+            { name: "С хрустящими баклажанами", price: 590, cat: "Салаты" },
+            { name: "Овощной с адыгейским сыром", price: 690, cat: "Салаты" },
+            { name: "Копченая форель под шубой", price: 690, cat: "Салаты" },
+            { name: "Мимоза с копченым осетром", price: 790, cat: "Салаты" },
+            { name: "Цезарь с курицей", price: 690, cat: "Салаты" },
+            { name: "Окрошка на квасе", price: 490, cat: "Супы" },
+            { name: "Уха из двух видов рыб", price: 990, cat: "Супы" },
+            { name: "Суп-лапша", price: 390, cat: "Супы" },
+            { name: "Борщ с бородинским хлебом и салом", price: 590, cat: "Супы" },
+            { name: "Морской гребешок с трюфельным пюре", price: 1990, cat: "Горячее" },
+            { name: "Осетр горячего копчения с толченым картофелем", price: 1890, cat: "Горячее" },
+            { name: "Тунец с крем бататом и соте манго", price: 990, cat: "Горячее" },
+            { name: "Форель с картофельным пюре и томатами", price: 1490, cat: "Горячее" },
+            { name: "Стейк из осетра с брокколи и шпинатом", price: 1590, cat: "Горячее" },
+            { name: "Пельмени рыбные", price: 790, cat: "Горячее" },
+            { name: "Пельмени мясные", price: 790, cat: "Горячее" },
+            { name: "Бургер с рваной говядиной", price: 990, cat: "Горячее" },
+            { name: "Паста карбонара", price: 790, cat: "Горячее" },
+            { name: "Телячьи щечки с толченым картофелем", price: 1090, cat: "Горячее" },
+            { name: "Маргарита", price: 590, cat: "Пицца" },
+            { name: "4 сыра", price: 1390, cat: "Пицца" },
+            { name: "С копченым осетром и форелью", price: 1490, cat: "Пицца" },
+            { name: "Карбонара", price: 890, cat: "Пицца" },
+            { name: "Пепперони", price: 790, cat: "Пицца" },
+            { name: "Картофель фри", price: 290, cat: "Гарниры" },
+            { name: "Толченый картофель с грибами", price: 390, cat: "Гарниры" },
+            { name: "Картофельное пюре", price: 290, cat: "Гарниры" },
+            { name: "Овощи гриль", price: 390, cat: "Гарниры" },
+            { name: "Брокколи кориандр", price: 390, cat: "Гарниры" },
+            { name: "Соус на выбор", price: 100, cat: "Гарниры" },
+            { name: "Тарелка к чаю", price: 390, cat: "Десерты" },
+            { name: "Сырный крем с тархуном и голубикой", price: 590, cat: "Десерты" },
+            { name: "Красный Бархат", price: 390, cat: "Десерты" },
+            { name: "Медовик", price: 390, cat: "Десерты" },
+            { name: "Чизкейк классический", price: 390, cat: "Десерты" },
+            { name: "Жареная бриошь с мороженым", price: 390, cat: "Десерты" },
+            { name: "Лимонад: Апельсин-базилик", price: 450, cat: "Бар" },
+            { name: "Лимонад: Клубника-маракуйя", price: 450, cat: "Бар" },
+            { name: "Морс: Клюква", price: 190, cat: "Бар" },
+            { name: "Фреш: Апельсин", price: 490, cat: "Бар" },
+            { name: "Кока-Кола", price: 290, cat: "Бар" },
+            { name: "Вода Байкал с газом", price: 390, cat: "Бар" },
+            { name: "Капучино", price: 290, cat: "Бар" },
+            { name: "Апероль спритц", price: 690, cat: "Бар" },
+            { name: "Джин тоник", price: 660, cat: "Бар" },
+            { name: "Настойка: Лимончелло", price: 290, cat: "Бар" },
+            { name: "Виски: Баллантайнс Файнест", price: 580, cat: "Бар" },
+            { name: "Игристое вино: Боэми Просекко", price: 1590, cat: "Бар" }
+        ];
+
+        let tables = JSON.parse(localStorage.getItem('fish_pro_tables')) || {};
+        if(Object.keys(tables).length === 0) {
+            for(let i=1; i<=15; i++) {
+                tables[`Стол ${i}`] = { items: [], guests: 2, guestNames: {1: "Гость 1", 2: "Гость 2"}, activeGuest: "В стол", course: "⚡ Сразу", lastVisited: null };
+            }
+            tables["Банкет"] = { items: [], guests: 4, guestNames: {1: "Гость 1", 2: "Гость 2", 3: "Гость 3", 4: "Гость 4"}, activeGuest: "В стол", course: "⚡ Сразу", lastVisited: null };
+        }
+
+        let currentTable = "Стол 1";
+        let currentCat = "all";
+        let pendingHosperItem = null;
+        let closedHistory = JSON.parse(localStorage.getItem('fish_pro_history')) || [];
+        let shiftArchive = JSON.parse(localStorage.getItem('fish_pro_shift_archive')) || [];
+        let currentTipAmount = 0;
+        let currentTipType = "Нал";
+        let onlyAttentionFilter = false;
+        let selectedActiveCourse = "⚡ Сразу";
+        let stopListSet = new Set(JSON.parse(localStorage.getItem('fish_pro_stoplist')) || []);
+        let tableToOpenGuests = null;
+        let shiftTipGoal = Number(localStorage.getItem('fish_pro_goal')) || 3000;
+
+        function saveData() {
+            localStorage.setItem('fish_pro_tables', JSON.stringify(tables));
+            localStorage.setItem('fish_pro_history', JSON.stringify(closedHistory));
+            localStorage.setItem('fish_pro_shift_archive', JSON.stringify(shiftArchive));
+            localStorage.setItem('fish_pro_stoplist', JSON.stringify([...stopListSet]));
+            localStorage.setItem('fish_pro_goal', shiftTipGoal);
+        }
+
+        function finishCurrentShift() {
+            if (closedHistory.length === 0) {
+                alert("За смену не было закрытых столов.");
+                return;
+            }
+            if (confirm("Завершить текущую смену и сохранить её в архив? Статистика смены обнулится.")) {
+                const totalTips = closedHistory.reduce((s, h) => s + h.tip, 0);
+                const shiftRecord = {
+                    date: new Date().toLocaleDateString(),
+                    tablesCount: closedHistory.length,
+                    totalTips: totalTips,
+                    items: [...closedHistory]
+                };
+                shiftArchive.unshift(shiftRecord);
+                closedHistory = [];
+                saveData();
+                renderStats();
+                renderShiftArchive();
+                updateTipGoalUI();
+                alert("Смена успешно сохранена в архив!");
+            }
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            if(tabId === 'hall') {
+                document.getElementById('tabHall').classList.remove('hidden');
+                document.getElementById('hallGridView').classList.remove('hidden');
+                document.getElementById('activeTableCard').classList.add('hidden');
+                renderTables();
+            } else if(tabId === 'myTables') {
+                document.getElementById('tabMyTables').classList.remove('hidden');
+                renderMyTables();
+            } else if(tabId === 'history') {
+                document.getElementById('tabHistory').classList.remove('hidden');
+                renderStats();
+                renderShiftArchive();
+                updateTipGoalUI();
+            } else if(tabId === 'stopList') {
+                document.getElementById('tabStopList').classList.remove('hidden');
+                renderStopList();
+            }
+
+            document.getElementById('mainScrollContainer').scrollTop = 0;
+
+            ['Hall', 'MyTables', 'History', 'StopList'].forEach(id => {
+                const btn = document.getElementById('navBtn' + id);
+                if(btn) {
+                    if(id.toLowerCase() === tabId.toLowerCase() || (id === 'Hall' && tabId === 'hall')) {
+                        btn.className = "flex flex-col items-center justify-center py-2.5 rounded-2xl text-slate-950 font-extrabold bg-slate-100 border border-slate-200 transition tap-scale shadow";
+                    } else {
+                        btn.className = "flex flex-col items-center justify-center py-2.5 rounded-2xl text-slate-400 font-medium hover:bg-slate-800/50 transition tap-scale";
+                    }
+                }
+            });
+        }
+
+        function updateTipGoalUI() {
+            const totalTips = closedHistory.reduce((s, h) => s + h.tip, 0);
+            const percent = Math.min(Math.round((totalTips / shiftTipGoal) * 100), 100);
+            
+            document.getElementById('tipGoalProgressBar').style.width = percent + '%';
+            document.getElementById('tipGoalSubtitle').innerText = `Заработано ${totalTips} ₽ из ${shiftTipGoal} ₽ (${percent}%)`;
+
+            const msgEl = document.getElementById('tipGoalMessage');
+            if(percent >= 100) {
+                msgEl.innerText = "🔥 Цель выполнена! Ты просто машина смены!";
+                msgEl.className = "text-[11px] text-emerald-400 font-bold text-center";
+            } else if(percent >= 50) {
+                msgEl.innerText = "💪 Экватор пройден, продолжай в том же духе!";
+                msgEl.className = "text-[11px] text-slate-200 font-medium text-center";
+            } else {
+                msgEl.innerText = "🚀 Отличное начало смены, догоняем цель!";
+                msgEl.className = "text-[11px] text-slate-300 font-medium text-center italic";
+            }
+        }
+
+        function openEditGoalModal() {
+            const newGoal = prompt("Введите вашу цель по чаевым на смену (рублей):", shiftTipGoal);
+            if(newGoal && !isNaN(newGoal) && Number(newGoal) > 0) {
+                shiftTipGoal = Number(newGoal);
+                saveData();
+                updateTipGoalUI();
+            }
+        }
+
+        function renderStopList() {
+            const container = document.getElementById('stopListContainer');
+            container.innerHTML = '';
+            const search = document.getElementById('stopListSearch').value.toLowerCase().trim();
+            const filtered = menuItems.filter(i => i.name.toLowerCase().includes(search));
+            document.getElementById('stopListCountBadge').innerText = stopListSet.size + ' в стопе';
+
+            filtered.forEach(item => {
+                const isStopped = stopListSet.has(item.name);
+                const div = document.createElement('div');
+                div.className = `flex justify-between items-center p-3 rounded-2xl border ${isStopped ? 'bg-rose-500/10 border-rose-500/30' : 'glass-panel border-slate-800'}`;
+                div.innerHTML = `
+                    <div class="pr-2">
+                        <div class="font-bold text-xs ${isStopped ? 'text-rose-300 line-through' : 'text-slate-200'}">${item.name}</div>
+                        <div class="text-[10px] text-slate-400">${item.price} ₽</div>
+                    </div>
+                    <button onclick="toggleStopItem('${item.name}')" class="px-3.5 py-2 rounded-xl text-xs font-extrabold tap-scale shadow ${isStopped ? 'bg-rose-600 text-white' : 'glass-panel text-slate-300'}">
+                        ${isStopped ? '❌ В стопе' : '✅ Активно'}
+                    </button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function toggleStopItem(name) {
+            if(stopListSet.has(name)) stopListSet.delete(name);
+            else stopListSet.add(name);
+            saveData();
+            renderStopList();
+            renderMenuDirect();
+        }
+
+        function renderTables() {
+            const grid = document.getElementById('tablesGrid');
+            grid.innerHTML = '';
+            let attentionCount = 0;
+
+            for(let name in tables) {
+                const t = tables[name];
+                const hasOrder = t.items.length > 0;
+                
+                let timerDisplay = "";
+                let timerColor = "glass-panel text-slate-300";
+                
+                if (hasOrder && t.lastVisited) {
+                    const diffMin = Math.floor((Date.now() - t.lastVisited) / 60000);
+                    timerDisplay = `${diffMin}м`;
+                    if(diffMin >= 5 && diffMin < 10) timerColor = "bg-amber-500/10 border-amber-500/30 text-amber-300";
+                    else if(diffMin >= 10) { timerColor = "bg-rose-500/20 border-rose-500/40 text-rose-300 animate-pulse"; attentionCount++; }
+                } else {
+                    timerDisplay = "Свободен";
+                }
+
+                if(onlyAttentionFilter && (!t.lastVisited || Math.floor((Date.now() - t.lastVisited) / 60000) < 10)) continue;
+
+                const totalSum = t.items.reduce((s, i) => s + i.price, 0);
+
+                const btn = document.createElement('button');
+                btn.className = `tap-scale p-3.5 rounded-[28px] border text-left flex flex-col justify-between h-24 ${currentTable === name ? 'ring-2 ring-slate-300 border-slate-500 ' + timerColor : timerColor}`;
+                btn.onclick = () => handleTableClick(name);
+                btn.innerHTML = `
+                    <div class="flex justify-between items-center w-full">
+                        <span class="font-extrabold text-xs">${name}</span>
+                        <span class="text-[10px] font-mono opacity-80">${hasOrder && t.lastVisited ? timerDisplay : ''}</span>
+                    </div>
+                    <div>
+                        <div class="text-[10px] opacity-60 font-medium">${t.guests} гост.</div>
+                        <div class="font-extrabold text-xs ${hasOrder ? 'text-slate-100' : 'opacity-30'}">${hasOrder ? totalSum + ' ₽' : 'Свободен'}</div>
+                    </div>
+                `;
+                grid.appendChild(btn);
+            }
+            document.getElementById('attentionCount').innerText = attentionCount;
+        }
+
+        function handleTableClick(name) {
+            tableToOpenGuests = name;
+            document.getElementById('guestsModalTitle').innerText = `${name}: гости`;
+            document.getElementById('customGuestsInput').value = '';
+            document.getElementById('guestsSelectModal').classList.remove('hidden');
+        }
+
+        function closeGuestsModal() {
+            document.getElementById('guestsSelectModal').classList.add('hidden');
+            tableToOpenGuests = null;
+        }
+
+        function confirmGuestsCount(count) {
+            if(!tableToOpenGuests) return;
+            const t = tables[tableToOpenGuests];
+            t.guests = count;
+            
+            if(!t.guestNames) t.guestNames = {};
+            for(let i=1; i<=count; i++) {
+                if(!t.guestNames[i]) t.guestNames[i] = `Гость ${i}`;
+            }
+
+            selectTable(tableToOpenGuests);
+            
+            document.getElementById('hallGridView').classList.add('hidden');
+            document.getElementById('activeTableCard').classList.remove('hidden');
+            document.getElementById('orderEditingSection').classList.remove('hidden');
+            document.getElementById('showMenuToggleBtnContainer').classList.add('hidden');
+
+            closeGuestsModal();
+            saveData();
+            document.getElementById('mainScrollContainer').scrollTop = 0;
+        }
+
+        function submitCustomGuests() {
+            const count = Number(document.getElementById('customGuestsInput').value);
+            if(!count || count <= 0) return;
+            confirmGuestsCount(count);
+        }
+
+        function openGuestsModalForActive() {
+            if(!currentTable) return;
+            handleTableClick(currentTable);
+        }
+
+        function selectTable(name) {
+            currentTable = name;
+            document.getElementById('activeTableCard').classList.remove('hidden');
+            document.getElementById('currentTableName').innerText = name;
+            renderTableCard();
+            renderMenuDirect();
+            renderTables();
+        }
+
+        function backToHallGrid() {
+            document.getElementById('activeTableCard').classList.add('hidden');
+            document.getElementById('hallGridView').classList.remove('hidden');
+            renderTables();
+        }
+
+        function toggleOrderReviewMode(reviewMode) {
+            const editingSection = document.getElementById('orderEditingSection');
+            const showMenuBtn = document.getElementById('showMenuToggleBtnContainer');
+            
+            if (reviewMode) {
+                editingSection.classList.add('hidden');
+                showMenuBtn.classList.remove('hidden');
+            } else {
+                editingSection.classList.remove('hidden');
+                showMenuBtn.classList.add('hidden');
+            }
+        }
+
+        function renderTableCard() {
+            if(!currentTable) return;
+            const t = tables[currentTable];
+            
+            const badge = document.getElementById('tableTimerBadge');
+            if (t.lastVisited) {
+                const diffMin = Math.floor((Date.now() - t.lastVisited) / 60000);
+                badge.innerText = diffMin + ' мин';
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+
+            document.getElementById('tableGuestsCountInfo').innerText = `Гостей: ${t.guests}`;
+
+            const guestsContainer = document.getElementById('guestsListBtns');
+            guestsContainer.innerHTML = '';
+            
+            let gBtnAll = document.createElement('button');
+            gBtnAll.className = `px-3.5 py-2 rounded-xl text-xs font-bold tap-scale ${t.activeGuest === 'В стол' ? 'bg-slate-100 text-slate-950 shadow' : 'glass-element text-slate-300'}`;
+            gBtnAll.innerText = '📌 В стол';
+            gBtnAll.onclick = () => { t.activeGuest = 'В стол'; renderTableCard(); };
+            guestsContainer.appendChild(gBtnAll);
+
+            if(!t.guestNames) t.guestNames = {};
+
+            for(let i=1; i<=t.guests; i++) {
+                if(!t.guestNames[i]) t.guestNames[i] = `Гость ${i}`;
+                let gLabel = t.guestNames[i];
+
+                let gBtn = document.createElement('button');
+                gBtn.className = `px-3.5 py-2 rounded-xl text-xs font-bold tap-scale flex items-center space-x-1.5 ${t.activeGuest === gLabel ? 'bg-slate-100 text-slate-950 shadow' : 'glass-element text-slate-300'}`;
+                gBtn.innerHTML = `<span>👤 ${gLabel}</span> <span onclick="event.stopPropagation(); renameGuest(${i})" class="text-[10px] opacity-70 ml-1 hover:opacity-100">✏️</span>`;
+                gBtn.onclick = (function(nameLabel) { return () => { t.activeGuest = nameLabel; renderTableCard(); }; })(gLabel);
+                
+                guestsContainer.appendChild(gBtn);
+            }
+
+            const itemsContainer = document.getElementById('currentTableItems');
+            itemsContainer.innerHTML = '';
+            let total = 0;
+
+            if(t.items.length === 0) {
+                itemsContainer.innerHTML = '<p class="text-slate-500 italic text-center py-4 text-xs">Стол пустой</p>';
+            } else {
+                t.items.forEach((item, idx) => {
+                    total += item.price;
+                    const div = document.createElement('div');
+                    div.className = "flex justify-between items-center glass-element px-4 py-3 rounded-2xl text-xs border border-slate-800/80";
+                    div.innerHTML = `
+                        <div>
+                            <div class="font-extrabold text-slate-100 text-sm tracking-wide">${item.name}</div>
+                            <div class="text-[11px] text-slate-400 mt-1 flex items-center space-x-1.5 flex-wrap">
+                                <span class="text-slate-300 font-bold">${item.course}</span> • 
+                                <span class="text-emerald-400 font-semibold">${item.guest}</span>
+                                <span class="text-rose-300 font-medium">${item.modifier ? '(' + item.modifier + ')' : ''}</span>
+                                <button onclick="editItemModifier(${idx})" class="text-slate-300 hover:text-white ml-1" title="Изменить пометку">✏️</button>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3.5">
+                            <span class="font-extrabold text-slate-100 text-sm">${item.price} ₽</span>
+                            <button onclick="removeItem(${idx})" class="w-7 h-7 rounded-full bg-rose-500/10 text-rose-400 font-bold flex items-center justify-center hover:bg-rose-500/20">✕</button>
+                        </div>
+                    `;
+                    itemsContainer.appendChild(div);
+                });
+            }
+            document.getElementById('currentTableTotal').innerText = total + ' ₽';
+        }
+
+        function renameGuest(index) {
+            const t = tables[currentTable];
+            const oldName = t.guestNames[index] || `Гость ${index}`;
+            const newName = prompt(`Введите примету или имя для гостя (например: бородач, в очках):`, "");
+            if(newName && newName.trim() !== "") {
+                const trimmed = newName.trim();
+                if(t.activeGuest === oldName) t.activeGuest = trimmed;
+                t.guestNames[index] = trimmed;
+                saveData();
+                renderTableCard();
+            }
+        }
+
+        function editItemModifier(idx) {
+            const t = tables[currentTable];
+            const item = t.items[idx];
+            const currentMod = item.modifier || "";
+            const newMod = prompt(`Укажите пометку к блюду "${item.name}" (например: без лука, соус отдельно):`, "");
+            if(newMod !== null) {
+                item.modifier = newMod.trim();
+                saveData();
+                renderTableCard();
+            }
+        }
+
+        function setCourseActive(courseName) {
+            selectedActiveCourse = courseName;
+            ['⚡ Сразу', '1к', '2к', '3к'].forEach(c => {
+                let key = c === '⚡ Сразу' ? 'Сразу' : c;
+                const btn = document.getElementById('courseBtn_' + key);
+                if(btn) {
+                    if(courseName.includes(key === 'Сразу' ? 'Сразу' : key[0])) {
+                        btn.className = "course-active-btn bg-slate-100 text-slate-950 py-2.5 rounded-2xl text-[11px] font-extrabold shadow-md";
+                    } else {
+                        btn.className = "course-active-btn glass-element text-slate-300 py-2.5 rounded-2xl text-[11px] font-semibold";
+                    }
+                }
+            });
+        }
+
+        function renderMenuDirect() {
+            const list = document.getElementById('directMenuList');
+            list.innerHTML = '';
+            const search = document.getElementById('menuSearch').value.toLowerCase().trim();
+
+            const filtered = menuItems.filter(i => {
+                const matchCat = currentCat === 'all' || i.cat === currentCat;
+                const matchSearch = i.name.toLowerCase().includes(search);
+                if (search.length > 0) return matchSearch;
+                return matchCat;
+            });
+
+            filtered.forEach(item => {
+                const isStopped = stopListSet.has(item.name);
+                const div = document.createElement('div');
+                div.className = `flex justify-between items-center p-3.5 rounded-2xl border transition ${isStopped ? 'bg-rose-500/5 border-rose-500/20 opacity-50' : 'glass-element border-slate-800 hover:border-slate-600'}`;
+                div.innerHTML = `
+                    <div class="pr-2 flex-1">
+                        <div class="font-bold text-xs ${isStopped ? 'text-rose-300 line-through' : 'text-slate-200'}">${item.name}</div>
+                        <div class="text-[10px] ${isStopped ? 'text-rose-400 font-extrabold' : 'text-slate-300 font-extrabold'} mt-0.5">
+                            ${isStopped ? '🛑 В СТОПЕ' : item.price + ' ₽'}
+                        </div>
+                    </div>
+                    <button ${isStopped ? 'disabled' : ''} onclick="orderMenuItemDirect('${item.name}', ${item.price}, ${item.isHosper ? 'true' : 'false'})" class="${isStopped ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : 'bg-slate-100 hover:bg-white text-slate-950 shadow-lg'} font-extrabold px-4 py-2.5 rounded-xl text-xs tap-scale shrink-0">
+                        ${isStopped ? 'Стоп' : '+ Добавить'}
+                    </button>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function filterCat(cat) {
+            currentCat = cat;
+            document.querySelectorAll('#menuCategories button').forEach(b => {
+                if(b.innerText.includes(cat) || (cat === 'all' && b.innerText === 'Все')) {
+                    b.className = "cat-tab bg-slate-100 text-slate-950 px-4 py-2 rounded-2xl font-extrabold whitespace-nowrap text-xs shadow";
+                } else if(cat === 'Бар' && b.innerText.includes('Бар')) {
+                    b.className = "cat-tab bg-slate-100 text-slate-950 px-4 py-2 rounded-2xl font-extrabold whitespace-nowrap text-xs shadow";
+                } else {
+                    b.className = "cat-tab glass-element text-slate-300 px-4 py-2 rounded-2xl whitespace-nowrap text-xs font-medium";
+                }
+            });
+            renderMenuDirect();
+        }
+
+        function orderMenuItemDirect(name, price, isHosper) {
+            if(!currentTable || stopListSet.has(name)) return;
+            document.getElementById('menuSearch').value = '';
+            
+            if(isHosper) {
+                pendingHosperItem = { name, price };
+                document.getElementById('hosperItemTitle').innerText = name;
+                document.getElementById('customWeightInput').value = '';
+                document.getElementById('hospersModal').classList.remove('hidden');
+                return;
+            }
+            addItemToTableDirect(name, price, null);
+        }
+
+        function selectHosperWeight(weight) {
+            if(!pendingHosperItem || !currentTable) return;
+            const finalPrice = Math.round((pendingHosperItem.price * weight) / 100);
+            addItemToTableDirect(`${pendingHosperItem.name} (${weight}г)`, finalPrice, null);
+            closeHosperModal();
+        }
+
+        function submitCustomWeight() {
+            const weightVal = Number(document.getElementById('customWeightInput').value);
+            if(!weightVal || weightVal <= 0) return;
+            selectHosperWeight(weightVal);
+        }
+
+        function closeHosperModal() {
+            document.getElementById('hospersModal').classList.add('hidden');
+            pendingHosperItem = null;
+        }
+
+        function addItemToTableDirect(name, price, modifier) {
+            const t = tables[currentTable];
+            t.items.push({ name, price, modifier, guest: t.activeGuest, course: selectedActiveCourse });
+            saveData();
+            renderTableCard();
+            renderTables();
+        }
+
+        function removeItem(idx) {
+            if(!currentTable) return;
+            tables[currentTable].items.splice(idx, 1);
+            saveData();
+            renderTableCard();
+            renderTables();
+        }
+
+        function saveTableToWork() {
+            if(!currentTable) return;
+            const t = tables[currentTable];
+            if (!t.lastVisited) {
+                t.lastVisited = Date.now(); 
+            }
+            saveData();
+            document.getElementById('activeTableCard').classList.add('hidden');
+            document.getElementById('hallGridView').classList.remove('hidden');
+            switchTab('hall');
+        }
+
+        function renderMyTables() {
+            const container = document.getElementById('myActiveTablesList');
+            container.innerHTML = '';
+            let activeCount = 0;
+
+            for(let name in tables) {
+                const t = tables[name];
+                if(t.items.length === 0) continue;
+                activeCount++;
+                const total = t.items.reduce((s, i) => s + i.price, 0);
+
+                const card = document.createElement('div');
+                card.className = "glass-panel rounded-[32px] p-4 space-y-2.5 shadow-lg border border-slate-800";
+                card.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <span class="font-extrabold text-sm text-slate-100">${name}</span>
+                        <span class="font-extrabold text-sm text-emerald-400">${total} ₽</span>
+                    </div>
+                    <div class="text-xs text-slate-400">Позиций: ${t.items.length} • Гостей: ${t.guests}</div>
+                    <button onclick="switchTab('hall'); document.getElementById('hallGridView').classList.add('hidden'); document.getElementById('activeTableCard').classList.remove('hidden'); currentTable='${name}'; toggleOrderReviewMode(true); renderTableCard();" class="w-full bg-slate-100 hover:bg-white text-slate-950 py-3 rounded-2xl text-xs font-extrabold tap-scale shadow">✏️ Открыть заказ</button>
+                `;
+                container.appendChild(card);
+            }
+            if(activeCount === 0) container.innerHTML = '<div class="text-center py-16 text-slate-500 text-xs italic">Нет активных столов в работе.</div>';
+            document.getElementById('activeTablesCountBadge').innerText = activeCount + ' в работе';
+        }
+
+        function markTableVisited() {
+            if(!currentTable) return;
+            const t = tables[currentTable];
+            if (t.lastVisited) {
+                t.lastVisited = Date.now(); 
+                saveData();
+            }
+            renderTableCard();
+            renderTables();
+        }
+
+        function openCheckoutModal() {
+            if(!currentTable) return;
+            const t = tables[currentTable];
+            if(t.items.length === 0) return;
+            const subtotal = t.items.reduce((s, i) => s + i.price, 0);
+            document.getElementById('checkoutModalTitle').innerText = `Закрытие: ${currentTable}`;
+            document.getElementById('checkoutModalSubtotal').innerText = subtotal + ' ₽';
+            currentTipAmount = 0;
+            document.getElementById('customTipInput').value = '';
+            document.getElementById('checkoutModal').classList.remove('hidden');
+        }
+
+        function closeCheckoutModal() { document.getElementById('checkoutModal').classList.add('hidden'); }
+        function setTipPercent(p) {
+            const subtotal = tables[currentTable].items.reduce((s, i) => s + i.price, 0);
+            currentTipAmount = Math.round((subtotal * p) / 100);
+            document.getElementById('customTipInput').value = currentTipAmount;
+        }
+        function updateCustomTip(val) { currentTipAmount = Number(val) || 0; }
+        function setTipType(type) {
+            currentTipType = type;
+            ['Nal', 'Card', 'Sbp'].forEach(t => {
+                const btn = document.getElementById('tipType' + t);
+                if(t.toLowerCase() === (type === 'Нал' ? 'nal' : type === 'Перевод' ? 'card' : 'sbp')) {
+                    btn.className = "bg-emerald-600 text-white py-2.5 rounded-xl text-xs font-extrabold tap-scale shadow";
+                } else {
+                    btn.className = "glass-element text-slate-300 py-2.5 rounded-xl text-xs font-extrabold tap-scale";
+                }
+            });
+        }
+
+        function confirmTableCheckout() {
+            if(!currentTable) return;
+            const t = tables[currentTable];
+            const subtotal = t.items.reduce((s, i) => s + i.price, 0);
+            
+            closedHistory.unshift({
+                tableName: currentTable,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                date: new Date().toLocaleDateString(),
+                subtotal, 
+                tip: currentTipAmount, 
+                tipType: currentTipType, 
+                guests: t.guests,
+                items: [...t.items]
+            });
+
+            tables[currentTable] = { items: [], guests: 2, guestNames: {1: "Гость 1", 2: "Гость 2"}, activeGuest: "В стол", course: "⚡ Сразу", lastVisited: null };
+            
+            closeCheckoutModal();
+            saveData();
+            
+            document.getElementById('activeTableCard').classList.add('hidden');
+            document.getElementById('hallGridView').classList.remove('hidden');
+            toggleOrderReviewMode(false);
+            
+            updateHeaderTips();
+            renderTables();
+            
+            if(!document.getElementById('tabMyTables').classList.contains('hidden')) {
+                renderMyTables();
+            } else {
+                switchTab('hall');
+            }
+        }
+
+        function updateHeaderTips() {
+            const totalTips = closedHistory.reduce((s, h) => s + h.tip, 0);
+            document.getElementById('headerTipSum').innerText = totalTips + ' ₽';
+        }
+
+        function renderStats() {
+            const totalTips = closedHistory.reduce((s, h) => s + h.tip, 0);
+            document.getElementById('statsTotalTips').innerText = totalTips + ' ₽';
+            document.getElementById('statsTotalTables').innerText = closedHistory.length;
+            const container = document.getElementById('closedTablesHistory');
+            container.innerHTML = '';
+            
+            if(closedHistory.length === 0) {
+                container.innerHTML = '<p class="text-slate-500 text-center py-6 italic">Нет закрытых столов за текущую смену</p>';
+            } else {
+                closedHistory.forEach((h, index) => {
+                    const div = document.createElement('div');
+                    div.className = "glass-element p-3.5 rounded-2xl border border-slate-800 flex justify-between items-center text-xs tap-scale cursor-pointer hover:border-slate-600 transition";
+                    div.onclick = () => openHistoryDetail(index);
+                    div.innerHTML = `
+                        <div>
+                            <span class="font-extrabold text-slate-200">${h.tableName}</span> <span class="text-[10px] text-slate-400">(${h.time})</span>
+                            <div class="text-[10px] text-slate-400 mt-0.5">Чек: ${h.subtotal} ₽ • Позиций: ${h.items.length} 🔍</div>
+                        </div>
+                        <span class="text-emerald-400 font-extrabold">+${h.tip} ₽</span>
+                    `;
+                    container.appendChild(div);
+                });
+            }
+        }
+
+        function renderShiftArchive() {
+            const container = document.getElementById('shiftArchiveList');
+            container.innerHTML = '';
+            if (shiftArchive.length === 0) {
+                container.innerHTML = '<p class="text-slate-500 text-center py-4 italic">Нет сохраненных смен в архиве</p>';
+                return;
+            }
+            shiftArchive.forEach((shift, sIdx) => {
+                const shiftTips = shift.items.reduce((s, i) => s + i.tip, 0);
+                const div = document.createElement('div');
+                div.className = "glass-element p-3 rounded-xl border border-slate-800 flex justify-between items-center text-xs";
+                div.innerHTML = `
+                    <div>
+                        <div class="font-extrabold text-slate-200">📅 Смена от ${shift.date}</div>
+                        <div class="text-[10px] text-slate-400">Столов: ${shift.tablesCount} • Чаевые: <span class="text-emerald-400 font-bold">${shiftTips} ₽</span></div>
+                    </div>
+                    <button onclick="alert('Детали смены за ${shift.date}: столов закрыто - ${shift.tablesCount}, чаевые - ${shiftTips} ₽')" class="glass-panel px-3 py-1.5 rounded-xl font-bold text-slate-300">👁️</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function openHistoryDetail(index) {
+            const h = closedHistory[index];
+            document.getElementById('historyModalTableName').innerText = h.tableName;
+            document.getElementById('historyModalTime').innerText = `${h.date} в ${h.time} • Гостей: ${h.guests}`;
+            document.getElementById('historyModalSubtotal').innerText = h.subtotal + ' ₽';
+            document.getElementById('historyModalTip').innerText = h.tip + ' ₽';
+            document.getElementById('historyModalTipType').innerText = h.tipType;
+
+            const listEl = document.getElementById('historyModalItemsList');
+            listEl.innerHTML = '';
+
+            if(h.items.length === 0) {
+                listEl.innerHTML = '<p class="text-slate-500 italic text-center py-3">Нет позиций</p>';
+            } else {
+                h.items.forEach(item => {
+                    const row = document.createElement('div');
+                    row.className = "flex justify-between items-center glass-element p-2.5 rounded-xl border border-slate-800 mb-1.5";
+                    row.innerHTML = `
+                        <div>
+                            <div class="text-slate-200 font-bold">${item.name}</div>
+                            <div class="text-[10px] text-slate-400"><span class="text-slate-300">${item.course}</span> • <span class="text-emerald-400">${item.guest}</span> ${item.modifier ? '('+item.modifier+')' : ''}</div>
+                        </div>
+                        <span class="font-bold text-slate-200">${item.price} ₽</span>
+                    `;
+                    listEl.appendChild(row);
+                });
+            }
+            document.getElementById('historyDetailModal').classList.remove('hidden');
+        }
+
+        function closeHistoryDetailModal() {
+            document.getElementById('historyDetailModal').classList.add('hidden');
+        }
+
+        function openManualTipModal() {
+            const sum = prompt("Введите сумму чаевых (рублей):", "300");
+            if(sum && !isNaN(sum)) {
+                closedHistory.unshift({
+                    tableName: "Вручную",
+                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    date: new Date().toLocaleDateString(),
+                    subtotal: 0,
+                    tip: Number(sum),
+                    tipType: "Перевод",
+                    guests: 1,
+                    items: []
+                });
+                saveData();
+                updateHeaderTips();
+                renderStats();
+                updateTipGoalUI();
+            }
+        }
+
+        function filterAttention() { onlyAttentionFilter = !onlyAttentionFilter; renderTables(); }
+        function resetAllTimers() { 
+            for(let n in tables) {
+                if (tables[n].lastVisited) tables[n].lastVisited = Date.now();
+            }
+            saveData(); 
+            renderTables(); 
+        }
+
+        setInterval(() => { renderTables(); if(currentTable) renderTableCard(); renderMyTables(); }, 60000);
+        
+        updateHeaderTips();
+        switchTab('hall');
+    </script>
+</body>
+</html>
