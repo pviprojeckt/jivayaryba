@@ -167,7 +167,7 @@
                         </button>
                         <button onclick="openCheckoutModal()" class="bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-extrabold py-4 rounded-2xl text-xs shadow-xl tap-scale flex items-center justify-center space-x-1.5">
                             <span>✅</span>
-                            <span>Закрыть стол</span>
+                            <span>Расчет стола</span>
                         </button>
                     </div>
                 </div>
@@ -183,7 +183,7 @@
             <div id="myActiveTablesList" class="space-y-3"></div>
         </div>
 
-        <!-- ВКЛАДКА 3: История и Сплит-счета -->
+        <!-- ВКЛАДКА 3: История и Смена -->
         <div id="tabHistory" class="tab-content space-y-4 hidden">
             <div class="glass-panel rounded-3xl p-4 flex justify-between items-center shadow-lg border border-slate-700/50 bg-gradient-to-r from-slate-900 to-slate-950">
                 <div>
@@ -298,17 +298,58 @@
         </div>
     </div>
 
+    <!-- МОДАЛКА РАСЧЕТА И ЗАКРЫТИЯ СЧЕТОВ СТОЛА -->
+    <div id="checkoutModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-panel rounded-[32px] max-w-sm w-full p-6 space-y-4 shadow-2xl border border-slate-700/50 max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 id="checkoutModalTitle" class="font-extrabold text-sm text-emerald-400">Расчет стола</h3>
+                <button onclick="closeCheckoutModal()" class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs">✕</button>
+            </div>
+
+            <!-- Блок управления счетами и объединением гостей -->
+            <div class="space-y-2">
+                <div class="flex justify-between items-center">
+                    <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">🧾 Выберите счет для закрытия:</span>
+                    <button onclick="openSplitBillModal()" class="text-[10px] glass-element text-sky-400 border border-sky-500/30 px-2.5 py-1 rounded-xl font-extrabold tap-scale">🔗 Объединить счета</button>
+                </div>
+                <div id="checkoutBillsPreview" class="space-y-2 max-h-48 overflow-y-auto pr-1 text-xs"></div>
+            </div>
+
+            <div class="space-y-1.5">
+                <label class="text-xs font-bold text-slate-300">Чаевые с этого счета:</label>
+                <div class="grid grid-cols-4 gap-1.5">
+                    <button onclick="setTipPercent(0)" class="glass-element py-2 rounded-xl text-xs font-bold tap-scale">0</button>
+                    <button onclick="setTipPercent(5)" class="glass-element py-2 rounded-xl text-xs font-bold tap-scale">5%</button>
+                    <button onclick="setTipPercent(10)" class="glass-element py-2 rounded-xl text-xs font-bold tap-scale">10%</button>
+                    <button onclick="setTipPercent(15)" class="glass-element py-2 rounded-xl text-xs font-bold tap-scale">15%</button>
+                </div>
+                <input type="number" id="customTipInput" placeholder="Свой чай (₽)..." oninput="updateCustomTip(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-3 py-2 text-xs outline-none">
+            </div>
+
+            <div class="space-y-1">
+                <label class="text-xs font-bold text-slate-300">Способ оплаты:</label>
+                <div class="grid grid-cols-3 gap-1.5">
+                    <button onclick="setTipType('Нал')" id="tipTypeNal" class="bg-emerald-600 text-white py-2 rounded-xl text-xs font-extrabold tap-scale shadow">💵 Нал</button>
+                    <button onclick="setTipType('Перевод')" id="tipTypeCard" class="glass-element text-slate-300 py-2 rounded-xl text-xs font-extrabold tap-scale">💳 Карта</button>
+                    <button onclick="setTipType('СБП')" id="tipTypeSbp" class="glass-element text-slate-300 py-2 rounded-xl text-xs font-extrabold tap-scale">📱 СБП</button>
+                </div>
+            </div>
+
+            <button onclick="confirmBillCheckout()" class="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-extrabold py-3 rounded-2xl text-xs shadow-xl tap-scale">💳 Закрыть выбранный счет</button>
+        </div>
+    </div>
+
     <!-- МОДАЛКА УПРАВЛЕНИЯ СЧЕТАМИ И ГРУППИРОВКОЙ ГОСТЕЙ -->
     <div id="splitBillModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-50 hidden flex items-center justify-center p-4">
         <div class="glass-panel rounded-[32px] max-w-sm w-full p-6 space-y-4 shadow-2xl border border-slate-700/50 max-h-[85vh] flex flex-col">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-                <h3 class="font-extrabold text-sm text-slate-100">🧾 Сплит-счета и группы гостей</h3>
+                <h3 class="font-extrabold text-sm text-slate-100">🧾 Объединение счетов</h3>
                 <button onclick="closeSplitBillModal()" class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs">✕</button>
             </div>
-            <div class="text-[11px] text-slate-400">Объедините гостей в семьи/группы, чтобы сформировать раздельные чеки для расчета.</div>
+            <div class="text-[11px] text-slate-400">Выберите, какие гости платят вместе по одному счету.</div>
             <div id="splitGroupsContainer" class="space-y-3 overflow-y-auto flex-1 pr-1 text-xs"></div>
-            <button onclick="addGroupToSplit()" class="w-full glass-element border-dashed border-slate-600 text-slate-300 font-bold py-2.5 rounded-2xl text-xs tap-scale">＋ Добавить счет (группу)</button>
-            <button onclick="closeSplitBillModal()" class="w-full bg-slate-100 text-slate-950 font-extrabold py-3 rounded-2xl text-xs">Готово</button>
+            <button onclick="addGroupToSplit()" class="w-full glass-element border-dashed border-slate-600 text-slate-300 font-bold py-2.5 rounded-2xl text-xs tap-scale">＋ Добавить еще счет</button>
+            <button onclick="closeSplitBillModal()" class="w-full bg-slate-100 text-slate-950 font-extrabold py-3 rounded-2xl text-xs">Сохранить</button>
         </div>
     </div>
 
@@ -350,39 +391,6 @@
                 </div>
             </div>
             <button onclick="closeHosperModal()" class="w-full glass-element text-slate-300 py-3 rounded-2xl text-xs font-bold tap-scale">Отмена</button>
-        </div>
-    </div>
-
-    <!-- МОДАЛКА ЗАКРЫТИЯ СТОЛА -->
-    <div id="checkoutModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-50 hidden flex items-center justify-center p-4">
-        <div class="glass-panel rounded-[32px] max-w-sm w-full p-6 space-y-4 shadow-2xl border border-slate-700/50">
-            <div class="flex justify-between items-center">
-                <h3 id="checkoutModalTitle" class="font-extrabold text-sm text-emerald-400">Закрытие стола</h3>
-                <button onclick="closeCheckoutModal()" class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs">✕</button>
-            </div>
-            <div class="bg-slate-950/80 p-3.5 rounded-2xl flex justify-between text-xs border border-slate-800">
-                <span class="text-slate-400">Сумма заказа:</span>
-                <span id="checkoutModalSubtotal" class="font-extrabold text-slate-100">0 ₽</span>
-            </div>
-            <div class="space-y-2">
-                <label class="text-xs font-bold text-slate-300">Чаевые:</label>
-                <div class="grid grid-cols-4 gap-1.5">
-                    <button onclick="setTipPercent(0)" class="glass-element py-2.5 rounded-xl text-xs font-bold tap-scale">0</button>
-                    <button onclick="setTipPercent(5)" class="glass-element py-2.5 rounded-xl text-xs font-bold tap-scale">5%</button>
-                    <button onclick="setTipPercent(10)" class="glass-element py-2.5 rounded-xl text-xs font-bold tap-scale">10%</button>
-                    <button onclick="setTipPercent(15)" class="glass-element py-2.5 rounded-xl text-xs font-bold tap-scale">15%</button>
-                </div>
-                <input type="number" id="customTipInput" placeholder="Свой чай (₽)..." oninput="updateCustomTip(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs outline-none">
-            </div>
-            <div class="space-y-1.5">
-                <label class="text-xs font-bold text-slate-300">Способ оплаты:</label>
-                <div class="grid grid-cols-3 gap-2">
-                    <button onclick="setTipType('Нал')" id="tipTypeNal" class="bg-emerald-600 text-white py-2.5 rounded-xl text-xs font-extrabold tap-scale shadow">💵 Нал</button>
-                    <button onclick="setTipType('Перевод')" id="tipTypeCard" class="glass-element text-slate-300 py-2.5 rounded-xl text-xs font-extrabold tap-scale">💳 Карта</button>
-                    <button onclick="setTipType('СБП')" id="tipTypeSbp" class="glass-element text-slate-300 py-2.5 rounded-xl text-xs font-extrabold tap-scale">📱 СБП</button>
-                </div>
-            </div>
-            <button onclick="confirmTableCheckout()" class="w-full bg-gradient-to-r from-slate-100 to-slate-300 text-slate-950 font-extrabold py-3.5 rounded-2xl text-xs shadow-xl tap-scale">💾 Сохранить и освободить</button>
         </div>
     </div>
 
@@ -483,6 +491,7 @@
         let stopListSet = new Set(JSON.parse(localStorage.getItem('fish_pro_stoplist')) || []);
         let tableToOpenGuests = null;
         let shiftTipGoal = Number(localStorage.getItem('fish_pro_goal')) || 3000;
+        let selectedCheckoutGroup = null;
 
         function saveData() {
             localStorage.setItem('fish_pro_tables', JSON.stringify(tables));
@@ -694,11 +703,6 @@
             confirmGuestsCount(count);
         }
 
-        function openGuestsModalForActive() {
-            if(!currentTable) return;
-            handleTableClick(currentTable);
-        }
-
         function selectTable(name) {
             currentTable = name;
             document.getElementById('activeTableCard').classList.remove('hidden');
@@ -760,13 +764,6 @@
                 guestsContainer.appendChild(gBtn);
             }
 
-            // Кнопка настройки сплит-счетов (группировки гостей)
-            let splitBtn = document.createElement('button');
-            splitBtn.className = "px-3.5 py-2 rounded-xl text-xs font-bold tap-scale glass-element text-sky-400 border border-sky-500/30";
-            splitBtn.innerHTML = "🧾 Сплит-счета";
-            splitBtn.onclick = openSplitBillModal;
-            guestsContainer.appendChild(splitBtn);
-
             const itemsContainer = document.getElementById('currentTableItems');
             itemsContainer.innerHTML = '';
             let total = 0;
@@ -806,13 +803,11 @@
 
             if (!t.splitGroups) t.splitGroups = {};
 
-            // Собираем всех гостей
             let allGuests = [];
             for(let i=1; i<=t.guests; i++) {
                 if(t.guestNames[i]) allGuests.push(t.guestNames[i]);
             }
 
-            // Если групп нет, создадим по умолчанию Счет 1 со всеми гостями
             if (Object.keys(t.splitGroups).length === 0) {
                 t.splitGroups["Счет №1"] = [...allGuests];
             }
@@ -820,7 +815,6 @@
             for(let groupName in t.splitGroups) {
                 const groupGuests = t.splitGroups[groupName];
                 
-                // Считаем сумму по этой группе
                 let groupSum = t.items
                     .filter(item => groupGuests.includes(item.guest))
                     .reduce((sum, item) => sum + item.price, 0);
@@ -849,7 +843,7 @@
 
         function closeSplitBillModal() {
             document.getElementById('splitBillModal').classList.add('hidden');
-            renderTableCard();
+            renderCheckoutBillsPreview();
         }
 
         function addGroupToSplit() {
@@ -884,7 +878,6 @@
             if(idx > -1) {
                 t.splitGroups[groupName].splice(idx, 1);
             } else {
-                // Удаляем гостя из других групп, чтобы он не двоился
                 for(let g in t.splitGroups) {
                     let i = t.splitGroups[g].indexOf(guestName);
                     if(i > -1) t.splitGroups[g].splice(i, 1);
@@ -904,7 +897,6 @@
                 if(t.activeGuest === oldName) t.activeGuest = trimmed;
                 t.guestNames[index] = trimmed;
                 
-                // Обновляем в группах сплита тоже
                 if(t.splitGroups) {
                     for(let g in t.splitGroups) {
                         let i = t.splitGroups[g].indexOf(oldName);
@@ -1091,18 +1083,63 @@
             if(!currentTable) return;
             const t = tables[currentTable];
             if(t.items.length === 0) return;
-            const subtotal = t.items.reduce((s, i) => s + i.price, 0);
-            document.getElementById('checkoutModalTitle').innerText = `Закрытие: ${currentTable}`;
-            document.getElementById('checkoutModalSubtotal').innerText = subtotal + ' ₽';
             currentTipAmount = 0;
             document.getElementById('customTipInput').value = '';
+            
+            renderCheckoutBillsPreview();
             document.getElementById('checkoutModal').classList.remove('hidden');
+        }
+
+        function renderCheckoutBillsPreview() {
+            const t = tables[currentTable];
+            const container = document.getElementById('checkoutBillsPreview');
+            container.innerHTML = '';
+
+            if (!t.splitGroups) t.splitGroups = {};
+
+            let allGuests = [];
+            for(let i=1; i<=t.guests; i++) {
+                if(t.guestNames[i]) allGuests.push(t.guestNames[i]);
+            }
+
+            if (Object.keys(t.splitGroups).length === 0) {
+                t.splitGroups["Счет №1"] = [...allGuests];
+            }
+
+            let firstGroup = null;
+
+            for(let groupName in t.splitGroups) {
+                const groupGuests = t.splitGroups[groupName];
+                let groupItems = t.items.filter(item => groupGuests.includes(item.guest));
+                let groupSum = groupItems.reduce((sum, item) => sum + item.price, 0);
+
+                if(!firstGroup) firstGroup = groupName;
+                let isSelected = selectedCheckoutGroup === groupName || (!selectedCheckoutGroup && groupName === firstGroup);
+                if(!selectedCheckoutGroup) selectedCheckoutGroup = firstGroup;
+
+                let itemsListText = groupItems.length > 0 ? groupItems.map(i => `${i.name} (${i.price}₽)`).join(', ') : 'Нет позиций';
+
+                const div = document.createElement('div');
+                div.className = `p-3 rounded-2xl border cursor-pointer transition ${isSelected ? 'bg-emerald-500/10 border-emerald-500/40 shadow' : 'glass-element border-slate-800'}`;
+                div.onclick = () => { selectedCheckoutGroup = groupName; renderCheckoutBillsPreview(); };
+                div.innerHTML = `
+                    <div class="flex justify-between items-center font-extrabold text-slate-200">
+                        <span>🧾 ${groupName} <span class="text-[10px] text-slate-400 font-normal">(${groupGuests.join(', ') || 'нет гостей'})</span></span>
+                        <span class="text-emerald-400">${groupSum} ₽</span>
+                    </div>
+                    <div class="text-[10px] text-slate-400 truncate mt-0.5">${itemsListText}</div>
+                `;
+                container.appendChild(div);
+            }
         }
 
         function closeCheckoutModal() { document.getElementById('checkoutModal').classList.add('hidden'); }
         function setTipPercent(p) {
-            const subtotal = tables[currentTable].items.reduce((s, i) => s + i.price, 0);
-            currentTipAmount = Math.round((subtotal * p) / 100);
+            const t = tables[currentTable];
+            const groupGuests = t.splitGroups[selectedCheckoutGroup] || [];
+            const groupSum = t.items.filter(item => groupGuests.includes(item.guest)).reduce((sum, item) => sum + item.price, 0);
+            
+            currentTipAmount = Math.round((groupSum * p) / 100);
             document.getElementById('customTipInput').value = currentTipAmount;
         }
         function updateCustomTip(val) { currentTipAmount = Number(val) || 0; }
@@ -1111,46 +1148,65 @@
             ['Nal', 'Card', 'Sbp'].forEach(t => {
                 const btn = document.getElementById('tipType' + t);
                 if(t.toLowerCase() === (type === 'Нал' ? 'nal' : type === 'Перевод' ? 'card' : 'sbp')) {
-                    btn.className = "bg-emerald-600 text-white py-2.5 rounded-xl text-xs font-extrabold tap-scale shadow";
+                    btn.className = "bg-emerald-600 text-white py-2 rounded-xl text-xs font-extrabold tap-scale shadow";
                 } else {
-                    btn.className = "glass-element text-slate-300 py-2.5 rounded-xl text-xs font-extrabold tap-scale";
+                    btn.className = "glass-element text-slate-300 py-2 rounded-xl text-xs font-extrabold tap-scale";
                 }
             });
         }
 
-        function confirmTableCheckout() {
-            if(!currentTable) return;
+        function confirmBillCheckout() {
+            if(!currentTable || !selectedCheckoutGroup) return;
             const t = tables[currentTable];
-            const subtotal = t.items.reduce((s, i) => s + i.price, 0);
+            const groupGuests = t.splitGroups[selectedCheckoutGroup] || [];
             
+            let groupItems = t.items.filter(item => groupGuests.includes(item.guest));
+            if (groupItems.length === 0) {
+                alert("В этом счете нет позиций для закрытия.");
+                return;
+            }
+
+            const groupSubtotal = groupItems.reduce((sum, item) => sum + item.price, 0);
+
+            // Сохраняем в историю закрытый счет
             closedHistory.unshift({
-                tableName: currentTable,
+                tableName: `${currentTable} (${selectedCheckoutGroup})`,
                 time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 date: new Date().toLocaleDateString(),
-                subtotal, 
+                subtotal: groupSubtotal, 
                 tip: currentTipAmount, 
                 tipType: currentTipType, 
-                guests: t.guests,
-                items: [...t.items],
-                splitGroups: t.splitGroups || {}
+                guests: groupGuests.length,
+                items: [...groupItems],
+                splitGroups: { [selectedCheckoutGroup]: groupGuests }
             });
 
-            tables[currentTable] = { items: [], guests: 2, guestNames: {1: "Гость 1", 2: "Гость 2"}, activeGuest: "Гость 1", course: "⚡ Сразу", lastVisited: null, splitGroups: {} };
-            
+            // Удаляем только те позиции, которые относились к этому закрытому счету
+            t.items = t.items.filter(item => !groupGuests.includes(item.guest));
+            delete t.splitGroups[selectedCheckoutGroup];
+            selectedCheckoutGroup = null;
+
             closeCheckoutModal();
             saveData();
             
-            document.getElementById('activeTableCard').classList.add('hidden');
-            document.getElementById('hallGridView').classList.remove('hidden');
-            toggleOrderReviewMode(false);
-            
             updateHeaderTips();
             renderTables();
+
+            // Если на столе больше не осталось позиций — полностью освобождаем стол
+            if (t.items.length === 0) {
+                tables[currentTable] = { items: [], guests: 2, guestNames: {1: "Гость 1", 2: "Гость 2"}, activeGuest: "Гость 1", course: "⚡ Сразу", lastVisited: null, splitGroups: {} };
+                saveData();
+                document.getElementById('activeTableCard').classList.add('hidden');
+                document.getElementById('hallGridView').classList.remove('hidden');
+                switchTab('hall');
+            } else {
+                // Если за столом еще кто-то сидит — обновляем карточку стола
+                renderTableCard();
+                alert("Счет успешно закрыт! Остальные гости остаются за столом.");
+            }
             
             if(!document.getElementById('tabMyTables').classList.contains('hidden')) {
                 renderMyTables();
-            } else {
-                switchTab('hall');
             }
         }
 
@@ -1167,7 +1223,7 @@
             container.innerHTML = '';
             
             if(closedHistory.length === 0) {
-                container.innerHTML = '<p class="text-slate-500 text-center py-6 italic">Нет закрытых столов за текущую смену</p>';
+                container.innerHTML = '<p class="text-slate-500 text-center py-6 italic">Нет закрытых счетов за текущую смену</p>';
             } else {
                 closedHistory.forEach((h, index) => {
                     const div = document.createElement('div');
@@ -1199,9 +1255,9 @@
                 div.innerHTML = `
                     <div>
                         <div class="font-extrabold text-slate-200">📅 Смена от ${shift.date}</div>
-                        <div class="text-[10px] text-slate-400">Столов: ${shift.tablesCount} • Чаевые: <span class="text-emerald-400 font-bold">${shiftTips} ₽</span></div>
+                        <div class="text-[10px] text-slate-400">Счетов: ${shift.tablesCount} • Чаевые: <span class="text-emerald-400 font-bold">${shiftTips} ₽</span></div>
                     </div>
-                    <button onclick="alert('Детали смены за ${shift.date}: столов закрыто - ${shift.tablesCount}, чаевые - ${shiftTips} ₽')" class="glass-panel px-3 py-1.5 rounded-xl font-bold text-slate-300">👁️</button>
+                    <button onclick="alert('Детали смены за ${shift.date}: счетов закрыто - ${shift.tablesCount}, чаевые - ${shiftTips} ₽')" class="glass-panel px-3 py-1.5 rounded-xl font-bold text-slate-300">👁️</button>
                 `;
                 container.appendChild(div);
             });
@@ -1217,19 +1273,6 @@
 
             const listEl = document.getElementById('historyModalItemsList');
             listEl.innerHTML = '';
-
-            // Если есть сплит-группы, покажем их суммы
-            let splitHtml = "";
-            if (h.splitGroups && Object.keys(h.splitGroups).length > 0) {
-                splitHtml += `<div class="bg-slate-900/80 p-3 rounded-2xl border border-slate-800 space-y-1 mb-2"><div class="font-bold text-xs text-sky-400">🧾 Раздельные счета:</div>`;
-                for (let gName in h.splitGroups) {
-                    let gGuests = h.splitGroups[gName];
-                    let gSum = h.items.filter(item => gGuests.includes(item.guest)).reduce((s, i) => s + i.price, 0);
-                    splitHtml += `<div class="flex justify-between text-[11px] text-slate-300"><span>${gName} (${gGuests.join(', ')})</span><span class="font-bold text-emerald-400">${gSum} ₽</span></div>`;
-                }
-                splitHtml += `</div>`;
-                listEl.innerHTML += splitHtml;
-            }
 
             if(h.items.length === 0) {
                 listEl.innerHTML += '<p class="text-slate-500 italic text-center py-3">Нет позиций</p>';
