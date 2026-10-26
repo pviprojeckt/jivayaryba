@@ -200,6 +200,7 @@
                 </div>
             </div>
 
+            <!-- Блок цели по чаевым -->
             <div class="glass-panel rounded-3xl p-4 space-y-3 shadow-lg border border-slate-700/50">
                 <div class="flex justify-between items-center">
                     <div>
@@ -214,24 +215,32 @@
                 <div id="tipGoalMessage" class="text-[11px] text-slate-300 font-medium text-center italic">Поставь цель и вперед к победе! 🚀</div>
             </div>
 
+            <!-- Блок статистики (Нал / Безнал) -->
             <div class="grid grid-cols-2 gap-3">
                 <div class="glass-panel p-4 rounded-3xl space-y-1 shadow-lg">
                     <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Всего чаевых</p>
                     <p id="statsTotalTips" class="text-2xl font-extrabold text-slate-100">0 ₽</p>
+                    <div class="text-[10px] text-slate-400 pt-1 flex justify-between border-t border-slate-800/60 mt-1">
+                        <span>💵 Нал: <b id="statsCashTips" class="text-emerald-400">0 ₽</b></span>
+                        <span>💳 Безнал: <b id="statsCardTips" class="text-sky-400">0 ₽</b></span>
+                    </div>
                 </div>
                 <div class="glass-panel p-4 rounded-3xl space-y-1 shadow-lg">
-                    <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Закрыто столов</p>
+                    <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Закрыто счетов</p>
                     <p id="statsTotalTables" class="text-2xl font-extrabold text-slate-100">0</p>
+                    <div class="text-[10px] text-slate-400 pt-1 border-t border-slate-800/60 mt-1">
+                        <span>Смена активна</span>
+                    </div>
                 </div>
             </div>
 
             <div class="glass-panel rounded-3xl p-4 space-y-3 shadow-lg">
                 <div class="flex justify-between items-center">
-                    <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400">Столы за смену (тап для просмотра)</h3>
+                    <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400">Счета за смену (тап для просмотра)</h3>
                     <button onclick="openManualTipModal()" class="text-xs glass-element text-slate-300 border border-slate-700 px-3 py-1.5 rounded-2xl font-extrabold tap-scale">＋ Чай переводом</button>
                 </div>
                 <div id="closedTablesHistory" class="space-y-2 max-h-72 overflow-y-auto pr-1 text-xs">
-                    <p class="text-slate-500 text-center py-6 italic">Нет закрытых столов за текущую смену</p>
+                    <p class="text-slate-500 text-center py-6 italic">Нет закрытых счетов за текущую смену</p>
                 </div>
             </div>
         </div>
@@ -341,11 +350,12 @@
                 <input type="number" id="customTipInput" placeholder="Свой чай (₽)..." oninput="updateCustomTip(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-3 py-2 text-xs outline-none">
             </div>
 
+            <!-- Выбор: Нал или Безнал для чаевых -->
             <div class="space-y-1">
-                <label class="text-xs font-bold text-slate-300">Способ оплаты:</label>
+                <label class="text-xs font-bold text-slate-300">Как оставили чаевые:</label>
                 <div class="grid grid-cols-3 gap-1.5">
                     <button onclick="setTipType('Нал')" id="tipTypeNal" class="bg-emerald-600 text-white py-2 rounded-xl text-xs font-extrabold tap-scale shadow">💵 Нал</button>
-                    <button onclick="setTipType('Перевод')" id="tipTypeCard" class="glass-element text-slate-300 py-2 rounded-xl text-xs font-extrabold tap-scale">💳 Карта</button>
+                    <button onclick="setTipType('Перевод')" id="tipTypeCard" class="glass-element text-slate-300 py-2 rounded-xl text-xs font-extrabold tap-scale">💳 Перевод</button>
                     <button onclick="setTipType('СБП')" id="tipTypeSbp" class="glass-element text-slate-300 py-2 rounded-xl text-xs font-extrabold tap-scale">📱 СБП</button>
                 </div>
             </div>
@@ -575,10 +585,13 @@
 
         function updateTipGoalUI() {
             const totalTips = closedHistory.reduce((s, h) => s + h.tip, 0);
+            const cashTips = closedHistory.filter(h => h.tipType === 'Нал').reduce((s, h) => s + h.tip, 0);
+            const cardTips = totalTips - cashTips;
+            
             const percent = Math.min(Math.round((totalTips / shiftTipGoal) * 100), 100);
             
             document.getElementById('tipGoalProgressBar').style.width = percent + '%';
-            document.getElementById('tipGoalSubtitle').innerText = `Заработано ${totalTips} ₽ из ${shiftTipGoal} ₽ (${percent}%)`;
+            document.getElementById('tipGoalSubtitle').innerText = `Заработано ${totalTips} ₽ из ${shiftTipGoal} ₽ (${percent}%) [Нал: ${cashTips} ₽ | Безнал: ${cardTips} ₽]`;
 
             const msgEl = document.getElementById('tipGoalMessage');
             if(percent >= 100) {
@@ -1221,7 +1234,7 @@
                 date: new Date().toLocaleDateString(),
                 subtotal: groupSubtotal, 
                 tip: currentTipAmount, 
-                tipType: currentTipType, 
+                tipType: currentTipType, // Сохраняем "Нал", "Перевод" или "СБП"
                 guests: groupGuests.length,
                 items: [...groupItems],
                 splitGroups: { [selectedCheckoutGroup]: groupGuests }
@@ -1260,8 +1273,14 @@
 
         function renderStats() {
             const totalTips = closedHistory.reduce((s, h) => s + h.tip, 0);
+            const cashTips = closedHistory.filter(h => h.tipType === 'Нал').reduce((s, h) => s + h.tip, 0);
+            const cardTips = totalTips - cashTips;
+
             document.getElementById('statsTotalTips').innerText = totalTips + ' ₽';
+            document.getElementById('statsCashTips').innerText = cashTips + ' ₽';
+            document.getElementById('statsCardTips').innerText = cardTips + ' ₽';
             document.getElementById('statsTotalTables').innerText = closedHistory.length;
+
             const container = document.getElementById('closedTablesHistory');
             container.innerHTML = '';
             
@@ -1275,7 +1294,7 @@
                     div.innerHTML = `
                         <div>
                             <span class="font-extrabold text-slate-200">${h.tableName}</span> <span class="text-[10px] text-slate-400">(${h.time})</span>
-                            <div class="text-[10px] text-slate-400 mt-0.5">Чек: ${h.subtotal} ₽ • Позиций: ${h.items.length} 🔍</div>
+                            <div class="text-[10px] text-slate-400 mt-0.5">Чек: ${h.subtotal} ₽ • Чай: <span class="text-amber-300">${h.tipType}</span></div>
                         </div>
                         <span class="text-emerald-400 font-extrabold">+${h.tip} ₽</span>
                     `;
@@ -1343,13 +1362,14 @@
         function openManualTipModal() {
             const sum = prompt("Введите сумму чаевых (рублей):", "300");
             if(sum && !isNaN(sum)) {
+                const isCash = confirm("Это наличные чаевые? (ОК — Нал, Отмена — Безнал/Перевод)");
                 closedHistory.unshift({
                     tableName: "Вручную",
                     time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                     date: new Date().toLocaleDateString(),
                     subtotal: 0,
                     tip: Number(sum),
-                    tipType: "Перевод",
+                    tipType: isCash ? "Нал" : "Перевод",
                     guests: 1,
                     items: [],
                     splitGroups: {}
