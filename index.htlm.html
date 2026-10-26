@@ -6,6 +6,8 @@
     <title>Живая Рыба PRO — Пульт официанта</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Подключаем клиент Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         
@@ -54,8 +56,8 @@
                 <div>
                     <h1 class="font-extrabold text-xs tracking-wider text-slate-100 uppercase">Пульт Официанта PRO</h1>
                     <div class="flex items-center space-x-1.5 mt-0.5">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-lg shadow-emerald-500/50"></span>
-                        <span class="text-[10px] text-emerald-400 font-bold uppercase tracking-wide">Смена активна</span>
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-lg shadow-emerald-500/50" id="cloudStatusIndicator"></span>
+                        <span class="text-[10px] text-emerald-400 font-bold uppercase tracking-wide" id="cloudStatusText">Облако sync</span>
                     </div>
                 </div>
             </div>
@@ -183,7 +185,7 @@
             <div id="myActiveTablesList" class="space-y-3"></div>
         </div>
 
-        <!-- ВКЛАДКА 3: Текущая смена (Чай и закрытые счета за сегодня) -->
+        <!-- ВКЛАДКА 3: Текущая смена -->
         <div id="tabHistory" class="tab-content space-y-4 hidden">
             <div class="glass-panel rounded-3xl p-4 flex justify-between items-center shadow-lg border border-slate-700/50 bg-gradient-to-r from-slate-900 to-slate-950">
                 <div>
@@ -193,7 +195,6 @@
                 <button onclick="openFinishShiftModal()" class="bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 px-3.5 py-2.5 rounded-2xl text-xs font-extrabold tap-scale shadow">🏁 Закрыть смену</button>
             </div>
 
-            <!-- Блок цели по чаевым -->
             <div class="glass-panel rounded-3xl p-4 space-y-3 shadow-lg border border-slate-700/50">
                 <div class="flex justify-between items-center">
                     <div>
@@ -208,7 +209,6 @@
                 <div id="tipGoalMessage" class="text-[11px] text-slate-300 font-medium text-center italic">Поставь цель и вперед к победе! 🚀</div>
             </div>
 
-            <!-- Блок статистики (Нал / Безнал) -->
             <div class="grid grid-cols-2 gap-3">
                 <div class="glass-panel p-4 rounded-3xl space-y-1 shadow-lg">
                     <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Чаевые за сегодня</p>
@@ -250,10 +250,8 @@
             </div>
         </div>
 
-        <!-- ВКЛАДКА 5: ПРОФИЛЬ (SuperShift Календарь смен + Отчет за месяц) -->
+        <!-- ВКЛАДКА 5: ПРОФИЛЬ -->
         <div id="tabProfile" class="tab-content space-y-4 hidden">
-            
-            <!-- Карточка настроек ставки и добавления смены -->
             <div class="glass-panel rounded-3xl p-4 flex justify-between items-center shadow-lg border border-slate-700/50">
                 <div class="flex items-center space-x-3">
                     <div class="w-11 h-11 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-xl">💼</div>
@@ -270,13 +268,11 @@
                 </button>
             </div>
 
-            <!-- Переключатель внутри Профиля: Календарь смен / Отчет за месяц -->
             <div class="glass-panel p-1.5 rounded-2xl grid grid-cols-2 gap-1.5 border border-slate-800">
                 <button onclick="switchProfileSubTab('calendar')" id="profileSubBtnCalendar" class="py-2.5 rounded-xl text-xs font-extrabold bg-slate-100 text-slate-950 shadow tap-scale">📅 Календарь смен</button>
                 <button onclick="switchProfileSubTab('report')" id="profileSubBtnReport" class="py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-200 tap-scale">📈 Отчет за месяц</button>
             </div>
 
-            <!-- Навигация по месяцам (общая для календаря и отчета) -->
             <div class="flex justify-between items-center px-2">
                 <button onclick="changeProfileMonth(-1)" class="glass-element w-9 h-9 rounded-xl flex items-center justify-center text-slate-300 font-bold tap-scale">◀</button>
                 <div class="text-center">
@@ -286,18 +282,15 @@
                 <button onclick="changeProfileMonth(1)" class="glass-element w-9 h-9 rounded-xl flex items-center justify-center text-slate-300 font-bold tap-scale">▶</button>
             </div>
 
-            <!-- ПОД-ВКЛАДКА 1: КАЛЕНДАРЬ И АРХИВ ДНЯ -->
+            <!-- ПОД-ВКЛАДКА 1: КАЛЕНДАРЬ -->
             <div id="profileCalendarView" class="space-y-4">
                 <div class="glass-panel rounded-3xl p-4 space-y-3 shadow-xl border border-slate-800/80">
-                    <!-- Дни недели -->
                     <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-slate-500 uppercase">
                         <div>Пн</div><div>Вт</div><div>Ср</div><div>Чт</div><div>Пт</div><div class="text-rose-400/80">Сб</div><div class="text-rose-400/80">Вс</div>
                     </div>
-                    <!-- Сетка дней -->
                     <div id="calendarDaysGrid" class="grid grid-cols-7 gap-1.5"></div>
                 </div>
 
-                <!-- Детали выбранного дня в календаре -->
                 <div id="selectedDayArchiveCard" class="glass-panel rounded-3xl p-4 space-y-3 shadow-xl border border-slate-700/60">
                     <div class="flex justify-between items-center border-b border-slate-800 pb-2.5">
                         <div>
@@ -336,9 +329,8 @@
                 </div>
             </div>
 
-            <!-- ПОД-ВКЛАДКА 2: ПОЛНЫЙ ОТЧЕТ ЗА МЕСЯЦ -->
+            <!-- ПОД-ВКЛАДКА 2: ОТЧЕТ ЗА МЕСЯЦ -->
             <div id="profileReportView" class="space-y-4 hidden">
-                <!-- Главная карточка дохода -->
                 <div class="glass-panel rounded-[32px] p-5 space-y-4 border border-emerald-500/30 bg-gradient-to-br from-emerald-950/30 via-slate-900 to-slate-950 shadow-2xl">
                     <div class="flex justify-between items-start">
                         <div>
@@ -348,7 +340,6 @@
                         <span id="reportShiftsCountBadge" class="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-3 py-1 rounded-full text-xs font-extrabold">0 смен</span>
                     </div>
 
-                    <!-- Полоса соотношения Ставка vs Чаевые -->
                     <div class="space-y-1.5">
                         <div class="w-full bg-slate-950 h-3 rounded-full overflow-hidden flex border border-slate-800 p-0.5">
                             <div id="reportWageBar" class="bg-sky-500 h-full rounded-l-full transition-all duration-500" style="width: 50%"></div>
@@ -361,7 +352,6 @@
                     </div>
                 </div>
 
-                <!-- Детальная сетка показателей за месяц -->
                 <div class="grid grid-cols-2 gap-3">
                     <div class="glass-panel p-4 rounded-3xl space-y-1">
                         <p class="text-[10px] text-slate-400 uppercase font-bold">Отработано часов</p>
@@ -385,7 +375,6 @@
                     </div>
                 </div>
 
-                <!-- Выручка по кассе и количество счетов -->
                 <div class="glass-panel rounded-3xl p-4 flex justify-between items-center text-xs">
                     <div>
                         <div class="font-bold text-slate-300">Касса закрытых столов за месяц</div>
@@ -403,7 +392,7 @@
 
     </main>
 
-    <!-- Плавающая нижняя панель (5 вкладок) -->
+    <!-- Нижняя панель -->
     <nav class="bg-[#07090b]/90 backdrop-blur-2xl border-t border-slate-800/60 shrink-0 fixed bottom-0 left-0 right-0 z-50 px-3 py-2.5 shadow-2xl">
         <div class="max-w-md mx-auto glass-panel rounded-[26px] p-1 grid grid-cols-5 gap-1 border border-slate-700/50 shadow-2xl">
             <button onclick="switchTab('hall')" id="navBtnHall" class="flex flex-col items-center justify-center py-2 rounded-2xl text-slate-950 font-extrabold bg-slate-100 border border-slate-200 transition tap-scale shadow">
@@ -429,20 +418,18 @@
         </div>
     </nav>
 
-    <!-- МОДАЛКА ЗАВЕРШЕНИЯ СМЕНЫ (С РАСЧЕТОМ ЧАСОВ И СТАВКИ) -->
+    <!-- МОДАЛКИ -->
     <div id="finishShiftModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-50 hidden flex items-center justify-center p-4">
         <div class="glass-panel rounded-[32px] max-w-sm w-full p-6 space-y-4 shadow-2xl border border-slate-700/50">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
                 <h3 id="finishShiftModalTitle" class="font-extrabold text-sm text-emerald-400">🏁 Завершение смены</h3>
                 <button onclick="closeFinishShiftModal()" class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs">✕</button>
             </div>
-
             <div class="space-y-3 text-xs">
                 <div class="flex justify-between items-center">
                     <span class="text-slate-400 font-medium">Дата смены:</span>
                     <input type="date" id="finishShiftDateInput" class="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-100 outline-none font-bold">
                 </div>
-
                 <div class="space-y-1.5">
                     <label class="text-slate-300 font-bold">Сколько часов отработано:</label>
                     <div class="grid grid-cols-5 gap-1.5">
@@ -454,13 +441,10 @@
                     </div>
                     <input type="number" step="0.5" id="finishShiftHoursInput" placeholder="Часы (например: 13)" oninput="recalcFinishShiftPreview()" class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-2.5 text-xs text-slate-100 outline-none font-bold">
                 </div>
-
                 <div class="space-y-1">
                     <label class="text-slate-300 font-bold">Почасовая ставка (₽/час):</label>
                     <input type="number" id="finishShiftRateInput" oninput="recalcFinishShiftPreview()" class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-2.5 text-xs text-slate-100 outline-none font-bold">
                 </div>
-
-                <!-- Блок ручного ввода чая (показывается только при добавлении прошлой смены в календарь) -->
                 <div id="pastShiftManualTipsBox" class="space-y-2 pt-1 border-t border-slate-800 hidden">
                     <label class="text-slate-300 font-bold">Чаевые за ту смену (₽):</label>
                     <div class="grid grid-cols-2 gap-2">
@@ -474,8 +458,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Итоговая сводка перед сохранением -->
                 <div class="glass-element p-3.5 rounded-2xl border border-slate-800 space-y-1.5">
                     <div class="flex justify-between text-slate-300">
                         <span>Зарплата по часам:</span>
@@ -491,12 +473,10 @@
                     </div>
                 </div>
             </div>
-
             <button onclick="confirmSaveShiftToArchive()" class="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-extrabold py-3.5 rounded-2xl text-xs shadow-xl tap-scale">💾 Сохранить смену в календарь</button>
         </div>
     </div>
 
-    <!-- МОДАЛКА ИЗМЕНЕНИЯ ПОЧАСОВОЙ СТАВКИ И ЦЕЛИ -->
     <div id="simpleInputModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-50 hidden flex items-center justify-center p-4">
         <div class="glass-panel rounded-[32px] max-w-xs w-full p-6 space-y-4 shadow-2xl border border-slate-700/50">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -509,7 +489,6 @@
         </div>
     </div>
 
-    <!-- МОДАЛКА ГОСТЕЙ -->
     <div id="guestsSelectModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-50 hidden flex items-center justify-center p-4">
         <div class="glass-panel rounded-[32px] max-w-xs w-full p-6 space-y-4 shadow-2xl border border-slate-700/50">
             <div class="flex justify-between items-center">
@@ -535,14 +514,12 @@
         </div>
     </div>
 
-    <!-- МОДАЛКА РАСЧЕТА И ОПЛАТЫ СЧЕТА -->
     <div id="checkoutModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-50 hidden flex items-center justify-center p-4">
         <div class="glass-panel rounded-[32px] max-w-sm w-full p-6 space-y-3.5 shadow-2xl border border-slate-700/50 max-h-[92vh] flex flex-col overflow-y-auto">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
                 <h3 id="checkoutModalTitle" class="font-extrabold text-sm text-emerald-400">Расчет стола</h3>
                 <button onclick="closeCheckoutModal()" class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs">✕</button>
             </div>
-
             <div class="space-y-1.5">
                 <div class="flex justify-between items-center">
                     <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">🧾 Выберите счет для закрытия:</span>
@@ -550,7 +527,6 @@
                 </div>
                 <div id="checkoutBillsPreview" class="space-y-1.5 max-h-36 overflow-y-auto pr-1 text-xs"></div>
             </div>
-
             <div class="space-y-1">
                 <label class="text-xs font-bold text-slate-300">Как гости оплатили счет:</label>
                 <div class="grid grid-cols-3 gap-1.5">
@@ -559,7 +535,6 @@
                     <button onclick="setBillPaymentMethod('СБП')" id="payMethodSbp" class="glass-element text-slate-300 py-2 rounded-xl text-xs font-extrabold tap-scale">📱 СБП</button>
                 </div>
             </div>
-
             <div id="cashChangeSection" class="glass-element p-3 rounded-2xl border border-slate-800 space-y-2">
                 <div class="flex justify-between items-center text-xs">
                     <span class="font-bold text-slate-300">💵 Наличные от гостя:</span>
@@ -573,7 +548,6 @@
                 </div>
                 <input type="number" id="cashGivenInput" placeholder="Или введите сумму нал (₽)..." oninput="calculateChange(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs outline-none">
             </div>
-
             <div class="space-y-1.5">
                 <label class="text-xs font-bold text-slate-300">Чаевые с этого счета:</label>
                 <div class="grid grid-cols-4 gap-1.5">
@@ -584,7 +558,6 @@
                 </div>
                 <input type="number" id="customTipInput" placeholder="Свой чай (₽)..." oninput="updateCustomTip(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-3 py-2 text-xs outline-none">
             </div>
-
             <div class="space-y-1">
                 <label class="text-xs font-bold text-slate-300">Как оставили чаевые:</label>
                 <div class="grid grid-cols-3 gap-1.5">
@@ -593,12 +566,10 @@
                     <button onclick="setTipType('СБП')" id="tipTypeSbp" class="glass-element text-slate-300 py-2 rounded-xl text-xs font-extrabold tap-scale">📱 СБП</button>
                 </div>
             </div>
-
             <button onclick="confirmBillCheckout()" class="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-extrabold py-3 rounded-2xl text-xs shadow-xl tap-scale">💳 Закрыть выбранный счет</button>
         </div>
     </div>
 
-    <!-- ФИРМЕННАЯ МОДАЛКА РУЧНОГО ЧАЯ -->
     <div id="manualTipModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-50 hidden flex items-center justify-center p-4">
         <div class="glass-panel rounded-[32px] max-w-xs w-full p-6 space-y-4 shadow-2xl border border-slate-700/50">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -620,7 +591,6 @@
         </div>
     </div>
 
-    <!-- МОДАЛКА УПРАВЛЕНИЯ СЧЕТАМИ И ГРУППИРОВКОЙ ГОСТЕЙ -->
     <div id="splitBillModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-50 hidden flex items-center justify-center p-4">
         <div class="glass-panel rounded-[32px] max-w-sm w-full p-6 space-y-4 shadow-2xl border border-slate-700/50 max-h-[85vh] flex flex-col">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -634,7 +604,6 @@
         </div>
     </div>
 
-    <!-- МОДАЛКА ПРОСМОТРА ИСТОРИИ ЗАКРЫТОГО СТОЛА -->
     <div id="historyDetailModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-50 hidden flex items-center justify-center p-4">
         <div class="glass-panel rounded-[32px] max-w-sm w-full p-6 space-y-4 shadow-2xl border border-slate-700/50 max-h-[85vh] flex flex-col">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -653,7 +622,6 @@
         </div>
     </div>
 
-    <!-- МОДАЛКА ХОСПЕРА -->
     <div id="hospersModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-50 hidden flex items-center justify-center p-4">
         <div class="glass-panel rounded-[32px] max-w-xs w-full p-6 space-y-4 shadow-2xl border border-slate-700/50">
             <h3 id="hosperItemTitle" class="font-extrabold text-sm text-slate-100">Выберите вес</h3>
@@ -675,7 +643,7 @@
         </div>
     </div>
 
-    <!-- СКРИПТЫ -->
+    <!-- СКРИПТЫ С ОБЛАЧНОЙ СИНХРОНИЗАЦИЕЙ SUPABASE -->
     <script>
         if (window.Telegram && window.Telegram.WebApp) {
             window.Telegram.WebApp.ready();
@@ -684,6 +652,13 @@
                 try { window.Telegram.WebApp.requestFullscreen(); } catch(e) {}
             }
         }
+
+        // НАСТРОЙКИ SUPABASE
+        const SUPABASE_URL = 'https://avrtgjldydchwgtvgrqt.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_uobDghP-DOkp-xtBc5Q5JA_V1eZwstM';
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let userId = 'default_user';
 
         const menuItems = [
             { name: "Хлебная корзина", price: 390, cat: "Закуски" },
@@ -752,22 +727,15 @@
             { name: "Игристое вино: Боэми Просекко", price: 1590, cat: "Бар" }
         ];
 
-        let tables = JSON.parse(localStorage.getItem('fish_pro_tables')) || {};
-        if(Object.keys(tables).length === 0) {
-            for(let i=1; i<=15; i++) {
-                tables[`Стол ${i}`] = { items: [], guests: 2, guestNames: {1: "Гость 1", 2: "Гость 2"}, activeGuest: "Гость 1", course: "⚡ Сразу", lastVisited: null, splitGroups: {} };
-            }
-            tables["Банкет"] = { items: [], guests: 4, guestNames: {1: "Гость 1", 2: "Гость 2", 3: "Гость 3", 4: "Гость 4"}, activeGuest: "Гость 1", course: "⚡ Сразу", lastVisited: null, splitGroups: {} };
-        }
-
+        let tables = {};
         let currentTable = "Стол 1";
         let currentCat = "all";
         let pendingHosperItem = null;
-        let closedHistory = JSON.parse(localStorage.getItem('fish_pro_history')) || [];
-        let shiftArchive = JSON.parse(localStorage.getItem('fish_pro_shift_archive')) || [];
-        let hourlyRate = Number(localStorage.getItem('fish_pro_hourly_rate')) || 280;
-        let shiftTipGoal = Number(localStorage.getItem('fish_pro_goal')) || 3000;
-        let stopListSet = new Set(JSON.parse(localStorage.getItem('fish_pro_stoplist')) || []);
+        let closedHistory = [];
+        let shiftArchive = [];
+        let hourlyRate = 280;
+        let shiftTipGoal = 3000;
+        let stopListSet = new Set();
 
         let currentTipAmount = 0;
         let currentTipType = "Нал";
@@ -779,33 +747,99 @@
         let selectedCheckoutGroup = null;
         let simpleModalCallback = null;
 
-        // Переменные для календаря и профиля
         let profileDate = new Date();
         let selectedCalendarDateKey = null;
         let currentProfileSubTab = 'calendar';
         let isAddingPastShiftMode = false;
 
-        // Нормализация старых записей архива (если есть)
-        shiftArchive.forEach(s => {
-            if (!s.dateKey) {
-                const parts = (s.date || '').split('.');
-                if (parts.length === 3) {
-                    s.dateKey = `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
-                } else {
-                    s.dateKey = getTodayDateKey();
+        // ЗАГРУЗКА ДАННЫХ ИЗ ОБЛАКА
+        async function initCloudData() {
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+                userId = String(window.Telegram.WebApp.initDataUnsafe.user.id);
+            } else {
+                if (!localStorage.getItem('fish_pro_test_id')) {
+                    localStorage.setItem('fish_pro_test_id', 'test_user_' + Math.floor(Math.random() * 10000));
                 }
+                userId = localStorage.getItem('fish_pro_test_id');
             }
-            if (s.hours === undefined) s.hours = 12;
-            if (s.rate === undefined) s.rate = hourlyRate;
-            if (s.wage === undefined) s.wage = Math.round(s.hours * s.rate);
-            if (s.cashTips === undefined) {
-                s.cashTips = (s.items || []).filter(i => i.tipType === 'Нал').reduce((sum, i) => sum + i.tip, 0);
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('app_states')
+                    .select('state')
+                    .eq('telegram_id', userId)
+                    .single();
+
+                if (data && data.state) {
+                    const s = data.state;
+                    tables = s.tables || {};
+                    closedHistory = s.closedHistory || [];
+                    shiftArchive = s.shiftArchive || [];
+                    hourlyRate = s.hourlyRate !== undefined ? s.hourlyRate : 280;
+                    shiftTipGoal = s.shiftTipGoal !== undefined ? s.shiftTipGoal : 3000;
+                    stopListSet = new Set(s.stopListSet || []);
+                } else {
+                    // Инициализация по умолчанию
+                    for(let i=1; i<=15; i++) {
+                        tables[`Стол ${i}`] = { items: [], guests: 2, guestNames: {1: "Гость 1", 2: "Гость 2"}, activeGuest: "Гость 1", course: "⚡ Сразу", lastVisited: null, splitGroups: {} };
+                    }
+                    tables["Банкет"] = { items: [], guests: 4, guestNames: {1: "Гость 1", 2: "Гость 2", 3: "Гость 3", 4: "Гость 4"}, activeGuest: "Гость 1", course: "⚡ Сразу", lastVisited: null, splitGroups: {} };
+                }
+            } catch (e) {
+                console.log("Offline mode or cloud load failed, using local fallback");
+                // Fallback на localStorage
+                tables = JSON.parse(localStorage.getItem('fish_pro_tables')) || {};
+                if(Object.keys(tables).length === 0) {
+                    for(let i=1; i<=15; i++) {
+                        tables[`Стол ${i}`] = { items: [], guests: 2, guestNames: {1: "Гость 1", 2: "Гость 2"}, activeGuest: "Гость 1", course: "⚡ Сразу", lastVisited: null, splitGroups: {} };
+                    }
+                    tables["Банкет"] = { items: [], guests: 4, guestNames: {1: "Гость 1", 2: "Гость 2", 3: "Гость 3", 4: "Гость 4"}, activeGuest: "Гость 1", course: "⚡ Сразу", lastVisited: null, splitGroups: {} };
+                }
+                closedHistory = JSON.parse(localStorage.getItem('fish_pro_history')) || [];
+                shiftArchive = JSON.parse(localStorage.getItem('fish_pro_shift_archive')) || [];
+                hourlyRate = Number(localStorage.getItem('fish_pro_hourly_rate')) || 280;
+                shiftTipGoal = Number(localStorage.getItem('fish_pro_goal')) || 3000;
+                stopListSet = new Set(JSON.parse(localStorage.getItem('fish_pro_stoplist')) || []);
             }
-            if (s.cardTips === undefined) {
-                s.cardTips = (s.totalTips || 0) - s.cashTips;
+
+            selectedCalendarDateKey = getTodayDateKey();
+            updateHeaderTips();
+            switchTab('hall');
+        }
+
+        // СОХРАНЕНИЕ ДАННЫХ В ОБЛАКО + ЛОКАЛЬНЫЙ БЭКАП
+        async function saveData() {
+            // Локальный бэкап
+            localStorage.setItem('fish_pro_tables', JSON.stringify(tables));
+            localStorage.setItem('fish_pro_history', JSON.stringify(closedHistory));
+            localStorage.setItem('fish_pro_shift_archive', JSON.stringify(shiftArchive));
+            localStorage.setItem('fish_pro_stoplist', JSON.stringify([...stopListSet]));
+            localStorage.setItem('fish_pro_goal', shiftTipGoal);
+            localStorage.setItem('fish_pro_hourly_rate', hourlyRate);
+
+            // Отправка в Supabase
+            try {
+                const payload = {
+                    telegram_id: userId,
+                    state: {
+                        tables,
+                        closedHistory,
+                        shiftArchive,
+                        stopListSet: [...stopListSet],
+                        hourlyRate,
+                        shiftTipGoal
+                    },
+                    updated_at: new Date()
+                };
+                await supabaseClient.from('app_states').upsert(payload);
+                document.getElementById('cloudStatusIndicator').className = "w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-lg shadow-emerald-500/50";
+                document.getElementById('cloudStatusText').innerText = "Облако sync";
+            } catch (e) {
+                console.error("Cloud save error:", e);
+                document.getElementById('cloudStatusIndicator').className = "w-2 h-2 rounded-full bg-amber-500 shadow-lg";
+                document.getElementById('cloudStatusText').innerText = "Локально";
             }
-            if (s.totalEarned === undefined) s.totalEarned = s.wage + (s.totalTips || 0);
-        });
+        }
 
         function getTodayDateKey() {
             const d = new Date();
@@ -818,16 +852,6 @@
             return `${d}.${m}.${y}`;
         }
 
-        function saveData() {
-            localStorage.setItem('fish_pro_tables', JSON.stringify(tables));
-            localStorage.setItem('fish_pro_history', JSON.stringify(closedHistory));
-            localStorage.setItem('fish_pro_shift_archive', JSON.stringify(shiftArchive));
-            localStorage.setItem('fish_pro_stoplist', JSON.stringify([...stopListSet]));
-            localStorage.setItem('fish_pro_goal', shiftTipGoal);
-            localStorage.setItem('fish_pro_hourly_rate', hourlyRate);
-        }
-
-        // Универсальная модалка вместо системного prompt
         function openSimpleModal(title, desc, defaultValue, callback) {
             document.getElementById('simpleModalTitle').innerText = title;
             document.getElementById('simpleModalDesc').innerText = desc;
@@ -849,7 +873,6 @@
             closeSimpleModal();
         }
 
-        // Переключение основных вкладок
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             if(tabId === 'hall') {
@@ -886,8 +909,6 @@
                 }
             });
         }
-
-        // ================= ЛОГИКА ЗАВЕРШЕНИЯ СМЕНЫ И КАЛЕНДАРЯ =================
 
         function openFinishShiftModal() {
             isAddingPastShiftMode = false;
@@ -970,7 +991,6 @@
             const totalTips = cashTips + cardTips;
             const totalEarned = wage + totalTips;
 
-            // Если за эту дату уже есть запись в архиве — перезаписываем или суммируем
             const existingIdx = shiftArchive.findIndex(s => s.dateKey === dateKey);
             const shiftRecord = {
                 dateKey: dateKey,
@@ -1018,8 +1038,6 @@
             });
         }
 
-        // ================= РЕНДЕР ПРОФИЛЯ: КАЛЕНДАРЬ И ОТЧЕТ =================
-
         function switchProfileSubTab(subTab) {
             currentProfileSubTab = subTab;
             const calView = document.getElementById('profileCalendarView');
@@ -1064,7 +1082,7 @@
 
             renderCalendarGrid(year, month, monthShifts);
             renderSelectedDayArchive();
-            renderMonthlyReport(monthShifts, monthNames[month], year);
+            renderMonthlyReport(monthShifts);
         }
 
         function renderCalendarGrid(year, month, monthShifts) {
@@ -1072,7 +1090,7 @@
             grid.innerHTML = '';
 
             const firstDayOfMonth = new Date(year, month, 1).getDay();
-            const startOffset = (firstDayOfMonth + 6) % 7; // Пн = 0 ... Вс = 6
+            const startOffset = (firstDayOfMonth + 6) % 7;
             const daysInMonth = new Date(year, month + 1, 0).getDate();
             const todayKey = getTodayDateKey();
 
@@ -1197,7 +1215,7 @@
             showBillHistoryModalObject(shift.items[itemIndex]);
         }
 
-        function renderMonthlyReport(monthShifts, monthName, year) {
+        function renderMonthlyReport(monthShifts) {
             const shiftsCount = monthShifts.length;
             const totalHours = monthShifts.reduce((s, sh) => s + (sh.hours || 0), 0);
             const totalWage = monthShifts.reduce((s, sh) => s + (sh.wage || 0), 0);
@@ -1261,11 +1279,9 @@
                 `💰 ИТОГО ДОХОД: ${totalIncome.toLocaleString('ru-RU')} ₽`;
 
             navigator.clipboard.writeText(reportText).then(() => {
-                alert("Отчет за месяц скопирован в буфер обмена! Можешь вставить его в Telegram.");
+                alert("Отчет за месяц скопирован в буфер обмена!");
             });
         }
-
-        // ================= ОСТАЛЬНАЯ ЛОГИКА ЗАЛА, СТОЛОВ И СЧЕТОВ =================
 
         function updateTipGoalUI() {
             const totalTips = closedHistory.reduce((s, h) => s + h.tip, 0);
@@ -2072,7 +2088,7 @@
         }
 
         function confirmManualTipModal() {
-            const sum = Number(document.getElementById('manualTipSumInput').value);
+            const sum = Number(document.getElementById('manualTipSumInput-replaced') || document.getElementById('manualTipSumInput').value);
             if(!sum || sum <= 0) return;
 
             closedHistory.unshift({
@@ -2105,9 +2121,8 @@
 
         setInterval(() => { renderTables(); if(currentTable) renderTableCard(); renderMyTables(); }, 60000);
         
-        selectedCalendarDateKey = getTodayDateKey();
-        updateHeaderTips();
-        switchTab('hall');
+        // Старт приложения с загрузкой из облака
+        initCloudData();
     </script>
 </body>
 </html>
