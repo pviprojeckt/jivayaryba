@@ -3,14 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Живая Рыба PRO — Пульт официанта</title>
+    <title>Пульт Официанта PRO</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Подключаем клиент Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-        
         html, body {
             font-family: 'Plus Jakarta Sans', sans-serif;
             -webkit-tap-highlight-color: transparent;
@@ -22,7 +20,6 @@
             position: fixed;
             width: 100%;
         }
-
         .glass-panel { 
             background: linear-gradient(135deg, rgba(17, 24, 32, 0.88) 0%, rgba(10, 14, 19, 0.96) 100%); 
             backdrop-filter: blur(28px); 
@@ -30,28 +27,23 @@
             border: 1px solid rgba(255, 255, 255, 0.07);
             box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.8);
         }
-
         .glass-element {
             background: rgba(30, 41, 59, 0.4);
             backdrop-filter: blur(16px);
             border: 1px solid rgba(255, 255, 255, 0.06);
         }
-
         .viral-story-card {
             background: radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.22) 0%, rgba(15, 23, 42, 0.95) 55%, #06090e 100%);
             border: 1px solid rgba(16, 185, 129, 0.35);
             box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.9);
         }
-
         .viral-inner-box {
             background: rgba(15, 23, 42, 0.85);
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
-        
         .tap-scale { transition: transform 0.12s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .tap-scale:active { transform: scale(0.95); }
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.12); border-radius: 4px; }
@@ -68,7 +60,7 @@
                     <h1 class="font-extrabold text-xs tracking-wider text-slate-100 uppercase">Пульт Официанта PRO</h1>
                     <button onclick="handleCloudStatusClick()" class="flex items-center space-x-1.5 mt-0.5 tap-scale text-left">
                         <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse shadow-lg" id="cloudStatusIndicator"></span>
-                        <span class="text-[10px] text-amber-400 font-bold uppercase tracking-wide" id="cloudStatusText">Подключение...</span>
+                        <span class="text-[10px] text-amber-400 font-bold uppercase tracking-wide" id="cloudStatusText">Запуск...</span>
                     </button>
                 </div>
             </div>
@@ -118,7 +110,6 @@
                     </div>
                 </div>
 
-                <!-- БЛОК РЕДАКТИРОВАНИЯ И МЕНЮ -->
                 <div id="orderEditingSection" class="space-y-4">
                     <div class="space-y-2 bg-slate-950/60 p-3.5 rounded-[24px] border border-slate-800/80 shadow-inner">
                         <div class="flex justify-between items-center">
@@ -159,7 +150,6 @@
                     </div>
                 </div>
 
-                <!-- КНОПКА ДОЗАКАЗА -->
                 <div id="showMenuToggleBtnContainer" class="hidden">
                     <button onclick="toggleOrderReviewMode(false)" class="w-full glass-element bg-slate-800/50 border border-slate-700 text-slate-200 font-extrabold py-3.5 rounded-2xl text-xs tap-scale flex items-center justify-center space-x-2 shadow-lg">
                         <span>➕</span>
@@ -167,7 +157,6 @@
                     </button>
                 </div>
 
-                <!-- СОСТАВ ЗАКАЗА -->
                 <div class="pt-3 border-t border-slate-800/80 space-y-3">
                     <div class="flex justify-between items-center text-xs px-3 bg-slate-950/70 p-3 rounded-2xl border border-slate-800 shadow">
                         <span class="font-bold text-slate-400 uppercase tracking-wide">Сумма заказа:</span>
@@ -356,7 +345,6 @@
                     </div>
                 </div>
 
-                <!-- КОМПАКТНЫЕ КНОПКИ НАСТРОЕК ПОД КАЛЕНДАРЕМ -->
                 <div class="grid grid-cols-2 gap-2 pt-2">
                     <button onclick="openAiScannerModal()" class="glass-panel hover:bg-slate-800 p-3 rounded-2xl flex items-center space-x-2.5 border border-emerald-500/20 tap-scale shadow">
                         <span class="text-lg">🤖</span>
@@ -872,12 +860,11 @@
         </div>
     </div>
 
-    <!-- СКРИПТЫ С ЗАЩИТОЙ ОТ БЕЛОГО ЭКРАНА -->
+    <!-- СКРИПТЫ С ЗАЩИТОЙ -->
     <script>
-        // Аварийный перехватчик ошибок для старых iOS
         window.onerror = function(msg, url, line) {
-            document.body.innerHTML = `<div style="padding:20px; color:#ff4444; font-family:sans-serif; font-size:12px;">
-                <b>Ошибка запуска:</b><br>${msg}<br><br><b>Строка:</b> ${line}
+            document.body.innerHTML = `<div style="padding:30px; color:#ff4444; font-family:sans-serif; font-size:14px; background:#07090b; height:100vh;">
+                <b>Ошибка на старом iOS:</b><br>${msg}<br><br><b>Строка:</b> ${line}
             </div>`;
         };
 
@@ -1026,30 +1013,35 @@
 
         function handleCloudStatusClick() {
             if (lastCloudError) {
-                alert(`Ошибка облака Supabase (ID: ${userId}):\n${lastCloudError.message || JSON.stringify(lastCloudError)}\n\nНажми ОК, чтобы попробовать синхронизировать снова.`);
+                alert(`Ошибка облака (ID: ${userId}):\n${lastCloudError.message || JSON.stringify(lastCloudError)}`);
             } else {
                 alert(`Облако активно!\nТвой ID: ${userId}`);
             }
             saveData();
         }
 
+        // Моментальная загрузка из локальной памяти без блокировки
         function loadLocalFallback() {
-            tables = JSON.parse(localStorage.getItem('fish_pro_tables')) || {};
-            if(Object.keys(tables).length === 0) {
-                for(let i=1; i<=15; i++) {
-                    tables[`Стол ${i}`] = createEmptyTableObj(2);
+            try {
+                tables = JSON.parse(localStorage.getItem('fish_pro_tables')) || {};
+                if(Object.keys(tables).length === 0) {
+                    for(let i=1; i<=15; i++) {
+                        tables[`Стол ${i}`] = createEmptyTableObj(2);
+                    }
+                    tables["Банкет"] = createEmptyTableObj(4);
                 }
-                tables["Банкет"] = createEmptyTableObj(4);
+                const savedMenu = localStorage.getItem('fish_pro_menu');
+                if (savedMenu) {
+                    try { menuItems = JSON.parse(savedMenu); } catch(e){}
+                }
+                closedHistory = JSON.parse(localStorage.getItem('fish_pro_history')) || [];
+                shiftArchive = JSON.parse(localStorage.getItem('fish_pro_shift_archive')) || [];
+                hourlyRate = Number(localStorage.getItem('fish_pro_hourly_rate')) || 280;
+                shiftTipGoal = Number(localStorage.getItem('fish_pro_goal')) || 3000;
+                stopListSet = new Set(JSON.parse(localStorage.getItem('fish_pro_stoplist')) || []);
+            } catch(e) {
+                console.error("Local storage error:", e);
             }
-            const savedMenu = localStorage.getItem('fish_pro_menu');
-            if (savedMenu) {
-                try { menuItems = JSON.parse(savedMenu); } catch(e){}
-            }
-            closedHistory = JSON.parse(localStorage.getItem('fish_pro_history')) || [];
-            shiftArchive = JSON.parse(localStorage.getItem('fish_pro_shift_archive')) || [];
-            hourlyRate = Number(localStorage.getItem('fish_pro_hourly_rate')) || 280;
-            shiftTipGoal = Number(localStorage.getItem('fish_pro_goal')) || 3000;
-            stopListSet = new Set(JSON.parse(localStorage.getItem('fish_pro_stoplist')) || []);
         }
 
         async function initCloudData() {
@@ -1063,8 +1055,14 @@
             }
 
             loadLocalFallback();
-            setCloudIndicator('sync', 'Синхронизация...');
+            
+            // Сразу отображаем интерфейс на основе локальных данных
+            selectedCalendarDateKey = getTodayDateKey();
+            updateHeaderTips();
+            switchTab('hall');
+            setCloudIndicator('sync', 'Синхр...');
 
+            // Асинхронно подтягиваем облако в фоновом режиме
             try {
                 const { data, error } = await supabaseClient
                     .from('app_states')
@@ -1087,6 +1085,8 @@
                     hourlyRate = s.hourlyRate !== undefined ? s.hourlyRate : 280;
                     shiftTipGoal = s.shiftTipGoal !== undefined ? s.shiftTipGoal : 3000;
                     stopListSet = new Set(s.stopListSet || []);
+                    
+                    renderTables();
                     setCloudIndicator('ok', '☁️ Облако ОК');
                 } else {
                     await saveData();
@@ -1095,29 +1095,18 @@
                 console.error("Cloud init error:", e);
                 setCloudIndicator('error', '⚠️ Ошибка БД', e);
             }
-
-            const tableKeys = Object.keys(tables);
-            if (tableKeys.length > 0 && !tables[currentTable]) {
-                currentTable = tableKeys[0];
-            }
-
-            selectedCalendarDateKey = getTodayDateKey();
-            updateHeaderTips();
-            switchTab('hall');
         }
 
         async function saveData() {
-            localStorage.setItem('fish_pro_tables', JSON.stringify(tables));
-            localStorage.setItem('fish_pro_menu', JSON.stringify(menuItems));
-            localStorage.setItem('fish_pro_history', JSON.stringify(closedHistory));
-            localStorage.setItem('fish_pro_shift_archive', JSON.stringify(shiftArchive));
-            localStorage.setItem('fish_pro_stoplist', JSON.stringify([...stopListSet]));
-            localStorage.setItem('fish_pro_goal', shiftTipGoal);
-            localStorage.setItem('fish_pro_hourly_rate', hourlyRate);
-
-            setCloudIndicator('sync', '⏳ Синхр...');
-
             try {
+                localStorage.setItem('fish_pro_tables', JSON.stringify(tables));
+                localStorage.setItem('fish_pro_menu', JSON.stringify(menuItems));
+                localStorage.setItem('fish_pro_history', JSON.stringify(closedHistory));
+                localStorage.setItem('fish_pro_shift_archive', JSON.stringify(shiftArchive));
+                localStorage.setItem('fish_pro_stoplist', JSON.stringify([...stopListSet]));
+                localStorage.setItem('fish_pro_goal', shiftTipGoal);
+                localStorage.setItem('fish_pro_hourly_rate', hourlyRate);
+
                 const payload = {
                     telegram_id: userId,
                     state: {
@@ -1137,7 +1126,6 @@
                     .upsert(payload, { onConflict: 'telegram_id' });
 
                 if (error) throw error;
-
                 setCloudIndicator('ok', '☁️ Облако ОК');
             } catch (e) {
                 console.error("Cloud save error:", e);
@@ -2837,6 +2825,7 @@
 
         setInterval(() => { renderTables(); if(currentTable) renderTableCard(); renderMyTables(); }, 60000);
         
+        // Запуск инициализации
         initCloudData();
     </script>
 </body>
