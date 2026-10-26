@@ -59,8 +59,8 @@
                 <div>
                     <h1 class="font-extrabold text-xs tracking-wider text-slate-100 uppercase">Пульт Официанта PRO</h1>
                     <button onclick="handleCloudStatusClick()" class="flex items-center space-x-1.5 mt-0.5 tap-scale text-left">
-                        <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse shadow-lg" id="cloudStatusIndicator"></span>
-                        <span class="text-[10px] text-amber-400 font-bold uppercase tracking-wide" id="cloudStatusText">Запуск...</span>
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 shadow-lg" id="cloudStatusIndicator"></span>
+                        <span class="text-[10px] text-emerald-400 font-bold uppercase tracking-wide" id="cloudStatusText">Готово</span>
                     </button>
                 </div>
             </div>
@@ -860,21 +860,19 @@
         </div>
     </div>
 
-    <!-- СКРИПТЫ С ЗАЩИТОЙ -->
+    <!-- СКРИПТЫ -->
     <script>
+        // Защита от падений на старых iOS
         window.onerror = function(msg, url, line) {
-            document.body.innerHTML = `<div style="padding:30px; color:#ff4444; font-family:sans-serif; font-size:14px; background:#07090b; height:100vh;">
-                <b>Ошибка на старом iOS:</b><br>${msg}<br><br><b>Строка:</b> ${line}
-            </div>`;
+            alert("JS Error: " + msg + " at line " + line);
         };
 
-        if (window.Telegram && window.Telegram.WebApp) {
-            window.Telegram.WebApp.ready();
-            window.Telegram.WebApp.expand();
-            if (window.Telegram.WebApp.requestFullscreen) {
-                try { window.Telegram.WebApp.requestFullscreen(); } catch(e) {}
+        try {
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.ready();
+                window.Telegram.WebApp.expand();
             }
-        }
+        } catch(e) {}
 
         const SUPABASE_URL = 'https://avrtgjldydchwgtvgrqt.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_uobDghP-DOkp-xtBc5Q5JA_V1eZwstM';
@@ -999,10 +997,10 @@
             const lbl = document.getElementById('cloudStatusText');
             lastCloudError = errObj;
             if (status === 'ok') {
-                dot.className = "w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-lg shadow-emerald-500/50";
+                dot.className = "w-2 h-2 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/50";
                 lbl.className = "text-[10px] text-emerald-400 font-bold uppercase tracking-wide";
             } else if (status === 'sync') {
-                dot.className = "w-2 h-2 rounded-full bg-amber-400 animate-pulse shadow-lg";
+                dot.className = "w-2 h-2 rounded-full bg-amber-400";
                 lbl.className = "text-[10px] text-amber-400 font-bold uppercase tracking-wide";
             } else {
                 dot.className = "w-2 h-2 rounded-full bg-rose-500 shadow-lg";
@@ -1020,7 +1018,6 @@
             saveData();
         }
 
-        // Моментальная загрузка из локальной памяти без блокировки
         function loadLocalFallback() {
             try {
                 tables = JSON.parse(localStorage.getItem('fish_pro_tables')) || {};
@@ -1039,30 +1036,30 @@
                 hourlyRate = Number(localStorage.getItem('fish_pro_hourly_rate')) || 280;
                 shiftTipGoal = Number(localStorage.getItem('fish_pro_goal')) || 3000;
                 stopListSet = new Set(JSON.parse(localStorage.getItem('fish_pro_stoplist')) || []);
-            } catch(e) {
-                console.error("Local storage error:", e);
-            }
+            } catch(e) {}
         }
 
         async function initCloudData() {
-            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
-                userId = String(window.Telegram.WebApp.initDataUnsafe.user.id);
-            } else {
-                if (!localStorage.getItem('fish_pro_test_id')) {
-                    localStorage.setItem('fish_pro_test_id', 'web_user_' + Math.floor(1000 + Math.random() * 9000));
+            try {
+                if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+                    userId = String(window.Telegram.WebApp.initDataUnsafe.user.id);
+                } else {
+                    if (!localStorage.getItem('fish_pro_test_id')) {
+                        localStorage.setItem('fish_pro_test_id', 'web_user_' + Math.floor(1000 + Math.random() * 9000));
+                    }
+                    userId = localStorage.getItem('fish_pro_test_id');
                 }
-                userId = localStorage.getItem('fish_pro_test_id');
+            } catch(e) {
+                userId = 'fallback_user';
             }
 
             loadLocalFallback();
             
-            // Сразу отображаем интерфейс на основе локальных данных
             selectedCalendarDateKey = getTodayDateKey();
             updateHeaderTips();
             switchTab('hall');
-            setCloudIndicator('sync', 'Синхр...');
+            setCloudIndicator('sync', 'Синхр');
 
-            // Асинхронно подтягиваем облако в фоновом режиме
             try {
                 const { data, error } = await supabaseClient
                     .from('app_states')
@@ -1087,13 +1084,12 @@
                     stopListSet = new Set(s.stopListSet || []);
                     
                     renderTables();
-                    setCloudIndicator('ok', '☁️ Облако ОК');
+                    setCloudIndicator('ok', 'Облако ОК');
                 } else {
                     await saveData();
                 }
             } catch (e) {
-                console.error("Cloud init error:", e);
-                setCloudIndicator('error', '⚠️ Ошибка БД', e);
+                setCloudIndicator('error', 'Ошибка БД', e);
             }
         }
 
@@ -1126,10 +1122,9 @@
                     .upsert(payload, { onConflict: 'telegram_id' });
 
                 if (error) throw error;
-                setCloudIndicator('ok', '☁️ Облако ОК');
+                setCloudIndicator('ok', 'Облако ОК');
             } catch (e) {
-                console.error("Cloud save error:", e);
-                setCloudIndicator('error', '⚠️ Ошибка БД', e);
+                setCloudIndicator('error', 'Ошибка БД', e);
             }
         }
 
@@ -1269,7 +1264,7 @@
             const file = event.target.files[0];
             if (!file) return;
             
-            setCloudIndicator('sync', '🤖 ИИ читает фото...');
+            setCloudIndicator('sync', 'ИИ читает...');
             setTimeout(() => {
                 const simulatedParsedText = `Стейк Рибай 1990
 Тартар из говядины 890
@@ -1278,18 +1273,15 @@
 Кока-Кола 250
 Капучино 290`;
                 document.getElementById('aiMenuTextInput').value = simulatedParsedText;
-                setCloudIndicator('ok', '☁️ Облако ОК');
-                alert("🤖 ИИ успешно распознал позиции с фотографии! Проверьте список ниже.");
+                setCloudIndicator('ok', 'Облако ОК');
+                alert("ИИ распознал позиции с фотографии!");
                 processAiMenuScan();
             }, 1200);
         }
 
         function processAiMenuScan() {
             const rawText = document.getElementById('aiMenuTextInput').value.trim();
-            if (!rawText) {
-                alert("Введите текст меню или загрузите фото.");
-                return;
-            }
+            if (!rawText) return;
 
             aiScannedParsedItems = [];
             const lines = rawText.split('\n');
@@ -1302,22 +1294,19 @@
                 if (match) {
                     let name = match[1].trim();
                     let price = parseInt(match[2], 10);
-                    
                     let cat = "Горячее";
                     const lowerName = name.toLowerCase();
-                    if (lowerName.includes('салат') || lowerName.includes('цезарь') || lowerName.includes('тартар') || lowerName.includes('брускетт')) cat = "Салаты";
-                    else if (lowerName.includes('суп') || lowerName.includes('том ям') || lowerName.includes('борщ') || lowerName.includes('уха')) cat = "Супы";
+                    if (lowerName.includes('салат') || lowerName.includes('цезарь')) cat = "Салаты";
+                    else if (lowerName.includes('суп')) cat = "Супы";
                     else if (lowerName.includes('пицц') || lowerName.includes('бургер')) cat = "Пицца";
-                    else if (lowerName.includes('чай') || lowerName.includes('кофе') || lowerName.includes('лимонад') || lowerName.includes('кола') || lowerName.includes('пиво') || lowerName.includes('ipa') || lowerName.includes('вино') || lowerName.includes('коктейл')) cat = "Бар";
-                    else if (lowerName.includes('десерт') || lowerName.includes('медовик') || lowerName.includes('чизкейк') || lowerName.includes('морожен')) cat = "Десерты";
-                    else if (lowerName.includes('хлеб') || lowerName.includes('гренк') || lowerName.includes('сырн')) cat = "Закуски";
-
+                    else if (lowerName.includes('чай') || lowerName.includes('кофе') || lowerName.includes('лимонад') || lowerName.includes('кола')) cat = "Бар";
+                    else if (lowerName.includes('десерт') || lowerName.includes('медовик')) cat = "Десерты";
                     aiScannedParsedItems.push({ name, price, cat });
                 }
             });
 
             if (aiScannedParsedItems.length === 0) {
-                alert("Не удалось распознать цены. Убедитесь, что каждая позиция записана в формате: 'Название - Цена'");
+                alert("Не удалось распознать цены.");
                 return;
             }
 
@@ -1349,7 +1338,7 @@
             menuItems = [...aiScannedParsedItems, ...menuItems];
             saveData();
             closeAiScannerModal();
-            alert(`Успешно добавлено ${aiScannedParsedItems.length} новых позиций в ваше меню!`);
+            alert(`Добавлено ${aiScannedParsedItems.length} позиций в меню!`);
             renderMenuDirect();
         }
 
@@ -1395,7 +1384,7 @@
                 if (match) {
                     const num = parseInt(match[1], 10);
                     if (num > targetCount && tables[name].items && tables[name].items.length > 0) {
-                        alert(`На столе "${name}" есть открытый заказ! Сначала закройте или очистите его.`);
+                        alert(`На столе "${name}" есть открытый заказ!`);
                         return;
                     }
                 }
@@ -1430,7 +1419,7 @@
         function applyHallPreset(presetType) {
             const hasActiveOrders = Object.values(tables).some(t => t.items && t.items.length > 0);
             if (hasActiveOrders) {
-                alert("В зале есть открытые столы с заказами! Закройте или очистите их перед сменой шаблона зала.");
+                alert("В зале есть открытые заказы!");
                 return;
             }
 
@@ -1460,7 +1449,7 @@
             const name = inp.value.trim();
             if (!name) return;
             if (tables[name]) {
-                alert("Стол или зона с таким названием уже существует!");
+                alert("Уже существует!");
                 return;
             }
             tables[name] = createEmptyTableObj(2);
@@ -1472,20 +1461,14 @@
         }
 
         function renameTableInConstructor(oldName) {
-            openSimpleModal("✏️ Переименовать стол", `Введите новое название для "${oldName}":`, oldName, (newName) => {
+            openSimpleModal("✏️ Переименовать", `Новое название для "${oldName}":`, oldName, (newName) => {
                 if (!newName || !newName.trim() || newName.trim() === oldName) return;
                 const trimmed = newName.trim();
-                if (tables[trimmed]) {
-                    alert("Такое название уже занято!");
-                    return;
-                }
+                if (tables[trimmed]) return;
                 const updated = {};
                 for (let k in tables) {
-                    if (k === oldName) {
-                        updated[trimmed] = tables[oldName];
-                    } else {
-                        updated[k] = tables[k];
-                    }
+                    if (k === oldName) updated[trimmed] = tables[oldName];
+                    else updated[k] = tables[k];
                 }
                 tables = updated;
                 if (currentTable === oldName) currentTable = trimmed;
@@ -1496,18 +1479,13 @@
         }
 
         function deleteTableInConstructor(name) {
-            if (Object.keys(tables).length <= 1) {
-                alert("В зале должен остаться хотя бы один стол!");
-                return;
-            }
+            if (Object.keys(tables).length <= 1) return;
             if (tables[name] && tables[name].items && tables[name].items.length > 0) {
-                alert(`На столе "${name}" есть активный заказ! Сначала рассчитайте или очистите его.`);
+                alert("Стол занят!");
                 return;
             }
             delete tables[name];
-            if (currentTable === name) {
-                currentTable = Object.keys(tables)[0];
-            }
+            if (currentTable === name) currentTable = Object.keys(tables)[0];
             saveData();
             document.getElementById('constructorTablesCountInput').value = getStandardTablesCount();
             renderHallConstructorList();
@@ -1531,8 +1509,8 @@
                         ${hasOrder ? '<span class="text-[9px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-bold">В работе</span>' : ''}
                     </div>
                     <div class="flex items-center space-x-1.5">
-                        <button onclick="renameTableInConstructor('${name.replace(/'/g, "\\'")}')" class="w-7 h-7 rounded-lg bg-slate-800 text-slate-300 flex items-center justify-center text-[10px] tap-scale" title="Переименовать">✏️</button>
-                        <button onclick="deleteTableInConstructor('${name.replace(/'/g, "\\'")}')" class="w-7 h-7 rounded-lg bg-rose-500/15 text-rose-400 flex items-center justify-center text-xs font-bold tap-scale" title="Удалить">✕</button>
+                        <button onclick="renameTableInConstructor('${name.replace(/'/g, "\\'")}')" class="w-7 h-7 rounded-lg bg-slate-800 text-slate-300 flex items-center justify-center text-[10px] tap-scale">✏️</button>
+                        <button onclick="deleteTableInConstructor('${name.replace(/'/g, "\\'")}')" class="w-7 h-7 rounded-lg bg-rose-500/15 text-rose-400 flex items-center justify-center text-xs font-bold tap-scale">✕</button>
                     </div>
                 `;
                 list.appendChild(row);
@@ -1610,7 +1588,7 @@
 
         function openFinishShiftModal() {
             isAddingPastShiftMode = false;
-            document.getElementById('finishShiftModalTitle').innerText = "🏁 Завершение текущей смены";
+            document.getElementById('finishShiftModalTitle').innerText = "🏁 Завершение смены";
             document.getElementById('finishShiftDateInput').value = getTodayDateKey();
             document.getElementById('finishShiftHoursInput').value = 13;
             document.getElementById('finishShiftRateInput').value = hourlyRate;
@@ -1621,7 +1599,7 @@
 
         function openAddPastShiftModal() {
             isAddingPastShiftMode = true;
-            document.getElementById('finishShiftModalTitle').innerText = "📅 Добавить смену в календарь";
+            document.getElementById('finishShiftModalTitle').innerText = "📅 Добавить смену";
             document.getElementById('finishShiftDateInput').value = selectedCalendarDateKey || getTodayDateKey();
             document.getElementById('finishShiftHoursInput').value = 13;
             document.getElementById('finishShiftRateInput').value = hourlyRate;
@@ -1665,10 +1643,7 @@
             const hours = Number(document.getElementById('finishShiftHoursInput').value) || 0;
             const rate = Number(document.getElementById('finishShiftRateInput').value) || hourlyRate;
             
-            if (hours <= 0) {
-                alert("Укажите количество отработанных часов.");
-                return;
-            }
+            if (hours <= 0) return;
 
             hourlyRate = rate;
             const wage = Math.round(hours * rate);
@@ -1704,15 +1679,10 @@
                 items: itemsToSave
             };
 
-            if (existingIdx > -1) {
-                shiftArchive[existingIdx] = shiftRecord;
-            } else {
-                shiftArchive.unshift(shiftRecord);
-            }
+            if (existingIdx > -1) shiftArchive[existingIdx] = shiftRecord;
+            else shiftArchive.unshift(shiftRecord);
 
-            if (!isAddingPastShiftMode) {
-                closedHistory = [];
-            }
+            if (!isAddingPastShiftMode) closedHistory = [];
 
             selectedCalendarDateKey = dateKey;
             const [y, m] = dateKey.split('-');
@@ -1726,7 +1696,7 @@
         }
 
         function openRateModal() {
-            openSimpleModal("💼 Почасовая ставка", "Введите вашу ставку в рублях за 1 час работы:", hourlyRate, (val) => {
+            openSimpleModal("💼 Почасовая ставка", "Введите ставку в рублях за 1 час:", hourlyRate, (val) => {
                 const num = Number(val);
                 if (num && num > 0) {
                     hourlyRate = num;
@@ -1814,17 +1784,15 @@
 
                 if (shift) {
                     baseClass += isSelected 
-                        ? "bg-emerald-500 text-slate-950 font-extrabold border-emerald-300 shadow-lg shadow-emerald-500/30" 
-                        : "bg-emerald-500/15 border-emerald-500/40 text-emerald-300 font-bold hover:bg-emerald-500/25";
+                        ? "bg-emerald-500 text-slate-950 font-extrabold border-emerald-300 shadow-lg" 
+                        : "bg-emerald-500/15 border-emerald-500/40 text-emerald-300 font-bold";
                 } else {
                     baseClass += isSelected
                         ? "bg-slate-200 text-slate-950 font-extrabold border-white"
-                        : "glass-element border-slate-800/80 text-slate-300 hover:border-slate-700";
+                        : "glass-element border-slate-800/80 text-slate-300";
                 }
 
-                if (isToday && !isSelected) {
-                    baseClass += " ring-1 ring-sky-400";
-                }
+                if (isToday && !isSelected) baseClass += " ring-1 ring-sky-400";
 
                 cell.className = baseClass;
                 cell.onclick = () => {
@@ -1850,7 +1818,7 @@
 
             if (!selectedCalendarDateKey) {
                 titleEl.innerText = "Выберите день в календаре";
-                subEl.innerText = "Нажмите на любую дату выше, чтобы посмотреть детали смены";
+                subEl.innerText = "Нажмите на любую дату выше";
                 contentEl.classList.add('hidden');
                 actionsEl.classList.add('hidden');
                 return;
@@ -1860,13 +1828,13 @@
             titleEl.innerText = `📅 Дата: ${formatDateKeyToRu(selectedCalendarDateKey)}`;
 
             if (!shift) {
-                subEl.innerText = "В этот день нет сохраненной смены (выходной)";
+                subEl.innerText = "Выходной день";
                 contentEl.classList.add('hidden');
                 actionsEl.classList.add('hidden');
                 return;
             }
 
-            subEl.innerText = `Смена закрыта • Ставка ${shift.rate} ₽/ч`;
+            subEl.innerText = `Смена • Ставка ${shift.rate} ₽/ч`;
             contentEl.classList.remove('hidden');
             actionsEl.classList.remove('hidden');
 
@@ -1881,7 +1849,7 @@
             billsList.innerHTML = '';
 
             if (!shift.items || shift.items.length === 0) {
-                billsList.innerHTML = '<div class="text-slate-500 italic text-center py-3 text-[11px]">Смена добавлена без детальных чеков</div>';
+                billsList.innerHTML = '<div class="text-slate-500 italic text-center py-3 text-[11px]">Без детальных чеков</div>';
             } else {
                 shift.items.forEach((h, idx) => {
                     const div = document.createElement('div');
@@ -1934,7 +1902,6 @@
 
             const avgIncome = shiftsCount > 0 ? Math.round(totalIncome / shiftsCount) : 0;
             const avgHours = shiftsCount > 0 ? (totalHours / shiftsCount).toFixed(1) : 0;
-
             const wagePct = totalIncome > 0 ? Math.round((totalWage / totalIncome) * 100) : 50;
             const tipsPct = totalIncome > 0 ? (100 - wagePct) : 50;
 
@@ -1946,13 +1913,13 @@
             document.getElementById('reportTipsPercent').innerText = `${tipsPct}%`;
 
             document.getElementById('reportTotalHours').innerText = `${totalHours} ч`;
-            document.getElementById('reportAvgHours').innerText = `В среднем ${avgHours} ч/смена`;
+            document.getElementById('reportAvgHours').innerText = `В среднем ${avgHours} ч`;
             document.getElementById('reportTotalWage').innerText = `${totalWage.toLocaleString('ru-RU')} ₽`;
-            document.getElementById('reportRateNote').innerText = `Текущая ставка ${hourlyRate} ₽/ч`;
+            document.getElementById('reportRateNote').innerText = `Ставка ${hourlyRate} ₽/ч`;
             document.getElementById('reportTotalTips').innerText = `${totalTips.toLocaleString('ru-RU')} ₽`;
-            document.getElementById('reportTipsSplit').innerText = `Нал: ${totalCashTips.toLocaleString('ru-RU')} ₽ • Б/н: ${totalCardTips.toLocaleString('ru-RU')} ₽`;
+            document.getElementById('reportTipsSplit').innerText = `Нал: ${totalCashTips} • Бн: ${totalCardTips}`;
             document.getElementById('reportAvgShiftIncome').innerText = `${avgIncome.toLocaleString('ru-RU')} ₽`;
-            document.getElementById('reportTotalBillsCount').innerText = `Закрыто счетов: ${totalBills}`;
+            document.getElementById('reportTotalBillsCount').innerText = `Счетов: ${totalBills}`;
             document.getElementById('reportTotalRevenue').innerText = `${totalRevenue.toLocaleString('ru-RU')} ₽`;
         }
 
@@ -1971,44 +1938,23 @@
             const totalTips = totalCashTips + totalCardTips;
             const totalIncome = totalWage + totalTips;
 
-            const reportText = `📊 ОТЧЕТ ЗА МЕСЯЦ: ${monthNames[month]} ${year}\n` +
-                `• Отработано смен: ${shiftsCount}\n` +
-                `• Часов: ${totalHours} ч\n` +
-                `• По ставке: ${totalWage.toLocaleString('ru-RU')} ₽\n` +
-                `• Чаевые всего: ${totalTips.toLocaleString('ru-RU')} ₽ (Нал: ${totalCashTips} ₽ | Безнал: ${totalCardTips} ₽)\n` +
-                `💰 ИТОГО ДОХОД: ${totalIncome.toLocaleString('ru-RU')} ₽\n` +
-                `🐟 Пульт Официанта PRO 👉 @waiter_pro_bot`;
+            const reportText = `📊 ОТЧЕТ: ${monthNames[month]} ${year}\nСмен: ${shiftsCount} | Часов: ${totalHours}ч\nДоход: ${totalIncome.toLocaleString('ru-RU')} ₽ (Чай: ${totalTips} ₽)\n👉 @waiter_pro_bot`;
 
-            navigator.clipboard.writeText(reportText).then(() => {
-                alert("Отчет за месяц скопирован в буфер обмена!");
-            });
+            navigator.clipboard.writeText(reportText).then(() => alert("Скопировано!"));
         }
 
         function updateTipGoalUI() {
             const totalTips = closedHistory.reduce((s, h) => s + h.tip, 0);
             const cashTips = closedHistory.filter(h => h.tipType === 'Нал').reduce((s, h) => s + h.tip, 0);
             const cardTips = totalTips - cashTips;
-            
             const percent = Math.min(Math.round((totalTips / shiftTipGoal) * 100), 100);
             
             document.getElementById('tipGoalProgressBar').style.width = percent + '%';
-            document.getElementById('tipGoalSubtitle').innerText = `Заработано ${totalTips} ₽ из ${shiftTipGoal} ₽ (${percent}%) [Нал: ${cashTips} ₽ | Безнал: ${cardTips} ₽]`;
-
-            const msgEl = document.getElementById('tipGoalMessage');
-            if(percent >= 100) {
-                msgEl.innerText = "🔥 Цель выполнена! Ты просто машина смены!";
-                msgEl.className = "text-[11px] text-emerald-400 font-bold text-center";
-            } else if(percent >= 50) {
-                msgEl.innerText = "💪 Экватор пройден, продолжай в том же духе!";
-                msgEl.className = "text-[11px] text-slate-200 font-medium text-center";
-            } else {
-                msgEl.innerText = "🚀 Отличное начало смены, догоняем цель!";
-                msgEl.className = "text-[11px] text-slate-300 font-medium text-center italic";
-            }
+            document.getElementById('tipGoalSubtitle').innerText = `Заработано ${totalTips} ₽ из ${shiftTipGoal} ₽ (${percent}%)`;
         }
 
         function openEditGoalModal() {
-            openSimpleModal("🎯 Цель на смену", "Введите желаемую сумму чаевых за смену (₽):", shiftTipGoal, (val) => {
+            openSimpleModal("🎯 Цель", "Сумма чаевых за смену (₽):", shiftTipGoal, (val) => {
                 const num = Number(val);
                 if(num && num > 0) {
                     shiftTipGoal = num;
@@ -2061,7 +2007,6 @@
             for(let name of keys) {
                 const t = tables[name];
                 const hasOrder = t.items.length > 0;
-                
                 let timerDisplay = "";
                 let timerColor = "glass-panel text-slate-300";
                 
@@ -2216,12 +2161,12 @@
                                 <span class="text-slate-300 font-bold">${item.course}</span> • 
                                 <span class="text-emerald-400 font-semibold">${item.guest}</span>
                                 <span class="text-rose-300 font-medium">${item.modifier ? '(' + item.modifier + ')' : ''}</span>
-                                <button onclick="editItemModifier(${idx})" class="text-slate-300 hover:text-white ml-1" title="Изменить пометку">✏️</button>
+                                <button onclick="editItemModifier(${idx})" class="text-slate-300 hover:text-white ml-1">✏️</button>
                             </div>
                         </div>
                         <div class="flex items-center space-x-3.5">
                             <span class="font-extrabold text-slate-100 text-sm">${item.price} ₽</span>
-                            <button onclick="removeItem(${idx})" class="w-7 h-7 rounded-full bg-rose-500/10 text-rose-400 font-bold flex items-center justify-center hover:bg-rose-500/20">✕</button>
+                            <button onclick="removeItem(${idx})" class="w-7 h-7 rounded-full bg-rose-500/10 text-rose-400 font-bold flex items-center justify-center">✕</button>
                         </div>
                     `;
                     itemsContainer.appendChild(div);
@@ -2248,10 +2193,7 @@
 
             for(let groupName in t.splitGroups) {
                 const groupGuests = t.splitGroups[groupName];
-                
-                let groupSum = t.items
-                    .filter(item => groupGuests.includes(item.guest))
-                    .reduce((sum, item) => sum + item.price, 0);
+                let groupSum = t.items.filter(item => groupGuests.includes(item.guest)).reduce((sum, item) => sum + item.price, 0);
 
                 const div = document.createElement('div');
                 div.className = "glass-panel p-3.5 rounded-2xl space-y-2 border border-slate-800";
@@ -2267,11 +2209,10 @@
                         <span class="font-extrabold text-emerald-400">${groupSum} ₽</span>
                     </div>
                     <div class="grid grid-cols-2 gap-1.5 pt-1">${guestsCheckboxesHtml}</div>
-                    <button onclick="removeSplitGroup('${groupName}')" class="text-[10px] text-rose-400 hover:underline pt-1">Удалить этот счет</button>
+                    <button onclick="removeSplitGroup('${groupName}')" class="text-[10px] text-rose-400 hover:underline pt-1">Удалить</button>
                 `;
                 container.appendChild(div);
             }
-
             document.getElementById('splitBillModal').classList.remove('hidden');
         }
 
@@ -2325,18 +2266,12 @@
         function renameGuest(index) {
             const t = tables[currentTable];
             const oldName = t.guestNames[index] || `Гость ${index}`;
-            openSimpleModal("👤 Примета или имя гостя", "Например: Бородач, Девушка в очках, Папа:", oldName, (newName) => {
+            openSimpleModal("👤 Имя гостя", "Введите имя или примету:", oldName, (newName) => {
                 if(newName && newName.trim() !== "") {
                     const trimmed = newName.trim();
                     if(t.activeGuest === oldName) t.activeGuest = trimmed;
                     t.guestNames[index] = trimmed;
                     t.items.forEach(it => { if(it.guest === oldName) it.guest = trimmed; });
-                    if(t.splitGroups) {
-                        for(let g in t.splitGroups) {
-                            let i = t.splitGroups[g].indexOf(oldName);
-                            if(i > -1) t.splitGroups[g][i] = trimmed;
-                        }
-                    }
                     saveData();
                     renderTableCard();
                 }
@@ -2346,7 +2281,7 @@
         function editItemModifier(idx) {
             const t = tables[currentTable];
             const item = t.items[idx];
-            openSimpleModal("✏️ Пометка к блюду", `Комментарий для "${item.name}" (без лука, соус отдельно):`, item.modifier || "", (newMod) => {
+            openSimpleModal("✏️ Пометка", "Комментарий к блюду:", item.modifier || "", (newMod) => {
                 if(newMod !== null) {
                     item.modifier = newMod.trim();
                     saveData();
@@ -2466,9 +2401,7 @@
         function saveTableToWork() {
             if(!currentTable) return;
             const t = tables[currentTable];
-            if (!t.lastVisited) {
-                t.lastVisited = Date.now(); 
-            }
+            if (!t.lastVisited) t.lastVisited = Date.now();
             saveData();
             document.getElementById('activeTableCard').classList.add('hidden');
             document.getElementById('hallGridView').classList.remove('hidden');
@@ -2494,11 +2427,11 @@
                         <span class="font-extrabold text-sm text-emerald-400">${total} ₽</span>
                     </div>
                     <div class="text-xs text-slate-400">Позиций: ${t.items.length} • Гостей: ${t.guests}</div>
-                    <button onclick="switchTab('hall'); document.getElementById('hallGridView').classList.add('hidden'); document.getElementById('activeTableCard').classList.remove('hidden'); currentTable='${name.replace(/'/g, "\\'")}'; document.getElementById('currentTableName').innerText='${name.replace(/'/g, "\\'")}'; toggleOrderReviewMode(true); renderTableCard();" class="w-full bg-slate-100 hover:bg-white text-slate-950 py-3 rounded-2xl text-xs font-extrabold tap-scale shadow">✏️ Открыть заказ</button>
+                    <button onclick="switchTab('hall'); document.getElementById('hallGridView').classList.add('hidden'); document.getElementById('activeTableCard').classList.remove('hidden'); currentTable='${name.replace(/'/g, "\\'")}'; document.getElementById('currentTableName').innerText='${name.replace(/'/g, "\\'")}'; toggleOrderReviewMode(true); renderTableCard();" class="w-full bg-slate-100 hover:bg-white text-slate-950 py-3 rounded-2xl text-xs font-extrabold tap-scale shadow">✏️ Открыть</button>
                 `;
                 container.appendChild(card);
             }
-            if(activeCount === 0) container.innerHTML = '<div class="text-center py-16 text-slate-500 text-xs italic">Нет активных столов в работе.</div>';
+            if(activeCount === 0) container.innerHTML = '<div class="text-center py-16 text-slate-500 text-xs italic">Нет активных столов.</div>';
             document.getElementById('activeTablesCountBadge').innerText = activeCount + ' в работе';
         }
 
@@ -2562,7 +2495,7 @@
                 div.onclick = () => { selectedCheckoutGroup = groupName; renderCheckoutBillsPreview(); };
                 div.innerHTML = `
                     <div class="flex justify-between items-center font-extrabold text-slate-200 text-xs">
-                        <span>🧾 ${groupName} <span class="text-[10px] text-slate-400 font-normal">(${groupGuests.join(', ') || 'нет гостей'})</span></span>
+                        <span>🧾 ${groupName} <span class="text-[10px] text-slate-400 font-normal">(${groupGuests.join(', ') || 'нет'})</span></span>
                         <span class="text-emerald-400">${groupSum} ₽</span>
                     </div>
                     <div class="text-[10px] text-slate-400 truncate mt-0.5">${itemsListText}</div>
@@ -2583,11 +2516,8 @@
             });
 
             const cashSection = document.getElementById('cashChangeSection');
-            if (method === 'Нал') {
-                cashSection.classList.remove('hidden');
-            } else {
-                cashSection.classList.add('hidden');
-            }
+            if (method === 'Нал') cashSection.classList.remove('hidden');
+            else cashSection.classList.add('hidden');
         }
 
         function setCashGiven(amount) {
@@ -2625,7 +2555,6 @@
             const t = tables[currentTable];
             const groupGuests = t.splitGroups[selectedCheckoutGroup] || [];
             const groupSum = t.items.filter(item => groupGuests.includes(item.guest)).reduce((sum, item) => sum + item.price, 0);
-            
             currentTipAmount = Math.round((groupSum * p) / 100);
             document.getElementById('customTipInput').value = currentTipAmount;
         }
@@ -2648,10 +2577,7 @@
             const groupGuests = t.splitGroups[selectedCheckoutGroup] || [];
             
             let groupItems = t.items.filter(item => groupGuests.includes(item.guest));
-            if (groupItems.length === 0) {
-                alert("В этом счете нет позиций для закрытия.");
-                return;
-            }
+            if (groupItems.length === 0) return;
 
             const groupSubtotal = groupItems.reduce((sum, item) => sum + item.price, 0);
 
@@ -2674,7 +2600,6 @@
 
             closeCheckoutModal();
             saveData();
-            
             updateHeaderTips();
             renderTables();
 
@@ -2686,10 +2611,6 @@
                 switchTab('hall');
             } else {
                 renderTableCard();
-            }
-            
-            if(!document.getElementById('tabMyTables').classList.contains('hidden')) {
-                renderMyTables();
             }
         }
 
@@ -2713,11 +2634,11 @@
             container.innerHTML = '';
             
             if(closedHistory.length === 0) {
-                container.innerHTML = '<p class="text-slate-500 text-center py-6 italic">Нет закрытых счетов за текущую смену</p>';
+                container.innerHTML = '<p class="text-slate-500 text-center py-6 italic">Нет закрытых счетов</p>';
             } else {
                 closedHistory.forEach((h, index) => {
                     const div = document.createElement('div');
-                    div.className = "glass-element p-3.5 rounded-2xl border border-slate-800 flex justify-between items-center text-xs tap-scale cursor-pointer hover:border-slate-600 transition";
+                    div.className = "glass-element p-3.5 rounded-2xl border border-slate-800 flex justify-between items-center text-xs tap-scale cursor-pointer";
                     div.onclick = () => openHistoryDetail(index);
                     div.innerHTML = `
                         <div>
@@ -2732,8 +2653,7 @@
         }
 
         function openHistoryDetail(index) {
-            const h = closedHistory[index];
-            showBillHistoryModalObject(h);
+            showBillHistoryModalObject(closedHistory[index]);
         }
 
         function showBillHistoryModalObject(h) {
@@ -2755,7 +2675,7 @@
                     row.innerHTML = `
                         <div>
                             <div class="text-slate-200 font-bold">${item.name}</div>
-                            <div class="text-[10px] text-slate-400"><span class="text-slate-300">${item.course}</span> • <span class="text-emerald-400">${item.guest}</span> ${item.modifier ? '('+item.modifier+')' : ''}</div>
+                            <div class="text-[10px] text-slate-400"><span class="text-slate-300">${item.course}</span> • <span class="text-emerald-400">${item.guest}</span></div>
                         </div>
                         <span class="font-bold text-slate-200">${item.price} ₽</span>
                     `;
@@ -2825,7 +2745,7 @@
 
         setInterval(() => { renderTables(); if(currentTable) renderTableCard(); renderMyTables(); }, 60000);
         
-        // Запуск инициализации
+        // Запуск
         initCloudData();
     </script>
 </body>
