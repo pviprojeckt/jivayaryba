@@ -9,6 +9,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        
         html, body {
             font-family: 'Plus Jakarta Sans', sans-serif;
             -webkit-tap-highlight-color: transparent;
@@ -20,6 +21,7 @@
             position: fixed;
             width: 100%;
         }
+
         .glass-panel { 
             background: linear-gradient(135deg, rgba(17, 24, 32, 0.88) 0%, rgba(10, 14, 19, 0.96) 100%); 
             backdrop-filter: blur(28px); 
@@ -27,23 +29,28 @@
             border: 1px solid rgba(255, 255, 255, 0.07);
             box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.8);
         }
+
         .glass-element {
             background: rgba(30, 41, 59, 0.4);
             backdrop-filter: blur(16px);
             border: 1px solid rgba(255, 255, 255, 0.06);
         }
+
         .viral-story-card {
             background: radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.22) 0%, rgba(15, 23, 42, 0.95) 55%, #06090e 100%);
             border: 1px solid rgba(16, 185, 129, 0.35);
             box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.9);
         }
+
         .viral-inner-box {
             background: rgba(15, 23, 42, 0.85);
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
+        
         .tap-scale { transition: transform 0.12s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .tap-scale:active { transform: scale(0.95); }
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.12); border-radius: 4px; }
@@ -59,8 +66,8 @@
                 <div>
                     <h1 class="font-extrabold text-xs tracking-wider text-slate-100 uppercase">Пульт Официанта PRO</h1>
                     <button onclick="handleCloudStatusClick()" class="flex items-center space-x-1.5 mt-0.5 tap-scale text-left">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500 shadow-lg" id="cloudStatusIndicator"></span>
-                        <span class="text-[10px] text-emerald-400 font-bold uppercase tracking-wide" id="cloudStatusText">Облако ОК</span>
+                        <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse shadow-lg" id="cloudStatusIndicator"></span>
+                        <span class="text-[10px] text-amber-400 font-bold uppercase tracking-wide" id="cloudStatusText">Подключение...</span>
                     </button>
                 </div>
             </div>
@@ -130,7 +137,7 @@
 
                     <div class="space-y-3 pt-1 border-t border-slate-800/80">
                         <div class="relative">
-                            <input type="text" id="menuSearch" placeholder="🔍 Поиск по меню (или загрузите свое через ИИ)..." oninput="renderMenuDirect()" class="w-full glass-element border-slate-800 focus:border-slate-500 rounded-2xl px-4 py-3 text-xs text-slate-100 outline-none placeholder-slate-500 shadow-inner">
+                            <input type="text" id="menuSearch" placeholder="🔍 Поиск по меню (или добавьте свое через ИИ)..." oninput="renderMenuDirect()" class="w-full glass-element border-slate-800 focus:border-slate-500 rounded-2xl px-4 py-3 text-xs text-slate-100 outline-none placeholder-slate-500 shadow-inner">
                         </div>
 
                         <div id="menuCategories" class="flex space-x-1.5 overflow-x-auto pb-1 text-xs">
@@ -266,7 +273,6 @@
 
         <!-- ВКЛАДКА 5: ПРОФИЛЬ -->
         <div id="tabProfile" class="tab-content space-y-4 hidden">
-            <!-- Плашка PRO-статуса и активации промокода -->
             <div id="proStatusCard" class="glass-panel rounded-2xl p-3.5 flex justify-between items-center shadow border border-amber-500/30 bg-gradient-to-r from-amber-950/20 to-slate-900">
                 <div class="flex items-center space-x-2.5">
                     <div class="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-sm">👑</div>
@@ -801,7 +807,7 @@
                     <button onclick="setTipType('СБП')" id="tipTypeSbp" class="glass-element text-slate-300 py-2 rounded-xl text-xs font-extrabold tap-scale">📱 СБП</button>
                 </div>
             </div>
-            <button onclick="confirmBillCheckout()" class="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-extrabold py-3 rounded-2xl text-xs shadow-xl tap-scale">💳 Закрыть счет</button>
+            <button onclick="confirmBillCheckout()" class="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-extrabold py-3 rounded-2xl text-xs shadow-xl tap-scale">💳 Закрыть счет</button>
         </div>
     </div>
 
@@ -883,6 +889,9 @@
         if (window.Telegram && window.Telegram.WebApp) {
             window.Telegram.WebApp.ready();
             window.Telegram.WebApp.expand();
+            if (window.Telegram.WebApp.requestFullscreen) {
+                try { window.Telegram.WebApp.requestFullscreen(); } catch(e) {}
+            }
         }
 
         const SUPABASE_URL = 'https://avrtgjldydchwgtvgrqt.supabase.co';
@@ -892,7 +901,7 @@
         let userId = 'default_user';
         let lastCloudError = null;
 
-        // Чистое базовое меню (очищено под кастомизацию через ИИ-сканер)
+        // Базовое стартовое меню (чистая база под сканирование)
         let menuItems = [
             { name: "Фирменный бургер", price: 790, cat: "Горячее" },
             { name: "Цезарь с курицей", price: 690, cat: "Салаты" },
@@ -912,7 +921,7 @@
         let shiftTipGoal = 3000;
         let stopListSet = new Set();
         let aiScannedParsedItems = [];
-        let isProActive = false; // Статус PRO-подписки
+        let isProActive = false;
 
         let currentTipAmount = 0;
         let currentTipType = "Нал";
@@ -955,7 +964,7 @@
                 dot.className = "w-2 h-2 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/50";
                 lbl.className = "text-[10px] text-emerald-400 font-bold uppercase tracking-wide";
             } else if (status === 'sync') {
-                dot.className = "w-2 h-2 rounded-full bg-amber-400";
+                dot.className = "w-2 h-2 rounded-full bg-amber-400 animate-pulse";
                 lbl.className = "text-[10px] text-amber-400 font-bold uppercase tracking-wide";
             } else {
                 dot.className = "w-2 h-2 rounded-full bg-rose-500 shadow-lg";
@@ -966,7 +975,7 @@
 
         function handleCloudStatusClick() {
             if (lastCloudError) alert(`Ошибка облака (ID: ${userId})`);
-            else alert(`Облако активно!\nID: ${userId} | PRO: ${isProActive ? 'Активен' - 'Нет'}`);
+            else alert(`Облако активно!\nID: ${userId} | PRO: ${isProActive ? 'Активен' : 'Нет'}`);
             saveData();
         }
 
@@ -1004,7 +1013,7 @@
             updateHeaderTips();
             switchTab('hall');
             updateProStatusUI();
-            setCloudIndicator('sync', 'Синхр');
+            setCloudIndicator('sync', 'Синхр...');
 
             try {
                 const { data, error } = await supabaseClient
@@ -1077,7 +1086,6 @@
 
         function applyPromoCode() {
             const code = document.getElementById('promoCodeInput').value.trim().toUpperCase();
-            // Секретный промокод для тебя и друзей (можешь менять на любое слово)
             const validPromos = ["PROMO2026", "BARISTA", "WAITERTOP", "FREEDOM"];
 
             if (validPromos.includes(code)) {
