@@ -37,7 +37,6 @@
             border: 1px solid rgba(255, 255, 255, 0.06);
         }
 
-        /* Стиль для вирусной карточки Сторис */
         .viral-story-card {
             background: radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.22) 0%, rgba(15, 23, 42, 0.95) 55%, #06090e 100%);
             border: 1px solid rgba(16, 185, 129, 0.35);
@@ -204,7 +203,6 @@
 
         <!-- ВКЛАДКА 3: Текущая смена -->
         <div id="tabHistory" class="tab-content space-y-4 hidden">
-            <!-- Блок управления сменой + кнопка Вирусной Сторис -->
             <div class="glass-panel rounded-3xl p-4 space-y-3 shadow-lg border border-slate-700/50 bg-gradient-to-r from-slate-900 to-slate-950">
                 <div class="flex justify-between items-center">
                     <div>
@@ -279,9 +277,8 @@
             </div>
         </div>
 
-        <!-- ВКЛАДКА 5: ПРОФИЛЬ (КАЛЕНДАРЬ НАВЕРХУ, КНОПКИ УПРАВЛЕНИЯНИЖЕ) -->
+        <!-- ВКЛАДКА 5: ПРОФИЛЬ -->
         <div id="tabProfile" class="tab-content space-y-4 hidden">
-            <!-- Компактная строка ставки и добавления смены -->
             <div class="glass-panel rounded-2xl p-3 flex justify-between items-center shadow border border-slate-700/50">
                 <div class="flex items-center space-x-2.5">
                     <div class="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-sm">💼</div>
@@ -485,7 +482,6 @@
                 <button onclick="closeViralShareModal()" class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-300 text-xs font-bold">✕</button>
             </div>
 
-            <!-- КАРТОЧКА ДЛЯ СКРИНШОТА -->
             <div id="viralCardCaptureArea" class="viral-story-card rounded-[36px] p-6 space-y-5 relative overflow-hidden">
                 <div class="flex justify-between items-center text-[10px] font-extrabold uppercase tracking-widest">
                     <span id="viralCardDate" class="text-slate-400 bg-slate-900/90 px-3 py-1.5 rounded-full border border-slate-800">📅 26 ОКТЯБРЯ</span>
@@ -876,8 +872,15 @@
         </div>
     </div>
 
-    <!-- СКРИПТЫ -->
+    <!-- СКРИПТЫ С ЗАЩИТОЙ ОТ БЕЛОГО ЭКРАНА -->
     <script>
+        // Аварийный перехватчик ошибок для старых iOS
+        window.onerror = function(msg, url, line) {
+            document.body.innerHTML = `<div style="padding:20px; color:#ff4444; font-family:sans-serif; font-size:12px;">
+                <b>Ошибка запуска:</b><br>${msg}<br><br><b>Строка:</b> ${line}
+            </div>`;
+        };
+
         if (window.Telegram && window.Telegram.WebApp) {
             window.Telegram.WebApp.ready();
             window.Telegram.WebApp.expand();
@@ -1142,8 +1145,6 @@
             }
         }
 
-        // ================= ВИРУСНАЯ КАРТОЧКА СТОРИС =================
-
         function formatHumanDateRu(dateKeyStr) {
             const monthsGen = ["ЯНВАРЯ", "ФЕВРАЛЯ", "МАРТА", "АПРЕЛЯ", "МАЯ", "ИЮНЯ", "ИЮЛЯ", "АВГУСТА", "СЕНТЯБРЯ", "ОКТЯБРЯ", "НОЯБРЯ", "ДЕКАБРЯ"];
             const [y, m, d] = dateKeyStr.split('-');
@@ -1255,8 +1256,6 @@
             }
         }
 
-        // ================= ИИ-СКАНЕР МЕНЮ =================
-
         function openAiScannerModal() {
             document.getElementById('aiMenuTextInput').value = '';
             document.getElementById('aiScanResultsBox').classList.add('hidden');
@@ -1365,8 +1364,6 @@
             alert(`Успешно добавлено ${aiScannedParsedItems.length} новых позиций в ваше меню!`);
             renderMenuDirect();
         }
-
-        // ================= КОНСТРУКТОР ЗАЛА И ОСТАЛЬНАЯ ЛОГИКА =================
 
         function getStandardTablesCount() {
             let maxNum = 0;
