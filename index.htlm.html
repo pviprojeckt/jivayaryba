@@ -55,10 +55,10 @@
                 <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/60 flex items-center justify-center text-xl shadow-inner">🐟</div>
                 <div>
                     <h1 class="font-extrabold text-xs tracking-wider text-slate-100 uppercase">Пульт Официанта PRO</h1>
-                    <div class="flex items-center space-x-1.5 mt-0.5">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-lg shadow-emerald-500/50" id="cloudStatusIndicator"></span>
-                        <span class="text-[10px] text-emerald-400 font-bold uppercase tracking-wide" id="cloudStatusText">Облако sync</span>
-                    </div>
+                    <button onclick="handleCloudStatusClick()" class="flex items-center space-x-1.5 mt-0.5 tap-scale text-left">
+                        <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse shadow-lg" id="cloudStatusIndicator"></span>
+                        <span class="text-[10px] text-amber-400 font-bold uppercase tracking-wide" id="cloudStatusText">Подключение...</span>
+                    </button>
                 </div>
             </div>
             <div class="flex items-center space-x-2">
@@ -643,7 +643,7 @@
         </div>
     </div>
 
-    <!-- СКРИПТЫ С ОБЛАЧНОЙ СИНХРОНИЗАЦИЕЙ SUPABASE -->
+    <!-- СКРИПТЫ С ЧЕСТНОЙ ПРОВЕРКОЙ ОБЛАКА SUPABASE -->
     <script>
         if (window.Telegram && window.Telegram.WebApp) {
             window.Telegram.WebApp.ready();
@@ -653,12 +653,12 @@
             }
         }
 
-        // НАСТРОЙКИ SUPABASE
         const SUPABASE_URL = 'https://avrtgjldydchwgtvgrqt.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_uobDghP-DOkp-xtBc5Q5JA_V1eZwstM';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let userId = 'default_user';
+        let lastCloudError = null;
 
         const menuItems = [
             { name: "Хлебная корзина", price: 390, cat: "Закуски" },
@@ -752,54 +752,87 @@
         let currentProfileSubTab = 'calendar';
         let isAddingPastShiftMode = false;
 
-        // ЗАГРУЗКА ДАННЫХ ИЗ ОБЛАКА
+        function setCloudIndicator(status, text, errObj = null) {
+            const dot = document.getElementById('cloudStatusIndicator');
+            const lbl = document.getElementById('cloudStatusText');
+            lastCloudError = errObj;
+            if (status === 'ok') {
+                dot.className = "w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-lg shadow-emerald-500/50";
+                lbl.className = "text-[10px] text-emerald-400 font-bold uppercase tracking-wide";
+            } else if (status === 'sync') {
+                dot.className = "w-2 h-2 rounded-full bg-amber-400 animate-pulse shadow-lg";
+                lbl.className = "text-[10px] text-amber-400 font-bold uppercase tracking-wide";
+            } else {
+                dot.className = "w-2 h-2 rounded-full bg-rose-500 shadow-lg";
+                lbl.className = "text-[10px] text-rose-400 font-bold uppercase tracking-wide underline";
+            }
+            lbl.innerText = text;
+        }
+
+        function handleCloudStatusClick() {
+            if (lastCloudError) {
+                alert(`Ошибка облака Supabase (ID: ${userId}):\n${lastCloudError.message || JSON.stringify(lastCloudError)}\n\nНажми ОК, чтобы попробовать синхронизировать снова.`);
+            } else {
+                alert(`Облако активно!\nТвой ID: ${userId}`);
+            }
+            saveData();
+        }
+
+        function loadLocalFallback() {
+            tables = JSON.parse(localStorage.getItem('fish_pro_tables')) || {};
+            if(Object.keys(tables).length === 0) {
+                for(let i=1; i<=15; i++) {
+                    tables[`Стол ${i}`] = { items: [], guests: 2, guestNames: {1: "Гость 1", 2: "Гость 2"}, activeGuest: "Гость 1", course: "⚡ Сразу", lastVisited: null, splitGroups: {} };
+                }
+                tables["Банкет"] = { items: [], guests: 4, guestNames: {1: "Гость 1", 2: "Гость 2", 3: "Гость 3", 4: "Гость 4"}, activeGuest: "Гость 1", course: "⚡ Сразу", lastVisited: null, splitGroups: {} };
+            }
+            closedHistory = JSON.parse(localStorage.getItem('fish_pro_history')) || [];
+            shiftArchive = JSON.parse(localStorage.getItem('fish_pro_shift_archive')) || [];
+            hourlyRate = Number(localStorage.getItem('fish_pro_hourly_rate')) || 280;
+            shiftTipGoal = Number(localStorage.getItem('fish_pro_goal')) || 3000;
+            stopListSet = new Set(JSON.parse(localStorage.getItem('fish_pro_stoplist')) || []);
+        }
+
+        // ЗАГРУЗКА ДАННЫХ ИЗ ОБЛАКА И ПЕРВИЧНАЯ ЗАПИСЬ
         async function initCloudData() {
             if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
                 userId = String(window.Telegram.WebApp.initDataUnsafe.user.id);
             } else {
                 if (!localStorage.getItem('fish_pro_test_id')) {
-                    localStorage.setItem('fish_pro_test_id', 'test_user_' + Math.floor(Math.random() * 10000));
+                    localStorage.setItem('fish_pro_test_id', 'web_user_' + Math.floor(1000 + Math.random() * 9000));
                 }
                 userId = localStorage.getItem('fish_pro_test_id');
             }
+
+            // Сначала берем локальные данные, чтобы ничего не потерять
+            loadLocalFallback();
+            setCloudIndicator('sync', 'Синхронизация...');
 
             try {
                 const { data, error } = await supabaseClient
                     .from('app_states')
                     .select('state')
                     .eq('telegram_id', userId)
-                    .single();
+                    .maybeSingle();
+
+                if (error) throw error;
 
                 if (data && data.state) {
                     const s = data.state;
-                    tables = s.tables || {};
+                    tables = s.tables || tables;
                     closedHistory = s.closedHistory || [];
                     shiftArchive = s.shiftArchive || [];
                     hourlyRate = s.hourlyRate !== undefined ? s.hourlyRate : 280;
                     shiftTipGoal = s.shiftTipGoal !== undefined ? s.shiftTipGoal : 3000;
                     stopListSet = new Set(s.stopListSet || []);
+                    setCloudIndicator('ok', 'Облако ОК');
                 } else {
-                    // Инициализация по умолчанию
-                    for(let i=1; i<=15; i++) {
-                        tables[`Стол ${i}`] = { items: [], guests: 2, guestNames: {1: "Гость 1", 2: "Гость 2"}, activeGuest: "Гость 1", course: "⚡ Сразу", lastVisited: null, splitGroups: {} };
-                    }
-                    tables["Банкет"] = { items: [], guests: 4, guestNames: {1: "Гость 1", 2: "Гость 2", 3: "Гость 3", 4: "Гость 4"}, activeGuest: "Гость 1", course: "⚡ Сразу", lastVisited: null, splitGroups: {} };
+                    // Если в базе еще нет записи для этого пользователя — сразу создаем её!
+                    await saveData();
                 }
             } catch (e) {
-                console.log("Offline mode or cloud load failed, using local fallback");
-                // Fallback на localStorage
-                tables = JSON.parse(localStorage.getItem('fish_pro_tables')) || {};
-                if(Object.keys(tables).length === 0) {
-                    for(let i=1; i<=15; i++) {
-                        tables[`Стол ${i}`] = { items: [], guests: 2, guestNames: {1: "Гость 1", 2: "Гость 2"}, activeGuest: "Гость 1", course: "⚡ Сразу", lastVisited: null, splitGroups: {} };
-                    }
-                    tables["Банкет"] = { items: [], guests: 4, guestNames: {1: "Гость 1", 2: "Гость 2", 3: "Гость 3", 4: "Гость 4"}, activeGuest: "Гость 1", course: "⚡ Сразу", lastVisited: null, splitGroups: {} };
-                }
-                closedHistory = JSON.parse(localStorage.getItem('fish_pro_history')) || [];
-                shiftArchive = JSON.parse(localStorage.getItem('fish_pro_shift_archive')) || [];
-                hourlyRate = Number(localStorage.getItem('fish_pro_hourly_rate')) || 280;
-                shiftTipGoal = Number(localStorage.getItem('fish_pro_goal')) || 3000;
-                stopListSet = new Set(JSON.parse(localStorage.getItem('fish_pro_stoplist')) || []);
+                console.error("Cloud init error:", e);
+                setCloudIndicator('error', 'Ошибка БД (нажми)', e);
             }
 
             selectedCalendarDateKey = getTodayDateKey();
@@ -807,9 +840,8 @@
             switchTab('hall');
         }
 
-        // СОХРАНЕНИЕ ДАННЫХ В ОБЛАКО + ЛОКАЛЬНЫЙ БЭКАП
+        // ЧЕСТНОЕ СОХРАНЕНИЕ В SUPABASE С ПРОВЕРКОЙ ОШИБОК
         async function saveData() {
-            // Локальный бэкап
             localStorage.setItem('fish_pro_tables', JSON.stringify(tables));
             localStorage.setItem('fish_pro_history', JSON.stringify(closedHistory));
             localStorage.setItem('fish_pro_shift_archive', JSON.stringify(shiftArchive));
@@ -817,7 +849,8 @@
             localStorage.setItem('fish_pro_goal', shiftTipGoal);
             localStorage.setItem('fish_pro_hourly_rate', hourlyRate);
 
-            // Отправка в Supabase
+            setCloudIndicator('sync', '⏳ Синхр...');
+
             try {
                 const payload = {
                     telegram_id: userId,
@@ -829,15 +862,19 @@
                         hourlyRate,
                         shiftTipGoal
                     },
-                    updated_at: new Date()
+                    updated_at: new Date().toISOString()
                 };
-                await supabaseClient.from('app_states').upsert(payload);
-                document.getElementById('cloudStatusIndicator').className = "w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-lg shadow-emerald-500/50";
-                document.getElementById('cloudStatusText').innerText = "Облако sync";
+
+                const { error } = await supabaseClient
+                    .from('app_states')
+                    .upsert(payload, { onConflict: 'telegram_id' });
+
+                if (error) throw error;
+
+                setCloudIndicator('ok', '☁️ Облако ОК');
             } catch (e) {
                 console.error("Cloud save error:", e);
-                document.getElementById('cloudStatusIndicator').className = "w-2 h-2 rounded-full bg-amber-500 shadow-lg";
-                document.getElementById('cloudStatusText').innerText = "Локально";
+                setCloudIndicator('error', '⚠️ Ошибка БД', e);
             }
         }
 
@@ -2088,7 +2125,7 @@
         }
 
         function confirmManualTipModal() {
-            const sum = Number(document.getElementById('manualTipSumInput-replaced') || document.getElementById('manualTipSumInput').value);
+            const sum = Number(document.getElementById('manualTipSumInput').value);
             if(!sum || sum <= 0) return;
 
             closedHistory.unshift({
@@ -2121,7 +2158,6 @@
 
         setInterval(() => { renderTables(); if(currentTable) renderTableCard(); renderMyTables(); }, 60000);
         
-        // Старт приложения с загрузкой из облака
         initCloudData();
     </script>
 </body>
