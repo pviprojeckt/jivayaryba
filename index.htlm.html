@@ -8,8 +8,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Подключаем клиент Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- Подключаем генератор картинок для вирусных Сторис -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         
@@ -39,7 +37,7 @@
             border: 1px solid rgba(255, 255, 255, 0.06);
         }
 
-        /* Специальный стиль для вирусной карточки Сторис (плотные градиенты для идеального рендера в PNG) */
+        /* Стиль для вирусной карточки Сторис */
         .viral-story-card {
             background: radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.22) 0%, rgba(15, 23, 42, 0.95) 55%, #06090e 100%);
             border: 1px solid rgba(16, 185, 129, 0.35);
@@ -211,7 +209,7 @@
                 <div class="flex justify-between items-center">
                     <div>
                         <h3 class="text-xs font-extrabold uppercase tracking-widest text-slate-200">⏱ Управление сменой</h3>
-                        <p class="text-[10px] text-slate-400 mt-0.5">Сохрани в календарь или поделись сторис</p>
+                        <p class="text-[10px] text-slate-400 mt-0.5">Сохрани в календарь или открой карточку для сторис</p>
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-2">
@@ -478,10 +476,10 @@
         </div>
     </nav>
 
-    <!-- МОДАЛКА ВИРУСНОГО ШАРИНГА СТОРИС (9:16 WRAPPED CARD) -->
+    <!-- МОДАЛКА ВИРУСНОЙ КАРТОЧКИ СТОРИС (9:16 WRAPPED CARD ПОД СКРИНШОТ) -->
     <div id="viralShareModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-2xl z-50 hidden flex items-center justify-center p-3">
         <div class="max-w-sm w-full flex flex-col space-y-3 max-h-[95vh] overflow-y-auto">
-            <!-- Панель настроек карточки сверху (не попадает на скриншот) -->
+            <!-- Панель настроек карточки сверху -->
             <div class="flex justify-between items-center px-2">
                 <div class="flex items-center space-x-2">
                     <button onclick="toggleViralPrivacyMask()" id="viralPrivacyBtn" class="glass-element px-3 py-1.5 rounded-xl text-[11px] font-bold text-slate-200 border border-slate-700 tap-scale flex items-center space-x-1">
@@ -497,7 +495,7 @@
                 <button onclick="closeViralShareModal()" class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-300 text-xs font-bold">✕</button>
             </div>
 
-            <!-- САМА КАРТОЧКА ДЛЯ ГЕНЕРАЦИИ КАРТИНКИ (Скриншотится именно этот блок) -->
+            <!-- САМА КАРТОЧКА ДЛЯ СКРИНШОТА -->
             <div id="viralCardCaptureArea" class="viral-story-card rounded-[36px] p-6 space-y-5 relative overflow-hidden">
                 <!-- Верхняя строка: дата и бейдж -->
                 <div class="flex justify-between items-center text-[10px] font-extrabold uppercase tracking-widest">
@@ -560,18 +558,6 @@
                     </div>
                     <span class="text-[9px] font-mono font-bold text-slate-500 bg-slate-900 px-2 py-1 rounded-lg border border-slate-800">PRO</span>
                 </div>
-            </div>
-
-            <!-- Кнопки отправки и сохранения -->
-            <div class="grid grid-cols-3 gap-2 pt-1">
-                <button onclick="shareOrDownloadViralCardImage()" id="viralDownloadBtn" class="col-span-2 bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 font-extrabold py-3.5 rounded-2xl text-xs shadow-xl tap-scale flex items-center justify-center space-x-1.5">
-                    <span>📲</span>
-                    <span id="viralDownloadBtnText">Поделиться картинкой</span>
-                </button>
-                <button onclick="copyViralShiftText()" class="glass-element border border-slate-700 text-slate-200 font-extrabold py-3.5 rounded-2xl text-xs tap-scale flex items-center justify-center space-x-1">
-                    <span>📋</span>
-                    <span>Текст</span>
-                </button>
             </div>
         </div>
     </div>
@@ -1015,7 +1001,6 @@
         let currentProfileSubTab = 'calendar';
         let isAddingPastShiftMode = false;
 
-        // Переменные для вирусной карточки Сторис
         let viralDataState = {
             dateLabel: '',
             hours: 13,
@@ -1172,7 +1157,7 @@
             }
         }
 
-        // ================= ВИРУСНЫЙ ШАРИНГ (СТОРИС КАРТОЧКА) =================
+        // ================= ВИРУСНАЯ КАРТОЧКА СТОРИС =================
 
         function formatHumanDateRu(dateKeyStr) {
             const monthsGen = ["ЯНВАРЯ", "ФЕВРАЛЯ", "МАРТА", "АПРЕЛЯ", "МАЯ", "ИЮНЯ", "ИЮЛЯ", "АВГУСТА", "СЕНТЯБРЯ", "ОКТЯБРЯ", "НОЯБРЯ", "ДЕКАБРЯ"];
@@ -1249,7 +1234,6 @@
             const hourlyEff = d.hours > 0 ? Math.round(totalEarned / d.hours) : 0;
             const avgTip = d.tablesCount > 0 ? Math.round(totalTips / d.tablesCount) : totalTips;
 
-            // Определяем вирусный игровой ранг
             let rank = "⚡ СТАТУС: УДАРНАЯ СМЕНА";
             if (goalPct >= 150) rank = "💎 СТАТУС: БОГ СЕРВИСА";
             else if (d.tablesCount >= 20) rank = "🔥 СТАТУС: РАЗРЫВ ЗАЛА";
@@ -1284,83 +1268,6 @@
                 document.getElementById('viralCardHourlyEff').innerText = `${hourlyEff.toLocaleString('ru-RU')} ₽/ч`;
                 document.getElementById('viralCardAvgTip').innerText = `Сред. чай: ${avgTip} ₽`;
             }
-        }
-
-        async function shareOrDownloadViralCardImage() {
-            const btnText = document.getElementById('viralDownloadBtnText');
-            const origText = btnText.innerText;
-            btnText.innerText = "⏳ Создаем сторис...";
-
-            try {
-                const cardEl = document.getElementById('viralCardCaptureArea');
-                const canvas = await html2canvas(cardEl, {
-                    backgroundColor: '#06090e',
-                    scale: 3, // Высокое разрешение для четких сторис
-                    useCORS: true,
-                    logging: false
-                });
-
-                canvas.toBlob(async (blob) => {
-                    if (!blob) {
-                        btnText.innerText = origText;
-                        return;
-                    }
-                    const file = new File([blob], 'shift-story.png', { type: 'image/png' });
-
-                    // Если телефон поддерживает системное меню "Поделиться файлом" (iOS / Android)
-                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                        try {
-                            await navigator.share({
-                                files: [file],
-                                title: 'Итоги моей смены — Пульт Официанта PRO',
-                                text: 'Моя смена в Пульт Официанта PRO 🐟🔥'
-                            });
-                            btnText.innerText = origText;
-                            return;
-                        } catch (shareErr) {
-                            console.log("Share cancelled or fallback to download");
-                        }
-                    }
-
-                    // Иначе скачиваем картинку напрямую
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `smena-${getTodayDateKey()}.png`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                    btnText.innerText = "✅ Сохранено!";
-                    setTimeout(() => { btnText.innerText = origText; }, 2000);
-                }, 'image/png');
-            } catch (e) {
-                console.error("Canvas error:", e);
-                alert("Не удалось создать картинку, попробуйте сделать скриншот экрана!");
-                btnText.innerText = origText;
-            }
-        }
-
-        function copyViralShiftText() {
-            const d = viralDataState;
-            const wage = Math.round(d.hours * d.rate);
-            const totalTips = d.cashTips + d.cardTips;
-            const totalEarned = wage + totalTips;
-            const hourlyEff = d.hours > 0 ? Math.round(totalEarned / d.hours) : 0;
-
-            const text = `🔥 МОЯ СМЕНА (${d.dateLabel})\n` +
-                `━━━━━━━━━━━━━━\n` +
-                `💰 Общий доход: +${totalEarned.toLocaleString('ru-RU')} ₽\n` +
-                `💸 Чаевые: ${totalTips.toLocaleString('ru-RU')} ₽ (Нал: ${d.cashTips} ₽ | Б/н: ${d.cardTips} ₽)\n` +
-                `⏱ Отработано: ${d.hours} ч (Ставка: ${wage.toLocaleString('ru-RU')} ₽)\n` +
-                `🍽 Закрыто счетов: ${d.tablesCount}\n` +
-                `⚡ Эффективность: ${hourlyEff} ₽ / час\n` +
-                `━━━━━━━━━━━━━━\n` +
-                `🐟 Считаю смены и чай в Пульт Официанта PRO 👉 @waiter_pro_bot`;
-
-            navigator.clipboard.writeText(text).then(() => {
-                alert("Красивый текстовый отчет скопирован! Можно вставить в чат или сторис.");
-            });
         }
 
         // ================= ИИ-СКАНЕР МЕНЮ =================
@@ -1845,7 +1752,6 @@
             closeFinishShiftModal();
             updateHeaderTips();
             switchTab('profile');
-            // Сразу открываем вирусную карточку после закрытия смены!
             openViralShareFromArchiveDay();
         }
 
