@@ -279,49 +279,22 @@
             </div>
         </div>
 
-        <!-- ВКЛАДКА 5: ПРОФИЛЬ -->
+        <!-- ВКЛАДКА 5: ПРОФИЛЬ (КАЛЕНДАРЬ НАВЕРХУ, КНОПКИ УПРАВЛЕНИЯНИЖЕ) -->
         <div id="tabProfile" class="tab-content space-y-4 hidden">
-            <div class="glass-panel rounded-3xl p-4 flex justify-between items-center shadow-lg border border-slate-700/50">
-                <div class="flex items-center space-x-3">
-                    <div class="w-11 h-11 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-xl">💼</div>
+            <!-- Компактная строка ставки и добавления смены -->
+            <div class="glass-panel rounded-2xl p-3 flex justify-between items-center shadow border border-slate-700/50">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-sm">💼</div>
                     <div>
-                        <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Почасовая ставка</div>
-                        <div class="flex items-center space-x-2 mt-0.5">
-                            <span id="profileHourlyRateDisplay" class="text-base font-extrabold text-slate-100">280 ₽ / час</span>
-                            <button onclick="openRateModal()" class="text-[10px] glass-element px-2 py-0.5 rounded-lg text-sky-400 font-bold tap-scale">✏️ Изм.</button>
+                        <div class="text-[9px] uppercase font-bold text-slate-400">Ставка</div>
+                        <div class="flex items-center space-x-1.5">
+                            <span id="profileHourlyRateDisplay" class="text-xs font-extrabold text-slate-100">280 ₽/ч</span>
+                            <button onclick="openRateModal()" class="text-[9px] text-sky-400 font-bold hover:underline">✏️</button>
                         </div>
                     </div>
                 </div>
-                <button onclick="openAddPastShiftModal()" class="glass-element border border-slate-700 hover:bg-slate-800 text-slate-200 px-3 py-2.5 rounded-2xl text-xs font-extrabold tap-scale shadow">
+                <button onclick="openAddPastShiftModal()" class="bg-slate-100 hover:bg-white text-slate-950 px-3 py-2 rounded-xl text-xs font-extrabold tap-scale shadow">
                     ＋ Смена
-                </button>
-            </div>
-
-            <!-- Карточка ИИ-сканера меню в профиле -->
-            <div class="glass-panel rounded-3xl p-4 flex justify-between items-center shadow-lg border border-emerald-500/30 bg-gradient-to-r from-emerald-950/20 to-slate-900">
-                <div class="flex items-center space-x-3">
-                    <div class="w-11 h-11 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-xl">🤖</div>
-                    <div>
-                        <div class="text-xs font-extrabold text-slate-100">ИИ-сканер меню</div>
-                        <div class="text-[10px] text-emerald-400 mt-0.5">Загрузить меню по фото или тексту за 5 секунд</div>
-                    </div>
-                </div>
-                <button onclick="openAiScannerModal()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-3.5 py-2.5 rounded-2xl text-xs font-extrabold tap-scale shadow-lg">
-                    ✨ Сканировать
-                </button>
-            </div>
-
-            <!-- Карточка конструктора зала в профиле -->
-            <div class="glass-panel rounded-3xl p-4 flex justify-between items-center shadow-lg border border-slate-700/50">
-                <div class="flex items-center space-x-3">
-                    <div class="w-11 h-11 rounded-2xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-xl">🗺️</div>
-                    <div>
-                        <div class="text-xs font-extrabold text-slate-100">Конструктор зала и столов</div>
-                        <div id="profileTablesCountInfo" class="text-[10px] text-slate-400 mt-0.5">Настройте столы, бар или зоны под себя</div>
-                    </div>
-                </div>
-                <button onclick="openHallConstructorModal()" class="bg-sky-500/15 text-sky-400 border border-sky-500/30 hover:bg-sky-500/25 px-3.5 py-2.5 rounded-2xl text-xs font-extrabold tap-scale shadow">
-                    ⚙️ Зал
                 </button>
             </div>
 
@@ -384,6 +357,24 @@
                             <div id="dayArchiveBillsList" class="space-y-1.5 max-h-60 overflow-y-auto pr-1 text-xs"></div>
                         </div>
                     </div>
+                </div>
+
+                <!-- КОМПАКТНЫЕ КНОПКИ НАСТРОЕК ПОД КАЛЕНДАРЕМ -->
+                <div class="grid grid-cols-2 gap-2 pt-2">
+                    <button onclick="openAiScannerModal()" class="glass-panel hover:bg-slate-800 p-3 rounded-2xl flex items-center space-x-2.5 border border-emerald-500/20 tap-scale shadow">
+                        <span class="text-lg">🤖</span>
+                        <div class="text-left">
+                            <div class="text-xs font-extrabold text-slate-100">ИИ-сканер</div>
+                            <div class="text-[9px] text-emerald-400">Загрузить меню</div>
+                        </div>
+                    </button>
+                    <button onclick="openHallConstructorModal()" class="glass-panel hover:bg-slate-800 p-3 rounded-2xl flex items-center space-x-2.5 border border-sky-500/20 tap-scale shadow">
+                        <span class="text-lg">🗺️</span>
+                        <div class="text-left">
+                            <div class="text-xs font-extrabold text-slate-100">Зал и столы</div>
+                            <div id="profileTablesCountInfo" class="text-[9px] text-sky-400">16 позиций</div>
+                        </div>
+                    </button>
                 </div>
             </div>
 
@@ -476,10 +467,9 @@
         </div>
     </nav>
 
-    <!-- МОДАЛКА ВИРУСНОЙ КАРТОЧКИ СТОРИС (9:16 WRAPPED CARD ПОД СКРИНШОТ) -->
+    <!-- МОДАЛКА ВИРУСНОЙ КАРТОЧКИ СТОРИС -->
     <div id="viralShareModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-2xl z-50 hidden flex items-center justify-center p-3">
         <div class="max-w-sm w-full flex flex-col space-y-3 max-h-[95vh] overflow-y-auto">
-            <!-- Панель настроек карточки сверху -->
             <div class="flex justify-between items-center px-2">
                 <div class="flex items-center space-x-2">
                     <button onclick="toggleViralPrivacyMask()" id="viralPrivacyBtn" class="glass-element px-3 py-1.5 rounded-xl text-[11px] font-bold text-slate-200 border border-slate-700 tap-scale flex items-center space-x-1">
@@ -495,22 +485,19 @@
                 <button onclick="closeViralShareModal()" class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-300 text-xs font-bold">✕</button>
             </div>
 
-            <!-- САМА КАРТОЧКА ДЛЯ СКРИНШОТА -->
+            <!-- КАРТОЧКА ДЛЯ СКРИНШОТА -->
             <div id="viralCardCaptureArea" class="viral-story-card rounded-[36px] p-6 space-y-5 relative overflow-hidden">
-                <!-- Верхняя строка: дата и бейдж -->
                 <div class="flex justify-between items-center text-[10px] font-extrabold uppercase tracking-widest">
                     <span id="viralCardDate" class="text-slate-400 bg-slate-900/90 px-3 py-1.5 rounded-full border border-slate-800">📅 26 ОКТЯБРЯ</span>
                     <span class="text-emerald-400 bg-emerald-500/15 px-3 py-1.5 rounded-full border border-emerald-500/30">⚡ ИТОГИ СМЕНЫ</span>
                 </div>
 
-                <!-- Звание / Ранг дня -->
                 <div class="text-center space-y-1 pt-1">
                     <div class="inline-block bg-amber-500/15 border border-amber-500/40 text-amber-300 px-4 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-widest shadow">
                         <span id="viralCardRankTitle">🏆 СТАТУС: МАШИНА СМЕНЫ</span>
                     </div>
                 </div>
 
-                <!-- Главная сумма дохода и прогресс цели -->
                 <div class="text-center space-y-2 py-1">
                     <div class="text-[10px] font-bold uppercase tracking-widest text-slate-400">ДОХОД ЗА СМЕНУ</div>
                     <div id="viralCardTotalEarned" class="text-4xl font-extrabold text-white tracking-tight">+ 8 440 ₽</div>
@@ -523,7 +510,6 @@
                     </div>
                 </div>
 
-                <!-- Сетка 2х2 с метриками -->
                 <div class="grid grid-cols-2 gap-2.5">
                     <div class="viral-inner-box p-3.5 rounded-2xl space-y-1">
                         <div class="text-[10px] font-bold text-slate-400 uppercase">💸 ЧАЕВЫЕ</div>
@@ -547,7 +533,6 @@
                     </div>
                 </div>
 
-                <!-- Водяной знак / Брендинг приложения -->
                 <div class="pt-3 border-t border-slate-800/90 flex items-center justify-between">
                     <div class="flex items-center space-x-2.5">
                         <div class="w-9 h-9 rounded-xl bg-slate-900 border border-slate-700 flex items-center justify-center text-base shadow">🐟</div>
@@ -1795,9 +1780,9 @@
         }
 
         function renderProfileAll() {
-            document.getElementById('profileHourlyRateDisplay').innerText = `${hourlyRate} ₽ / час`;
+            document.getElementById('profileHourlyRateDisplay').innerText = `${hourlyRate} ₽/ч`;
             document.getElementById('currentRateInfoBadge').innerText = `${hourlyRate} ₽/ч`;
-            document.getElementById('profileTablesCountInfo').innerText = `Активных позиций в зале: ${Object.keys(tables).length}`;
+            document.getElementById('profileTablesCountInfo').innerText = `${Object.keys(tables).length} позиций`;
 
             const year = profileDate.getFullYear();
             const month = profileDate.getMonth();
