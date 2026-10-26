@@ -315,7 +315,6 @@
                 <button onclick="closeCheckoutModal()" class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs">✕</button>
             </div>
 
-            <!-- Выбор счета для закрытия -->
             <div class="space-y-1.5">
                 <div class="flex justify-between items-center">
                     <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">🧾 Выберите счет для закрытия:</span>
@@ -324,7 +323,6 @@
                 <div id="checkoutBillsPreview" class="space-y-1.5 max-h-36 overflow-y-auto pr-1 text-xs"></div>
             </div>
 
-            <!-- ВЫБОР СПОСОБА ОПЛАТЫ САМОГО СЧЕТА (НАЛ / КАРТА / СБП) -->
             <div class="space-y-1">
                 <label class="text-xs font-bold text-slate-300">Как гости оплатили счет:</label>
                 <div class="grid grid-cols-3 gap-1.5">
@@ -334,7 +332,6 @@
                 </div>
             </div>
 
-            <!-- БЛОК БЫСТРОГО РАСЧЕТА СДАЧИ (показывается только если выбраны Наличные) -->
             <div id="cashChangeSection" class="glass-element p-3 rounded-2xl border border-slate-800 space-y-2">
                 <div class="flex justify-between items-center text-xs">
                     <span class="font-bold text-slate-300">💵 Наличные от гостя:</span>
@@ -349,7 +346,6 @@
                 <input type="number" id="cashGivenInput" placeholder="Или введите сумму нал (₽)..." oninput="calculateChange(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs outline-none">
             </div>
 
-            <!-- БЛОК ЧАЕВЫХ -->
             <div class="space-y-1.5">
                 <label class="text-xs font-bold text-slate-300">Чаевые с этого счета:</label>
                 <div class="grid grid-cols-4 gap-1.5">
@@ -361,7 +357,6 @@
                 <input type="number" id="customTipInput" placeholder="Свой чай (₽)..." oninput="updateCustomTip(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-3 py-2 text-xs outline-none">
             </div>
 
-            <!-- ВЫБОР: КАК ОСТАВИЛИ ЧАЕВЫЕ (НАЛ / ПЕРЕВОД / СБП) -->
             <div class="space-y-1">
                 <label class="text-xs font-bold text-slate-300">Как оставили чаевые:</label>
                 <div class="grid grid-cols-3 gap-1.5">
@@ -372,6 +367,28 @@
             </div>
 
             <button onclick="confirmBillCheckout()" class="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-extrabold py-3 rounded-2xl text-xs shadow-xl tap-scale">💳 Закрыть выбранный счет</button>
+        </div>
+    </div>
+
+    <!-- ФИРМЕННАЯ МОДАЛКА РУЧНОГО ЧАЯ (ВМЕСТО УБОГОГО CONFIRM) -->
+    <div id="manualTipModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-panel rounded-[32px] max-w-xs w-full p-6 space-y-4 shadow-2xl border border-slate-700/50">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 class="font-extrabold text-sm text-slate-100">＋ Чай переводом / Вручную</h3>
+                <button onclick="closeManualTipModal()" class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs">✕</button>
+            </div>
+            <div class="space-y-1">
+                <label class="text-[11px] text-slate-400">Сумма чаевых (рублей):</label>
+                <input type="number" id="manualTipSumInput" placeholder="Например: 300" class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs text-slate-100 outline-none">
+            </div>
+            <div class="space-y-1">
+                <label class="text-[11px] text-slate-400">Как оставили чаевые:</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="setManualTipTypeModal('Нал')" id="manualTipModalNal" class="glass-element text-slate-300 py-2.5 rounded-xl text-xs font-extrabold tap-scale">💵 Нал</button>
+                    <button onclick="setManualTipTypeModal('Перевод')" id="manualTipModalCard" class="bg-emerald-600 text-white py-2.5 rounded-xl text-xs font-extrabold tap-scale shadow">💳 Безнал</button>
+                </div>
+            </div>
+            <button onclick="confirmManualTipModal()" class="w-full bg-slate-100 text-slate-950 font-extrabold py-3.5 rounded-2xl text-xs tap-scale shadow-lg">💾 Сохранить чай</button>
         </div>
     </div>
 
@@ -523,6 +540,7 @@
         let currentTipAmount = 0;
         let currentTipType = "Нал";
         let currentBillPaymentMethod = "Нал";
+        let manualTipModalType = "Перевод";
         let onlyAttentionFilter = false;
         let selectedActiveCourse = "⚡ Сразу";
         let stopListSet = new Set(JSON.parse(localStorage.getItem('fish_pro_stoplist')) || []);
@@ -1129,6 +1147,7 @@
             document.getElementById('quickChangeDisplay').innerText = 'Сдача: 0 ₽';
             
             setBillPaymentMethod('Нал');
+            setTipType('Нал');
             renderCheckoutBillsPreview();
             document.getElementById('checkoutModal').classList.remove('hidden');
         }
@@ -1187,7 +1206,6 @@
                 }
             });
 
-            // Показываем или скрываем блок с наличными и сдачей в зависимости от способа оплаты счета
             const cashSection = document.getElementById('cashChangeSection');
             if (method === 'Нал') {
                 cashSection.classList.remove('hidden');
@@ -1267,8 +1285,8 @@
                 date: new Date().toLocaleDateString(),
                 subtotal: groupSubtotal, 
                 tip: currentTipAmount, 
-                tipType: currentTipType, // Нал / Перевод / СБП (для чаевых)
-                paymentMethod: currentBillPaymentMethod, // Нал / Карта / СБП (как оплатили счет)
+                tipType: currentTipType,
+                paymentMethod: currentBillPaymentMethod,
                 guests: groupGuests.length,
                 items: [...groupItems],
                 splitGroups: { [selectedCheckoutGroup]: groupGuests }
@@ -1394,26 +1412,48 @@
         }
 
         function openManualTipModal() {
-            const sum = prompt("Введите сумму чаевых (рублей):", "300");
-            if(sum && !isNaN(sum)) {
-                const isCash = confirm("Это наличные чаевые? (ОК — Нал, Отмена — Безнал/Перевод)");
-                closedHistory.unshift({
-                    tableName: "Вручную",
-                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                    date: new Date().toLocaleDateString(),
-                    subtotal: 0,
-                    tip: Number(sum),
-                    tipType: isCash ? "Нал" : "Перевод",
-                    paymentMethod: "Нал",
-                    guests: 1,
-                    items: [],
-                    splitGroups: {}
-                });
-                saveData();
-                updateHeaderTips();
-                renderStats();
-                updateTipGoalUI();
-            }
+            document.getElementById('manualTipSumInput').value = '300';
+            setManualTipTypeModal('Перевод');
+            document.getElementById('manualTipModal').classList.remove('hidden');
+        }
+
+        function closeManualTipModal() {
+            document.getElementById('manualTipModal').classList.add('hidden');
+        }
+
+        function setManualTipTypeModal(type) {
+            manualTipModalType = type;
+            ['Nal', 'Card'].forEach(t => {
+                const btn = document.getElementById('manualTipModal' + t);
+                if((t === 'Nal' && type === 'Нал') || (t === 'Card' && type === 'Перевод')) {
+                    btn.className = "bg-emerald-600 text-white py-2.5 rounded-xl text-xs font-extrabold tap-scale shadow";
+                } else {
+                    btn.className = "glass-element text-slate-300 py-2.5 rounded-xl text-xs font-extrabold tap-scale";
+                }
+            });
+        }
+
+        function confirmManualTipModal() {
+            const sum = Number(document.getElementById('manualTipSumInput').value);
+            if(!sum || sum <= 0) return;
+
+            closedHistory.unshift({
+                tableName: "Вручную",
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                date: new Date().toLocaleDateString(),
+                subtotal: 0,
+                tip: sum,
+                tipType: manualTipModalType,
+                paymentMethod: "Нал",
+                guests: 1,
+                items: [],
+                splitGroups: {}
+            });
+            saveData();
+            updateHeaderTips();
+            renderStats();
+            updateTipGoalUI();
+            closeManualTipModal();
         }
 
         function filterAttention() { onlyAttentionFilter = !onlyAttentionFilter; renderTables(); }
