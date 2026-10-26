@@ -307,9 +307,9 @@
         </div>
     </div>
 
-    <!-- МОДАЛКА РАСЧЕТА И БЫСТРОГО РАСЧЕТА СДАЧИ -->
+    <!-- МОДАЛКА РАСЧЕТА И ОПЛАТЫ СЧЕТА -->
     <div id="checkoutModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-50 hidden flex items-center justify-center p-4">
-        <div class="glass-panel rounded-[32px] max-w-sm w-full p-6 space-y-3.5 shadow-2xl border border-slate-700/50 max-h-[92vh] flex flex-col">
+        <div class="glass-panel rounded-[32px] max-w-sm w-full p-6 space-y-3.5 shadow-2xl border border-slate-700/50 max-h-[92vh] flex flex-col overflow-y-auto">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
                 <h3 id="checkoutModalTitle" class="font-extrabold text-sm text-emerald-400">Расчет стола</h3>
                 <button onclick="closeCheckoutModal()" class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs">✕</button>
@@ -324,8 +324,18 @@
                 <div id="checkoutBillsPreview" class="space-y-1.5 max-h-36 overflow-y-auto pr-1 text-xs"></div>
             </div>
 
-            <!-- БЛОК БЫСТРОГО РАСЧЕТА СДАЧИ -->
-            <div class="glass-element p-3 rounded-2xl border border-slate-800 space-y-2">
+            <!-- ВЫБОР СПОСОБА ОПЛАТЫ САМОГО СЧЕТА (НАЛ / КАРТА / СБП) -->
+            <div class="space-y-1">
+                <label class="text-xs font-bold text-slate-300">Как гости оплатили счет:</label>
+                <div class="grid grid-cols-3 gap-1.5">
+                    <button onclick="setBillPaymentMethod('Нал')" id="payMethodNal" class="bg-emerald-600 text-white py-2 rounded-xl text-xs font-extrabold tap-scale shadow">💵 Наличные</button>
+                    <button onclick="setBillPaymentMethod('Карта')" id="payMethodCard" class="glass-element text-slate-300 py-2 rounded-xl text-xs font-extrabold tap-scale">💳 Карта</button>
+                    <button onclick="setBillPaymentMethod('СБП')" id="payMethodSbp" class="glass-element text-slate-300 py-2 rounded-xl text-xs font-extrabold tap-scale">📱 СБП</button>
+                </div>
+            </div>
+
+            <!-- БЛОК БЫСТРОГО РАСЧЕТА СДАЧИ (показывается только если выбраны Наличные) -->
+            <div id="cashChangeSection" class="glass-element p-3 rounded-2xl border border-slate-800 space-y-2">
                 <div class="flex justify-between items-center text-xs">
                     <span class="font-bold text-slate-300">💵 Наличные от гостя:</span>
                     <span id="quickChangeDisplay" class="font-extrabold text-emerald-400">Сдача: 0 ₽</span>
@@ -339,6 +349,7 @@
                 <input type="number" id="cashGivenInput" placeholder="Или введите сумму нал (₽)..." oninput="calculateChange(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs outline-none">
             </div>
 
+            <!-- БЛОК ЧАЕВЫХ -->
             <div class="space-y-1.5">
                 <label class="text-xs font-bold text-slate-300">Чаевые с этого счета:</label>
                 <div class="grid grid-cols-4 gap-1.5">
@@ -350,7 +361,7 @@
                 <input type="number" id="customTipInput" placeholder="Свой чай (₽)..." oninput="updateCustomTip(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-3 py-2 text-xs outline-none">
             </div>
 
-            <!-- Выбор: Нал или Безнал для чаевых -->
+            <!-- ВЫБОР: КАК ОСТАВИЛИ ЧАЕВЫЕ (НАЛ / ПЕРЕВОД / СБП) -->
             <div class="space-y-1">
                 <label class="text-xs font-bold text-slate-300">Как оставили чаевые:</label>
                 <div class="grid grid-cols-3 gap-1.5">
@@ -511,6 +522,7 @@
         let shiftArchive = JSON.parse(localStorage.getItem('fish_pro_shift_archive')) || [];
         let currentTipAmount = 0;
         let currentTipType = "Нал";
+        let currentBillPaymentMethod = "Нал";
         let onlyAttentionFilter = false;
         let selectedActiveCourse = "⚡ Сразу";
         let stopListSet = new Set(JSON.parse(localStorage.getItem('fish_pro_stoplist')) || []);
@@ -1116,6 +1128,7 @@
             document.getElementById('cashGivenInput').value = '';
             document.getElementById('quickChangeDisplay').innerText = 'Сдача: 0 ₽';
             
+            setBillPaymentMethod('Нал');
             renderCheckoutBillsPreview();
             document.getElementById('checkoutModal').classList.remove('hidden');
         }
@@ -1160,6 +1173,26 @@
                     <div class="text-[10px] text-slate-400 truncate mt-0.5">${itemsListText}</div>
                 `;
                 container.appendChild(div);
+            }
+        }
+
+        function setBillPaymentMethod(method) {
+            currentBillPaymentMethod = method;
+            ['Nal', 'Card', 'Sbp'].forEach(m => {
+                const btn = document.getElementById('payMethod' + m);
+                if(m.toLowerCase() === (method === 'Нал' ? 'nal' : method === 'Карта' ? 'card' : 'sbp')) {
+                    btn.className = "bg-emerald-600 text-white py-2 rounded-xl text-xs font-extrabold tap-scale shadow";
+                } else {
+                    btn.className = "glass-element text-slate-300 py-2 rounded-xl text-xs font-extrabold tap-scale";
+                }
+            });
+
+            // Показываем или скрываем блок с наличными и сдачей в зависимости от способа оплаты счета
+            const cashSection = document.getElementById('cashChangeSection');
+            if (method === 'Нал') {
+                cashSection.classList.remove('hidden');
+            } else {
+                cashSection.classList.add('hidden');
             }
         }
 
@@ -1234,7 +1267,8 @@
                 date: new Date().toLocaleDateString(),
                 subtotal: groupSubtotal, 
                 tip: currentTipAmount, 
-                tipType: currentTipType, // Сохраняем "Нал", "Перевод" или "СБП"
+                tipType: currentTipType, // Нал / Перевод / СБП (для чаевых)
+                paymentMethod: currentBillPaymentMethod, // Нал / Карта / СБП (как оплатили счет)
                 guests: groupGuests.length,
                 items: [...groupItems],
                 splitGroups: { [selectedCheckoutGroup]: groupGuests }
@@ -1294,7 +1328,7 @@
                     div.innerHTML = `
                         <div>
                             <span class="font-extrabold text-slate-200">${h.tableName}</span> <span class="text-[10px] text-slate-400">(${h.time})</span>
-                            <div class="text-[10px] text-slate-400 mt-0.5">Чек: ${h.subtotal} ₽ • Чай: <span class="text-amber-300">${h.tipType}</span></div>
+                            <div class="text-[10px] text-slate-400 mt-0.5">Оплата: <span class="text-slate-200 font-bold">${h.paymentMethod || 'Нал'}</span> • Чай: <span class="text-amber-300">${h.tipType}</span></div>
                         </div>
                         <span class="text-emerald-400 font-extrabold">+${h.tip} ₽</span>
                     `;
@@ -1328,7 +1362,7 @@
         function openHistoryDetail(index) {
             const h = closedHistory[index];
             document.getElementById('historyModalTableName').innerText = h.tableName;
-            document.getElementById('historyModalTime').innerText = `${h.date} в ${h.time} • Гостей: ${h.guests}`;
+            document.getElementById('historyModalTime').innerText = `${h.date} в ${h.time} • Оплата: ${h.paymentMethod || 'Нал'}`;
             document.getElementById('historyModalSubtotal').innerText = h.subtotal + ' ₽';
             document.getElementById('historyModalTip').innerText = h.tip + ' ₽';
             document.getElementById('historyModalTipType').innerText = h.tipType;
@@ -1370,6 +1404,7 @@
                     subtotal: 0,
                     tip: Number(sum),
                     tipType: isCash ? "Нал" : "Перевод",
+                    paymentMethod: "Нал",
                     guests: 1,
                     items: [],
                     splitGroups: {}
