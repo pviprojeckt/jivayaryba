@@ -78,10 +78,15 @@
         <div id="tabHall" class="tab-content space-y-4">
             <div id="hallGridView" class="space-y-4">
                 <div class="flex justify-between items-center px-1">
-                    <h2 class="text-xs font-bold uppercase tracking-widest text-slate-400">🗺 Зал ресторана (15 столов)</h2>
-                    <button onclick="filterAttention()" id="attentionFilterBtn" class="text-xs glass-element hover:bg-slate-800 px-3.5 py-2 rounded-2xl text-slate-300 transition font-bold shadow">
-                        ⚠️ Внимание (<span id="attentionCount">0</span>)
-                    </button>
+                    <h2 id="hallHeaderTitle" class="text-xs font-bold uppercase tracking-widest text-slate-400">🗺 Зал (16 столов)</h2>
+                    <div class="flex items-center space-x-1.5">
+                        <button onclick="openHallConstructorModal()" class="text-xs glass-element hover:bg-slate-800 px-3 py-2 rounded-2xl text-sky-400 border border-sky-500/20 transition font-extrabold shadow tap-scale">
+                            ⚙️ Зал
+                        </button>
+                        <button onclick="filterAttention()" id="attentionFilterBtn" class="text-xs glass-element hover:bg-slate-800 px-3 py-2 rounded-2xl text-slate-300 transition font-bold shadow tap-scale">
+                            ⚠️ (<span id="attentionCount">0</span>)
+                        </button>
+                    </div>
                 </div>
                 <div id="tablesGrid" class="grid grid-cols-3 gap-3"></div>
             </div>
@@ -268,6 +273,20 @@
                 </button>
             </div>
 
+            <!-- Карточка конструктора зала в профиле -->
+            <div class="glass-panel rounded-3xl p-4 flex justify-between items-center shadow-lg border border-slate-700/50">
+                <div class="flex items-center space-x-3">
+                    <div class="w-11 h-11 rounded-2xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-xl">🗺️</div>
+                    <div>
+                        <div class="text-xs font-extrabold text-slate-100">Конструктор зала и столов</div>
+                        <div id="profileTablesCountInfo" class="text-[10px] text-slate-400 mt-0.5">Настройте столы, бар или зоны под себя</div>
+                    </div>
+                </div>
+                <button onclick="openHallConstructorModal()" class="bg-sky-500/15 text-sky-400 border border-sky-500/30 hover:bg-sky-500/25 px-3.5 py-2.5 rounded-2xl text-xs font-extrabold tap-scale shadow">
+                    ⚙️ Зал
+                </button>
+            </div>
+
             <div class="glass-panel p-1.5 rounded-2xl grid grid-cols-2 gap-1.5 border border-slate-800">
                 <button onclick="switchProfileSubTab('calendar')" id="profileSubBtnCalendar" class="py-2.5 rounded-xl text-xs font-extrabold bg-slate-100 text-slate-950 shadow tap-scale">📅 Календарь смен</button>
                 <button onclick="switchProfileSubTab('report')" id="profileSubBtnReport" class="py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-200 tap-scale">📈 Отчет за месяц</button>
@@ -418,7 +437,66 @@
         </div>
     </nav>
 
-    <!-- МОДАЛКИ -->
+    <!-- МОДАЛКА КОНСТРУКТОРА ЗАЛА И СТОЛОВ -->
+    <div id="hallConstructorModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-panel rounded-[32px] max-w-sm w-full p-6 space-y-4 shadow-2xl border border-slate-700/50 max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <div>
+                    <h3 class="font-extrabold text-sm text-sky-400">🗺 Конструктор зала</h3>
+                    <p class="text-[10px] text-slate-400">Настройте столы и зоны под своё заведение</p>
+                </div>
+                <button onclick="closeHallConstructorModal()" class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs">✕</button>
+            </div>
+
+            <div class="space-y-4 overflow-y-auto flex-1 pr-1 text-xs">
+                <!-- Быстрое изменение количества номерных столов -->
+                <div class="glass-element p-3.5 rounded-2xl border border-slate-800 space-y-2.5">
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold text-slate-200">Количество обычных столов:</span>
+                        <span class="text-[10px] text-slate-400">(Стол 1 ... Стол N)</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="stepStandardTablesCount(-1)" class="w-10 h-10 rounded-xl glass-panel font-extrabold text-base text-slate-200 tap-scale">−</button>
+                        <input type="number" id="constructorTablesCountInput" value="15" min="0" max="100" class="flex-1 bg-slate-950 border border-slate-800 rounded-xl py-2.5 text-center font-extrabold text-sm text-slate-100 outline-none">
+                        <button onclick="stepStandardTablesCount(1)" class="w-10 h-10 rounded-xl glass-panel font-extrabold text-base text-slate-200 tap-scale">＋</button>
+                        <button onclick="applyStandardTablesCount()" class="bg-sky-500 hover:bg-sky-400 text-slate-950 font-extrabold px-4 py-2.5 rounded-xl text-xs tap-scale shadow">Задать</button>
+                    </div>
+                </div>
+
+                <!-- Быстрые пресеты под разные типы заведений -->
+                <div class="space-y-1.5">
+                    <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Готовые шаблоны зала:</span>
+                    <div class="grid grid-cols-3 gap-1.5">
+                        <button onclick="applyHallPreset('restaurant')" class="glass-element hover:bg-slate-800 p-2.5 rounded-xl text-[10px] font-bold text-slate-200 tap-scale text-center">🍽 Ресторан<br><span class="text-[9px] text-slate-400 font-normal">15 ст. + Банкет</span></button>
+                        <button onclick="applyHallPreset('bar')" class="glass-element hover:bg-slate-800 p-2.5 rounded-xl text-[10px] font-bold text-sky-300 tap-scale text-center">🍸 Бар<br><span class="text-[9px] text-slate-400 font-normal">Бар 1-8 + 6 ст.</span></button>
+                        <button onclick="applyHallPreset('cafe')" class="glass-element hover:bg-slate-800 p-2.5 rounded-xl text-[10px] font-bold text-amber-300 tap-scale text-center">☕ Кофейня<br><span class="text-[9px] text-slate-400 font-normal">8 ст. + С собой</span></button>
+                    </div>
+                </div>
+
+                <!-- Добавление своей зоны / стола -->
+                <div class="space-y-1.5">
+                    <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Добавить свой стол или зону:</span>
+                    <div class="flex space-x-2">
+                        <input type="text" id="customTableNameInput" placeholder="Напр: Бар 1, Веранда 2, VIP..." class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 outline-none">
+                        <button onclick="addCustomTableFromConstructor()" class="bg-emerald-600 text-white font-extrabold px-4 py-2.5 rounded-xl text-xs tap-scale shadow">＋ Добавить</button>
+                    </div>
+                </div>
+
+                <!-- Текущий список всех столов -->
+                <div class="space-y-1.5">
+                    <div class="flex justify-between items-center">
+                        <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Текущие столы в зале:</span>
+                        <span id="constructorTotalBadge" class="text-[10px] text-sky-400 font-bold">Всего: 16</span>
+                    </div>
+                    <div id="constructorTablesList" class="space-y-1.5 max-h-48 overflow-y-auto pr-1"></div>
+                </div>
+            </div>
+
+            <button onclick="closeHallConstructorModal()" class="w-full bg-slate-100 text-slate-950 font-extrabold py-3.5 rounded-2xl text-xs tap-scale shadow-lg">Готово</button>
+        </div>
+    </div>
+
+    <!-- ОСТАЛЬНЫЕ МОДАЛКИ -->
     <div id="finishShiftModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-50 hidden flex items-center justify-center p-4">
         <div class="glass-panel rounded-[32px] max-w-sm w-full p-6 space-y-4 shadow-2xl border border-slate-700/50">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -643,7 +721,7 @@
         </div>
     </div>
 
-    <!-- СКРИПТЫ С ЧЕСТНОЙ ПРОВЕРКОЙ ОБЛАКА SUPABASE -->
+    <!-- СКРИПТЫ -->
     <script>
         if (window.Telegram && window.Telegram.WebApp) {
             window.Telegram.WebApp.ready();
@@ -752,6 +830,12 @@
         let currentProfileSubTab = 'calendar';
         let isAddingPastShiftMode = false;
 
+        function createEmptyTableObj(guestsCount = 2) {
+            const gNames = {};
+            for (let i = 1; i <= guestsCount; i++) gNames[i] = `Гость ${i}`;
+            return { items: [], guests: guestsCount, guestNames: gNames, activeGuest: "Гость 1", course: "⚡ Сразу", lastVisited: null, splitGroups: {} };
+        }
+
         function setCloudIndicator(status, text, errObj = null) {
             const dot = document.getElementById('cloudStatusIndicator');
             const lbl = document.getElementById('cloudStatusText');
@@ -782,9 +866,9 @@
             tables = JSON.parse(localStorage.getItem('fish_pro_tables')) || {};
             if(Object.keys(tables).length === 0) {
                 for(let i=1; i<=15; i++) {
-                    tables[`Стол ${i}`] = { items: [], guests: 2, guestNames: {1: "Гость 1", 2: "Гость 2"}, activeGuest: "Гость 1", course: "⚡ Сразу", lastVisited: null, splitGroups: {} };
+                    tables[`Стол ${i}`] = createEmptyTableObj(2);
                 }
-                tables["Банкет"] = { items: [], guests: 4, guestNames: {1: "Гость 1", 2: "Гость 2", 3: "Гость 3", 4: "Гость 4"}, activeGuest: "Гость 1", course: "⚡ Сразу", lastVisited: null, splitGroups: {} };
+                tables["Банкет"] = createEmptyTableObj(4);
             }
             closedHistory = JSON.parse(localStorage.getItem('fish_pro_history')) || [];
             shiftArchive = JSON.parse(localStorage.getItem('fish_pro_shift_archive')) || [];
@@ -793,7 +877,6 @@
             stopListSet = new Set(JSON.parse(localStorage.getItem('fish_pro_stoplist')) || []);
         }
 
-        // ЗАГРУЗКА ДАННЫХ ИЗ ОБЛАКА И ПЕРВИЧНАЯ ЗАПИСЬ
         async function initCloudData() {
             if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
                 userId = String(window.Telegram.WebApp.initDataUnsafe.user.id);
@@ -804,7 +887,6 @@
                 userId = localStorage.getItem('fish_pro_test_id');
             }
 
-            // Сначала берем локальные данные, чтобы ничего не потерять
             loadLocalFallback();
             setCloudIndicator('sync', 'Синхронизация...');
 
@@ -819,20 +901,26 @@
 
                 if (data && data.state) {
                     const s = data.state;
-                    tables = s.tables || tables;
+                    if (s.tables && Object.keys(s.tables).length > 0) {
+                        tables = s.tables;
+                    }
                     closedHistory = s.closedHistory || [];
                     shiftArchive = s.shiftArchive || [];
                     hourlyRate = s.hourlyRate !== undefined ? s.hourlyRate : 280;
                     shiftTipGoal = s.shiftTipGoal !== undefined ? s.shiftTipGoal : 3000;
                     stopListSet = new Set(s.stopListSet || []);
-                    setCloudIndicator('ok', 'Облако ОК');
+                    setCloudIndicator('ok', '☁️ Облако ОК');
                 } else {
-                    // Если в базе еще нет записи для этого пользователя — сразу создаем её!
                     await saveData();
                 }
             } catch (e) {
                 console.error("Cloud init error:", e);
-                setCloudIndicator('error', 'Ошибка БД (нажми)', e);
+                setCloudIndicator('error', '⚠️ Ошибка БД', e);
+            }
+
+            const tableKeys = Object.keys(tables);
+            if (tableKeys.length > 0 && !tables[currentTable]) {
+                currentTable = tableKeys[0];
             }
 
             selectedCalendarDateKey = getTodayDateKey();
@@ -840,7 +928,6 @@
             switchTab('hall');
         }
 
-        // ЧЕСТНОЕ СОХРАНЕНИЕ В SUPABASE С ПРОВЕРКОЙ ОШИБОК
         async function saveData() {
             localStorage.setItem('fish_pro_tables', JSON.stringify(tables));
             localStorage.setItem('fish_pro_history', JSON.stringify(closedHistory));
@@ -877,6 +964,199 @@
                 setCloudIndicator('error', '⚠️ Ошибка БД', e);
             }
         }
+
+        // ================= КОНСТРУКТОР ЗАЛА И СТОЛОВ =================
+
+        function getStandardTablesCount() {
+            let maxNum = 0;
+            for (let name in tables) {
+                const match = name.match(/^Стол\s+(\d+)$/i);
+                if (match) {
+                    const num = parseInt(match[1], 10);
+                    if (num > maxNum) maxNum = num;
+                }
+            }
+            return maxNum;
+        }
+
+        function openHallConstructorModal() {
+            document.getElementById('constructorTablesCountInput').value = getStandardTablesCount();
+            document.getElementById('customTableNameInput').value = '';
+            renderHallConstructorList();
+            document.getElementById('hallConstructorModal').classList.remove('hidden');
+        }
+
+        function closeHallConstructorModal() {
+            document.getElementById('hallConstructorModal').classList.add('hidden');
+            renderTables();
+            if (!document.getElementById('tabProfile').classList.contains('hidden')) {
+                renderProfileAll();
+            }
+        }
+
+        function stepStandardTablesCount(delta) {
+            const inp = document.getElementById('constructorTablesCountInput');
+            let val = parseInt(inp.value, 10) || 0;
+            val = Math.max(0, Math.min(100, val + delta));
+            inp.value = val;
+        }
+
+        function applyStandardTablesCount() {
+            const targetCount = Math.max(0, Math.min(100, parseInt(document.getElementById('constructorTablesCountInput').value, 10) || 0));
+
+            // Проверяем, нет ли активных заказов на столах, которые нужно удалить
+            for (let name in tables) {
+                const match = name.match(/^Стол\s+(\d+)$/i);
+                if (match) {
+                    const num = parseInt(match[1], 10);
+                    if (num > targetCount && tables[name].items && tables[name].items.length > 0) {
+                        alert(`На столе "${name}" есть открытый заказ! Сначала закройте или очистите его.`);
+                        return;
+                    }
+                }
+            }
+
+            const newTables = {};
+            // 1. Создаем или сохраняем Стол 1 ... Стол N по порядку
+            for (let i = 1; i <= targetCount; i++) {
+                const tName = `Стол ${i}`;
+                newTables[tName] = tables[tName] ? tables[tName] : createEmptyTableObj(2);
+            }
+
+            // 2. Сохраняем все кастомные столы и зоны (Банкет, Бар, VIP и т.д.)
+            for (let name in tables) {
+                if (!/^Стол\s+\d+$/i.test(name)) {
+                    newTables[name] = tables[name];
+                }
+            }
+
+            if (Object.keys(newTables).length === 0) {
+                newTables["Стол 1"] = createEmptyTableObj(2);
+            }
+
+            tables = newTables;
+            if (!tables[currentTable]) {
+                currentTable = Object.keys(tables)[0];
+            }
+
+            saveData();
+            renderHallConstructorList();
+            renderTables();
+        }
+
+        function applyHallPreset(presetType) {
+            const hasActiveOrders = Object.values(tables).some(t => t.items && t.items.length > 0);
+            if (hasActiveOrders) {
+                alert("В зале есть открытые столы с заказами! Закройте или очистите их перед сменой шаблона зала.");
+                return;
+            }
+
+            const newTables = {};
+            if (presetType === 'restaurant') {
+                for (let i = 1; i <= 15; i++) newTables[`Стол ${i}`] = createEmptyTableObj(2);
+                newTables["Банкет"] = createEmptyTableObj(4);
+            } else if (presetType === 'bar') {
+                for (let i = 1; i <= 8; i++) newTables[`Бар ${i}`] = createEmptyTableObj(1);
+                for (let i = 1; i <= 6; i++) newTables[`Стол ${i}`] = createEmptyTableObj(2);
+            } else if (presetType === 'cafe') {
+                for (let i = 1; i <= 8; i++) newTables[`Стол ${i}`] = createEmptyTableObj(2);
+                newTables["С собой 1"] = createEmptyTableObj(1);
+                newTables["С собой 2"] = createEmptyTableObj(1);
+            }
+
+            tables = newTables;
+            currentTable = Object.keys(tables)[0];
+            document.getElementById('constructorTablesCountInput').value = getStandardTablesCount();
+            saveData();
+            renderHallConstructorList();
+            renderTables();
+        }
+
+        function addCustomTableFromConstructor() {
+            const inp = document.getElementById('customTableNameInput');
+            const name = inp.value.trim();
+            if (!name) return;
+            if (tables[name]) {
+                alert("Стол или зона с таким названием уже существует!");
+                return;
+            }
+            tables[name] = createEmptyTableObj(2);
+            inp.value = '';
+            saveData();
+            document.getElementById('constructorTablesCountInput').value = getStandardTablesCount();
+            renderHallConstructorList();
+            renderTables();
+        }
+
+        function renameTableInConstructor(oldName) {
+            openSimpleModal("✏️ Переименовать стол", `Введите новое название для "${oldName}":`, oldName, (newName) => {
+                if (!newName || !newName.trim() || newName.trim() === oldName) return;
+                const trimmed = newName.trim();
+                if (tables[trimmed]) {
+                    alert("Такое название уже занято!");
+                    return;
+                }
+                const updated = {};
+                for (let k in tables) {
+                    if (k === oldName) {
+                        updated[trimmed] = tables[oldName];
+                    } else {
+                        updated[k] = tables[k];
+                    }
+                }
+                tables = updated;
+                if (currentTable === oldName) currentTable = trimmed;
+                saveData();
+                renderHallConstructorList();
+                renderTables();
+            });
+        }
+
+        function deleteTableInConstructor(name) {
+            if (Object.keys(tables).length <= 1) {
+                alert("В зале должен остаться хотя бы один стол!");
+                return;
+            }
+            if (tables[name] && tables[name].items && tables[name].items.length > 0) {
+                alert(`На столе "${name}" есть активный заказ! Сначала рассчитайте или очистите его.`);
+                return;
+            }
+            delete tables[name];
+            if (currentTable === name) {
+                currentTable = Object.keys(tables)[0];
+            }
+            saveData();
+            document.getElementById('constructorTablesCountInput').value = getStandardTablesCount();
+            renderHallConstructorList();
+            renderTables();
+        }
+
+        function renderHallConstructorList() {
+            const list = document.getElementById('constructorTablesList');
+            list.innerHTML = '';
+            const keys = Object.keys(tables);
+            document.getElementById('constructorTotalBadge').innerText = `Всего: ${keys.length}`;
+
+            keys.forEach(name => {
+                const t = tables[name];
+                const hasOrder = t.items && t.items.length > 0;
+                const row = document.createElement('div');
+                row.className = "flex justify-between items-center glass-element px-3 py-2 rounded-xl border border-slate-800";
+                row.innerHTML = `
+                    <div class="flex items-center space-x-2">
+                        <span class="font-extrabold text-slate-200">${name}</span>
+                        ${hasOrder ? '<span class="text-[9px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-bold">В работе</span>' : ''}
+                    </div>
+                    <div class="flex items-center space-x-1.5">
+                        <button onclick="renameTableInConstructor('${name.replace(/'/g, "\\'")}')" class="w-7 h-7 rounded-lg bg-slate-800 text-slate-300 flex items-center justify-center text-[10px] tap-scale" title="Переименовать">✏️</button>
+                        <button onclick="deleteTableInConstructor('${name.replace(/'/g, "\\'")}')" class="w-7 h-7 rounded-lg bg-rose-500/15 text-rose-400 flex items-center justify-center text-xs font-bold tap-scale" title="Удалить">✕</button>
+                    </div>
+                `;
+                list.appendChild(row);
+            });
+        }
+
+        // ================= ОСТАЛЬНЫЕ ФУНКЦИИ =================
 
         function getTodayDateKey() {
             const d = new Date();
@@ -1105,6 +1385,7 @@
         function renderProfileAll() {
             document.getElementById('profileHourlyRateDisplay').innerText = `${hourlyRate} ₽ / час`;
             document.getElementById('currentRateInfoBadge').innerText = `${hourlyRate} ₽/ч`;
+            document.getElementById('profileTablesCountInfo').innerText = `Активных позиций в зале: ${Object.keys(tables).length}`;
 
             const year = profileDate.getFullYear();
             const month = profileDate.getMonth();
@@ -1391,7 +1672,10 @@
             grid.innerHTML = '';
             let attentionCount = 0;
 
-            for(let name in tables) {
+            const keys = Object.keys(tables);
+            document.getElementById('hallHeaderTitle').innerText = `🗺 Зал (${keys.length} поз.)`;
+
+            for(let name of keys) {
                 const t = tables[name];
                 const hasOrder = t.items.length > 0;
                 
@@ -1416,8 +1700,8 @@
                 btn.onclick = () => handleTableClick(name);
                 btn.innerHTML = `
                     <div class="flex justify-between items-center w-full">
-                        <span class="font-extrabold text-xs">${name}</span>
-                        <span class="text-[10px] font-mono opacity-80">${hasOrder && t.lastVisited ? timerDisplay : ''}</span>
+                        <span class="font-extrabold text-xs truncate pr-1">${name}</span>
+                        <span class="text-[10px] font-mono opacity-80 shrink-0">${hasOrder && t.lastVisited ? timerDisplay : ''}</span>
                     </div>
                     <div>
                         <div class="text-[10px] opacity-60 font-medium">${t.guests} гост.</div>
@@ -1499,7 +1783,7 @@
         }
 
         function renderTableCard() {
-            if(!currentTable) return;
+            if(!currentTable || !tables[currentTable]) return;
             const t = tables[currentTable];
             
             const badge = document.getElementById('tableTimerBadge');
@@ -1827,7 +2111,7 @@
                         <span class="font-extrabold text-sm text-emerald-400">${total} ₽</span>
                     </div>
                     <div class="text-xs text-slate-400">Позиций: ${t.items.length} • Гостей: ${t.guests}</div>
-                    <button onclick="switchTab('hall'); document.getElementById('hallGridView').classList.add('hidden'); document.getElementById('activeTableCard').classList.remove('hidden'); currentTable='${name}'; toggleOrderReviewMode(true); renderTableCard();" class="w-full bg-slate-100 hover:bg-white text-slate-950 py-3 rounded-2xl text-xs font-extrabold tap-scale shadow">✏️ Открыть заказ</button>
+                    <button onclick="switchTab('hall'); document.getElementById('hallGridView').classList.add('hidden'); document.getElementById('activeTableCard').classList.remove('hidden'); currentTable='${name.replace(/'/g, "\\'")}'; document.getElementById('currentTableName').innerText='${name.replace(/'/g, "\\'")}'; toggleOrderReviewMode(true); renderTableCard();" class="w-full bg-slate-100 hover:bg-white text-slate-950 py-3 rounded-2xl text-xs font-extrabold tap-scale shadow">✏️ Открыть заказ</button>
                 `;
                 container.appendChild(card);
             }
@@ -2012,7 +2296,7 @@
             renderTables();
 
             if (t.items.length === 0) {
-                tables[currentTable] = { items: [], guests: 2, guestNames: {1: "Гость 1", 2: "Гость 2"}, activeGuest: "Гость 1", course: "⚡ Сразу", lastVisited: null, splitGroups: {} };
+                tables[currentTable] = createEmptyTableObj(2);
                 saveData();
                 document.getElementById('activeTableCard').classList.add('hidden');
                 document.getElementById('hallGridView').classList.remove('hidden');
