@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Живая Рыба PRO</title>
+    <title>Живая Рыба PRO — Пульт официанта</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -22,7 +22,7 @@
         }
 
         .glass-panel { 
-            background: linear-gradient(135deg, rgba(17, 24, 32, 0.85) 0%, rgba(10, 14, 19, 0.95) 100%); 
+            background: linear-gradient(135deg, rgba(17, 24, 32, 0.88) 0%, rgba(10, 14, 19, 0.96) 100%); 
             backdrop-filter: blur(28px); 
             -webkit-backdrop-filter: blur(28px); 
             border: 1px solid rgba(255, 255, 255, 0.07);
@@ -32,7 +32,7 @@
         .glass-element {
             background: rgba(30, 41, 59, 0.4);
             backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.06);
         }
         
         .tap-scale { transition: transform 0.12s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
@@ -41,10 +41,10 @@
         
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.12); border-radius: 4px; }
     </style>
 </head>
-<body class="flex flex-col justify-between selection:bg-[#789591] selection:text-slate-950">
+<body class="flex flex-col justify-between selection:bg-emerald-500 selection:text-slate-950">
 
     <!-- Шапка -->
     <header class="bg-[#07090b]/90 backdrop-blur-2xl border-b border-slate-800/60 shrink-0 px-5 py-3.5 z-40">
@@ -52,15 +52,15 @@
             <div class="flex items-center space-x-3">
                 <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/60 flex items-center justify-center text-xl shadow-inner">🐟</div>
                 <div>
-                    <h1 class="font-extrabold text-xs tracking-wider text-slate-100 uppercase">Живая Рыба PRO</h1>
+                    <h1 class="font-extrabold text-xs tracking-wider text-slate-100 uppercase">Пульт Официанта PRO</h1>
                     <div class="flex items-center space-x-1.5 mt-0.5">
                         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-lg shadow-emerald-500/50"></span>
                         <span class="text-[10px] text-emerald-400 font-bold uppercase tracking-wide">Смена активна</span>
                     </div>
                 </div>
             </div>
-            <div class="flex items-center space-x-2.5">
-                <div class="glass-element text-emerald-400 px-3.5 py-2 rounded-2xl text-xs font-extrabold flex items-center space-x-2 shadow-lg">
+            <div class="flex items-center space-x-2">
+                <div onclick="switchTab('history')" class="cursor-pointer glass-element text-emerald-400 px-3.5 py-2 rounded-2xl text-xs font-extrabold flex items-center space-x-1.5 shadow-lg tap-scale">
                     <span class="text-[10px] text-slate-400 font-medium">Чай:</span>
                     <span id="headerTipSum">0 ₽</span>
                 </div>
@@ -183,34 +183,27 @@
             <div id="myActiveTablesList" class="space-y-3"></div>
         </div>
 
-        <!-- ВКЛАДКА 3: История и Смена -->
+        <!-- ВКЛАДКА 3: Текущая смена (Чай и закрытые счета за сегодня) -->
         <div id="tabHistory" class="tab-content space-y-4 hidden">
             <div class="glass-panel rounded-3xl p-4 flex justify-between items-center shadow-lg border border-slate-700/50 bg-gradient-to-r from-slate-900 to-slate-950">
                 <div>
-                    <h3 class="text-xs font-extrabold uppercase tracking-widest text-slate-200">📅 Текущая смена</h3>
-                    <p class="text-[10px] text-slate-400 mt-0.5">Архивировать день и начать с нуля</p>
+                    <h3 class="text-xs font-extrabold uppercase tracking-widest text-slate-200">⏱ Завершение смены</h3>
+                    <p class="text-[10px] text-slate-400 mt-0.5">Посчитать часы, ставку + чай и сохранить</p>
                 </div>
-                <button onclick="finishCurrentShift()" class="bg-amber-500/15 text-amber-400 border border-amber-500/30 hover:bg-amber-500/25 px-3.5 py-2 rounded-2xl text-xs font-extrabold tap-scale shadow">🏁 Завершить смену</button>
-            </div>
-
-            <div class="glass-panel rounded-3xl p-4 space-y-3 shadow-lg">
-                <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400">📂 Архив прошлых смен</h3>
-                <div id="shiftArchiveList" class="space-y-2 max-h-56 overflow-y-auto pr-1 text-xs">
-                    <p class="text-slate-500 text-center py-4 italic">Нет сохраненных смен в архиве</p>
-                </div>
+                <button onclick="openFinishShiftModal()" class="bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 px-3.5 py-2.5 rounded-2xl text-xs font-extrabold tap-scale shadow">🏁 Закрыть смену</button>
             </div>
 
             <!-- Блок цели по чаевым -->
             <div class="glass-panel rounded-3xl p-4 space-y-3 shadow-lg border border-slate-700/50">
                 <div class="flex justify-between items-center">
                     <div>
-                        <h3 class="text-xs font-extrabold uppercase tracking-widest text-slate-200">🎯 Цель по чаевым на смену</h3>
+                        <h3 class="text-xs font-extrabold uppercase tracking-widest text-slate-200">🎯 Цель по чаевым на сегодня</h3>
                         <p id="tipGoalSubtitle" class="text-[10px] text-slate-400 mt-0.5">Заработано 0 ₽ из 3000 ₽</p>
                     </div>
-                    <button onclick="openEditGoalModal()" class="text-xs glass-element bg-slate-800 text-slate-300 border border-slate-700 px-3 py-1.5 rounded-xl font-bold tap-scale">Изменить цель</button>
+                    <button onclick="openEditGoalModal()" class="text-xs glass-element bg-slate-800 text-slate-300 border border-slate-700 px-3 py-1.5 rounded-xl font-bold tap-scale">Изменить</button>
                 </div>
                 <div class="w-full bg-slate-950 h-3 rounded-full overflow-hidden p-0.5 border border-slate-800">
-                    <div id="tipGoalProgressBar" class="bg-gradient-to-r from-slate-400 to-slate-100 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                    <div id="tipGoalProgressBar" class="bg-gradient-to-r from-emerald-500 to-teal-300 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
                 </div>
                 <div id="tipGoalMessage" class="text-[11px] text-slate-300 font-medium text-center italic">Поставь цель и вперед к победе! 🚀</div>
             </div>
@@ -218,26 +211,26 @@
             <!-- Блок статистики (Нал / Безнал) -->
             <div class="grid grid-cols-2 gap-3">
                 <div class="glass-panel p-4 rounded-3xl space-y-1 shadow-lg">
-                    <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Всего чаевых</p>
+                    <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Чаевые за сегодня</p>
                     <p id="statsTotalTips" class="text-2xl font-extrabold text-slate-100">0 ₽</p>
                     <div class="text-[10px] text-slate-400 pt-1 flex justify-between border-t border-slate-800/60 mt-1">
                         <span>💵 Нал: <b id="statsCashTips" class="text-emerald-400">0 ₽</b></span>
-                        <span>💳 Безнал: <b id="statsCardTips" class="text-sky-400">0 ₽</b></span>
+                        <span>💳 Б/н: <b id="statsCardTips" class="text-sky-400">0 ₽</b></span>
                     </div>
                 </div>
                 <div class="glass-panel p-4 rounded-3xl space-y-1 shadow-lg">
                     <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Закрыто счетов</p>
                     <p id="statsTotalTables" class="text-2xl font-extrabold text-slate-100">0</p>
-                    <div class="text-[10px] text-slate-400 pt-1 border-t border-slate-800/60 mt-1">
-                        <span>Смена активна</span>
+                    <div class="text-[10px] text-slate-400 pt-1 border-t border-slate-800/60 mt-1 flex justify-between">
+                        <span>Ставка: <b id="currentRateInfoBadge" class="text-slate-200">280 ₽/ч</b></span>
                     </div>
                 </div>
             </div>
 
             <div class="glass-panel rounded-3xl p-4 space-y-3 shadow-lg">
                 <div class="flex justify-between items-center">
-                    <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400">Счета за смену (тап для просмотра)</h3>
-                    <button onclick="openManualTipModal()" class="text-xs glass-element text-slate-300 border border-slate-700 px-3 py-1.5 rounded-2xl font-extrabold tap-scale">＋ Чай переводом</button>
+                    <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400">Счета за сегодня (тап для деталей)</h3>
+                    <button onclick="openManualTipModal()" class="text-xs glass-element text-slate-300 border border-slate-700 px-3 py-1.5 rounded-2xl font-extrabold tap-scale">＋ Чай вручную</button>
                 </div>
                 <div id="closedTablesHistory" class="space-y-2 max-h-72 overflow-y-auto pr-1 text-xs">
                     <p class="text-slate-500 text-center py-6 italic">Нет закрытых счетов за текущую смену</p>
@@ -257,29 +250,264 @@
             </div>
         </div>
 
+        <!-- ВКЛАДКА 5: ПРОФИЛЬ (SuperShift Календарь смен + Отчет за месяц) -->
+        <div id="tabProfile" class="tab-content space-y-4 hidden">
+            
+            <!-- Карточка настроек ставки и добавления смены -->
+            <div class="glass-panel rounded-3xl p-4 flex justify-between items-center shadow-lg border border-slate-700/50">
+                <div class="flex items-center space-x-3">
+                    <div class="w-11 h-11 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-xl">💼</div>
+                    <div>
+                        <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Почасовая ставка</div>
+                        <div class="flex items-center space-x-2 mt-0.5">
+                            <span id="profileHourlyRateDisplay" class="text-base font-extrabold text-slate-100">280 ₽ / час</span>
+                            <button onclick="openRateModal()" class="text-[10px] glass-element px-2 py-0.5 rounded-lg text-sky-400 font-bold tap-scale">✏️ Изм.</button>
+                        </div>
+                    </div>
+                </div>
+                <button onclick="openAddPastShiftModal()" class="glass-element border border-slate-700 hover:bg-slate-800 text-slate-200 px-3 py-2.5 rounded-2xl text-xs font-extrabold tap-scale shadow">
+                    ＋ Смена
+                </button>
+            </div>
+
+            <!-- Переключатель внутри Профиля: Календарь смен / Отчет за месяц -->
+            <div class="glass-panel p-1.5 rounded-2xl grid grid-cols-2 gap-1.5 border border-slate-800">
+                <button onclick="switchProfileSubTab('calendar')" id="profileSubBtnCalendar" class="py-2.5 rounded-xl text-xs font-extrabold bg-slate-100 text-slate-950 shadow tap-scale">📅 Календарь смен</button>
+                <button onclick="switchProfileSubTab('report')" id="profileSubBtnReport" class="py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-200 tap-scale">📈 Отчет за месяц</button>
+            </div>
+
+            <!-- Навигация по месяцам (общая для календаря и отчета) -->
+            <div class="flex justify-between items-center px-2">
+                <button onclick="changeProfileMonth(-1)" class="glass-element w-9 h-9 rounded-xl flex items-center justify-center text-slate-300 font-bold tap-scale">◀</button>
+                <div class="text-center">
+                    <h3 id="profileCurrentMonthLabel" class="text-sm font-extrabold text-slate-100 uppercase tracking-wider">Октябрь 2026</h3>
+                    <p id="profileMonthQuickSummary" class="text-[10px] text-emerald-400 font-bold">Смен: 0 • Доход: 0 ₽</p>
+                </div>
+                <button onclick="changeProfileMonth(1)" class="glass-element w-9 h-9 rounded-xl flex items-center justify-center text-slate-300 font-bold tap-scale">▶</button>
+            </div>
+
+            <!-- ПОД-ВКЛАДКА 1: КАЛЕНДАРЬ И АРХИВ ДНЯ -->
+            <div id="profileCalendarView" class="space-y-4">
+                <div class="glass-panel rounded-3xl p-4 space-y-3 shadow-xl border border-slate-800/80">
+                    <!-- Дни недели -->
+                    <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-slate-500 uppercase">
+                        <div>Пн</div><div>Вт</div><div>Ср</div><div>Чт</div><div>Пт</div><div class="text-rose-400/80">Сб</div><div class="text-rose-400/80">Вс</div>
+                    </div>
+                    <!-- Сетка дней -->
+                    <div id="calendarDaysGrid" class="grid grid-cols-7 gap-1.5"></div>
+                </div>
+
+                <!-- Детали выбранного дня в календаре -->
+                <div id="selectedDayArchiveCard" class="glass-panel rounded-3xl p-4 space-y-3 shadow-xl border border-slate-700/60">
+                    <div class="flex justify-between items-center border-b border-slate-800 pb-2.5">
+                        <div>
+                            <h4 id="selectedDayTitle" class="text-xs font-extrabold text-slate-100 uppercase tracking-wider">Выберите день в календаре</h4>
+                            <p id="selectedDaySubtitle" class="text-[10px] text-slate-400 mt-0.5">Нажмите на любую дату, чтобы увидеть архив смены</p>
+                        </div>
+                        <div id="selectedDayActions" class="hidden">
+                            <button onclick="deleteSelectedDayShift()" class="text-[10px] bg-rose-500/10 text-rose-400 border border-rose-500/30 px-2.5 py-1.5 rounded-xl font-bold tap-scale">🗑 Удалить</button>
+                        </div>
+                    </div>
+
+                    <div id="selectedDayContent" class="hidden space-y-3">
+                        <div class="grid grid-cols-3 gap-2 text-center">
+                            <div class="glass-element p-2.5 rounded-2xl">
+                                <div class="text-[9px] text-slate-400 uppercase font-bold">По ставке</div>
+                                <div id="dayArchiveWage" class="text-xs font-extrabold text-slate-100 mt-0.5">0 ₽</div>
+                                <div id="dayArchiveHours" class="text-[9px] text-sky-400 font-semibold">0 ч</div>
+                            </div>
+                            <div class="glass-element p-2.5 rounded-2xl">
+                                <div class="text-[9px] text-slate-400 uppercase font-bold">Чаевые</div>
+                                <div id="dayArchiveTips" class="text-xs font-extrabold text-emerald-400 mt-0.5">0 ₽</div>
+                                <div id="dayArchiveTipsSplit" class="text-[9px] text-slate-400">Нал 0 / Бн 0</div>
+                            </div>
+                            <div class="bg-emerald-500/10 border border-emerald-500/30 p-2.5 rounded-2xl">
+                                <div class="text-[9px] text-emerald-300 uppercase font-bold">Всего за день</div>
+                                <div id="dayArchiveTotal" class="text-sm font-extrabold text-emerald-400 mt-0.5">0 ₽</div>
+                                <div id="dayArchiveTablesCount" class="text-[9px] text-emerald-300/80">Счетов: 0</div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Закрытые счета за этот день:</div>
+                            <div id="dayArchiveBillsList" class="space-y-1.5 max-h-60 overflow-y-auto pr-1 text-xs"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ПОД-ВКЛАДКА 2: ПОЛНЫЙ ОТЧЕТ ЗА МЕСЯЦ -->
+            <div id="profileReportView" class="space-y-4 hidden">
+                <!-- Главная карточка дохода -->
+                <div class="glass-panel rounded-[32px] p-5 space-y-4 border border-emerald-500/30 bg-gradient-to-br from-emerald-950/30 via-slate-900 to-slate-950 shadow-2xl">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span class="text-[10px] uppercase font-extrabold tracking-widest text-emerald-400">💰 Общий доход за месяц</span>
+                            <div id="reportTotalIncome" class="text-3xl font-extrabold text-slate-100 mt-1">0 ₽</div>
+                        </div>
+                        <span id="reportShiftsCountBadge" class="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-3 py-1 rounded-full text-xs font-extrabold">0 смен</span>
+                    </div>
+
+                    <!-- Полоса соотношения Ставка vs Чаевые -->
+                    <div class="space-y-1.5">
+                        <div class="w-full bg-slate-950 h-3 rounded-full overflow-hidden flex border border-slate-800 p-0.5">
+                            <div id="reportWageBar" class="bg-sky-500 h-full rounded-l-full transition-all duration-500" style="width: 50%"></div>
+                            <div id="reportTipsBar" class="bg-emerald-400 h-full rounded-r-full transition-all duration-500" style="width: 50%"></div>
+                        </div>
+                        <div class="flex justify-between text-[10px] font-bold">
+                            <span class="text-sky-400">🔹 По ставке: <span id="reportWagePercent">0%</span></span>
+                            <span class="text-emerald-400">🔸 Чаевые: <span id="reportTipsPercent">0%</span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Детальная сетка показателей за месяц -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="glass-panel p-4 rounded-3xl space-y-1">
+                        <p class="text-[10px] text-slate-400 uppercase font-bold">Отработано часов</p>
+                        <p id="reportTotalHours" class="text-xl font-extrabold text-slate-100">0 ч</p>
+                        <p id="reportAvgHours" class="text-[10px] text-slate-400">В среднем 0 ч/смена</p>
+                    </div>
+                    <div class="glass-panel p-4 rounded-3xl space-y-1">
+                        <p class="text-[10px] text-slate-400 uppercase font-bold">Зарплата по часам</p>
+                        <p id="reportTotalWage" class="text-xl font-extrabold text-sky-400">0 ₽</p>
+                        <p id="reportRateNote" class="text-[10px] text-slate-400">Ставка 280 ₽/ч</p>
+                    </div>
+                    <div class="glass-panel p-4 rounded-3xl space-y-1">
+                        <p class="text-[10px] text-slate-400 uppercase font-bold">Всего чаевых</p>
+                        <p id="reportTotalTips" class="text-xl font-extrabold text-emerald-400">0 ₽</p>
+                        <p id="reportTipsSplit" class="text-[10px] text-slate-400">Нал: 0 ₽ • Б/н: 0 ₽</p>
+                    </div>
+                    <div class="glass-panel p-4 rounded-3xl space-y-1">
+                        <p class="text-[10px] text-slate-400 uppercase font-bold">Средний доход</p>
+                        <p id="reportAvgShiftIncome" class="text-xl font-extrabold text-amber-400">0 ₽</p>
+                        <p class="text-[10px] text-slate-400">За 1 рабочую смену</p>
+                    </div>
+                </div>
+
+                <!-- Выручка по кассе и количество счетов -->
+                <div class="glass-panel rounded-3xl p-4 flex justify-between items-center text-xs">
+                    <div>
+                        <div class="font-bold text-slate-300">Касса закрытых столов за месяц</div>
+                        <div id="reportTotalBillsCount" class="text-[10px] text-slate-400">Обслужено счетов: 0</div>
+                    </div>
+                    <div id="reportTotalRevenue" class="text-base font-extrabold text-slate-200">0 ₽</div>
+                </div>
+
+                <button onclick="copyMonthlyReportToClipboard()" class="w-full bg-slate-100 hover:bg-white text-slate-950 font-extrabold py-4 rounded-2xl text-xs shadow-xl tap-scale flex items-center justify-center space-x-2">
+                    <span>📋</span>
+                    <span>Скопировать отчет за месяц</span>
+                </button>
+            </div>
+        </div>
+
     </main>
 
-    <!-- Плавающая нижняя панель -->
-    <nav class="bg-[#07090b]/90 backdrop-blur-2xl border-t border-slate-800/60 shrink-0 fixed bottom-0 left-0 right-0 z-50 px-4 py-3 shadow-2xl">
-        <div class="max-w-md mx-auto glass-panel rounded-[28px] p-1.5 grid grid-cols-4 gap-1 border border-slate-700/50 shadow-2xl">
-            <button onclick="switchTab('hall')" id="navBtnHall" class="flex flex-col items-center justify-center py-2.5 rounded-2xl text-slate-950 font-extrabold bg-slate-100 border border-slate-200 transition tap-scale shadow">
-                <span class="text-base">🗺️</span>
-                <span class="text-[9px] mt-0.5 tracking-wide">Зал</span>
+    <!-- Плавающая нижняя панель (5 вкладок) -->
+    <nav class="bg-[#07090b]/90 backdrop-blur-2xl border-t border-slate-800/60 shrink-0 fixed bottom-0 left-0 right-0 z-50 px-3 py-2.5 shadow-2xl">
+        <div class="max-w-md mx-auto glass-panel rounded-[26px] p-1 grid grid-cols-5 gap-1 border border-slate-700/50 shadow-2xl">
+            <button onclick="switchTab('hall')" id="navBtnHall" class="flex flex-col items-center justify-center py-2 rounded-2xl text-slate-950 font-extrabold bg-slate-100 border border-slate-200 transition tap-scale shadow">
+                <span class="text-sm">🗺️</span>
+                <span class="text-[9px] mt-0.5 tracking-tight">Зал</span>
             </button>
-            <button onclick="switchTab('myTables')" id="navBtnMyTables" class="flex flex-col items-center justify-center py-2.5 rounded-2xl text-slate-400 font-medium hover:bg-slate-800/50 transition tap-scale">
-                <span class="text-base">🍽️</span>
-                <span class="text-[9px] mt-0.5 tracking-wide">Столы</span>
+            <button onclick="switchTab('myTables')" id="navBtnMyTables" class="flex flex-col items-center justify-center py-2 rounded-2xl text-slate-400 font-medium hover:bg-slate-800/50 transition tap-scale">
+                <span class="text-sm">🍽️</span>
+                <span class="text-[9px] mt-0.5 tracking-tight">Столы</span>
             </button>
-            <button onclick="switchTab('history')" id="navBtnHistory" class="flex flex-col items-center justify-center py-2.5 rounded-2xl text-slate-400 font-medium hover:bg-slate-800/50 transition tap-scale">
-                <span class="text-base">📊</span>
-                <span class="text-[9px] mt-0.5 tracking-wide">История</span>
+            <button onclick="switchTab('history')" id="navBtnHistory" class="flex flex-col items-center justify-center py-2 rounded-2xl text-slate-400 font-medium hover:bg-slate-800/50 transition tap-scale">
+                <span class="text-sm">📊</span>
+                <span class="text-[9px] mt-0.5 tracking-tight">Смена</span>
             </button>
-            <button onclick="switchTab('stopList')" id="navBtnStopList" class="flex flex-col items-center justify-center py-2.5 rounded-2xl text-slate-400 font-medium hover:bg-slate-800/50 transition tap-scale">
-                <span class="text-base">🛑</span>
-                <span class="text-[9px] mt-0.5 tracking-wide">Стоп</span>
+            <button onclick="switchTab('stopList')" id="navBtnStopList" class="flex flex-col items-center justify-center py-2 rounded-2xl text-slate-400 font-medium hover:bg-slate-800/50 transition tap-scale">
+                <span class="text-sm">🛑</span>
+                <span class="text-[9px] mt-0.5 tracking-tight">Стоп</span>
+            </button>
+            <button onclick="switchTab('profile')" id="navBtnProfile" class="flex flex-col items-center justify-center py-2 rounded-2xl text-slate-400 font-medium hover:bg-slate-800/50 transition tap-scale">
+                <span class="text-sm">👤</span>
+                <span class="text-[9px] mt-0.5 tracking-tight">Профиль</span>
             </button>
         </div>
     </nav>
+
+    <!-- МОДАЛКА ЗАВЕРШЕНИЯ СМЕНЫ (С РАСЧЕТОМ ЧАСОВ И СТАВКИ) -->
+    <div id="finishShiftModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-panel rounded-[32px] max-w-sm w-full p-6 space-y-4 shadow-2xl border border-slate-700/50">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 id="finishShiftModalTitle" class="font-extrabold text-sm text-emerald-400">🏁 Завершение смены</h3>
+                <button onclick="closeFinishShiftModal()" class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs">✕</button>
+            </div>
+
+            <div class="space-y-3 text-xs">
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-400 font-medium">Дата смены:</span>
+                    <input type="date" id="finishShiftDateInput" class="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-100 outline-none font-bold">
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="text-slate-300 font-bold">Сколько часов отработано:</label>
+                    <div class="grid grid-cols-5 gap-1.5">
+                        <button onclick="setShiftHoursQuick(8)" class="glass-element py-2 rounded-xl font-extrabold text-xs tap-scale">8ч</button>
+                        <button onclick="setShiftHoursQuick(10)" class="glass-element py-2 rounded-xl font-extrabold text-xs tap-scale">10ч</button>
+                        <button onclick="setShiftHoursQuick(12)" class="glass-element py-2 rounded-xl font-extrabold text-xs tap-scale">12ч</button>
+                        <button onclick="setShiftHoursQuick(13)" class="glass-element py-2 rounded-xl font-extrabold text-xs tap-scale">13ч</button>
+                        <button onclick="setShiftHoursQuick(14)" class="glass-element py-2 rounded-xl font-extrabold text-xs tap-scale">14ч</button>
+                    </div>
+                    <input type="number" step="0.5" id="finishShiftHoursInput" placeholder="Часы (например: 13)" oninput="recalcFinishShiftPreview()" class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-2.5 text-xs text-slate-100 outline-none font-bold">
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-slate-300 font-bold">Почасовая ставка (₽/час):</label>
+                    <input type="number" id="finishShiftRateInput" oninput="recalcFinishShiftPreview()" class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-2.5 text-xs text-slate-100 outline-none font-bold">
+                </div>
+
+                <!-- Блок ручного ввода чая (показывается только при добавлении прошлой смены в календарь) -->
+                <div id="pastShiftManualTipsBox" class="space-y-2 pt-1 border-t border-slate-800 hidden">
+                    <label class="text-slate-300 font-bold">Чаевые за ту смену (₽):</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <span class="text-[10px] text-slate-400">💵 Нал:</span>
+                            <input type="number" id="pastShiftCashTipsInput" value="0" oninput="recalcFinishShiftPreview()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 outline-none">
+                        </div>
+                        <div>
+                            <span class="text-[10px] text-slate-400">💳 Безнал:</span>
+                            <input type="number" id="pastShiftCardTipsInput" value="0" oninput="recalcFinishShiftPreview()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Итоговая сводка перед сохранением -->
+                <div class="glass-element p-3.5 rounded-2xl border border-slate-800 space-y-1.5">
+                    <div class="flex justify-between text-slate-300">
+                        <span>Зарплата по часам:</span>
+                        <span id="finishPreviewWage" class="font-extrabold text-sky-400">3 640 ₽</span>
+                    </div>
+                    <div class="flex justify-between text-slate-300">
+                        <span>Чаевые за смену:</span>
+                        <span id="finishPreviewTips" class="font-extrabold text-emerald-400">0 ₽</span>
+                    </div>
+                    <div class="flex justify-between text-sm font-extrabold text-slate-100 pt-1.5 border-t border-slate-800">
+                        <span>ИТОГО ЗА ДЕНЬ:</span>
+                        <span id="finishPreviewTotal" class="text-emerald-400">3 640 ₽</span>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="confirmSaveShiftToArchive()" class="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-extrabold py-3.5 rounded-2xl text-xs shadow-xl tap-scale">💾 Сохранить смену в календарь</button>
+        </div>
+    </div>
+
+    <!-- МОДАЛКА ИЗМЕНЕНИЯ ПОЧАСОВОЙ СТАВКИ И ЦЕЛИ -->
+    <div id="simpleInputModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-panel rounded-[32px] max-w-xs w-full p-6 space-y-4 shadow-2xl border border-slate-700/50">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 id="simpleModalTitle" class="font-extrabold text-sm text-slate-100">Настройка</h3>
+                <button onclick="closeSimpleModal()" class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs">✕</button>
+            </div>
+            <p id="simpleModalDesc" class="text-[11px] text-slate-400"></p>
+            <input type="text" id="simpleModalInput" class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs text-slate-100 outline-none font-bold">
+            <button onclick="confirmSimpleModal()" class="w-full bg-slate-100 text-slate-950 font-extrabold py-3 rounded-2xl text-xs tap-scale shadow">Сохранить</button>
+        </div>
+    </div>
 
     <!-- МОДАЛКА ГОСТЕЙ -->
     <div id="guestsSelectModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-50 hidden flex items-center justify-center p-4">
@@ -370,11 +598,11 @@
         </div>
     </div>
 
-    <!-- ФИРМЕННАЯ МОДАЛКА РУЧНОГО ЧАЯ (ВМЕСТО УБОГОГО CONFIRM) -->
+    <!-- ФИРМЕННАЯ МОДАЛКА РУЧНОГО ЧАЯ -->
     <div id="manualTipModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-50 hidden flex items-center justify-center p-4">
         <div class="glass-panel rounded-[32px] max-w-xs w-full p-6 space-y-4 shadow-2xl border border-slate-700/50">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-                <h3 class="font-extrabold text-sm text-slate-100">＋ Чай переводом / Вручную</h3>
+                <h3 class="font-extrabold text-sm text-slate-100">＋ Добавить чаевые</h3>
                 <button onclick="closeManualTipModal()" class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs">✕</button>
             </div>
             <div class="space-y-1">
@@ -453,7 +681,7 @@
             window.Telegram.WebApp.ready();
             window.Telegram.WebApp.expand();
             if (window.Telegram.WebApp.requestFullscreen) {
-                window.Telegram.WebApp.requestFullscreen();
+                try { window.Telegram.WebApp.requestFullscreen(); } catch(e) {}
             }
         }
 
@@ -537,16 +765,58 @@
         let pendingHosperItem = null;
         let closedHistory = JSON.parse(localStorage.getItem('fish_pro_history')) || [];
         let shiftArchive = JSON.parse(localStorage.getItem('fish_pro_shift_archive')) || [];
+        let hourlyRate = Number(localStorage.getItem('fish_pro_hourly_rate')) || 280;
+        let shiftTipGoal = Number(localStorage.getItem('fish_pro_goal')) || 3000;
+        let stopListSet = new Set(JSON.parse(localStorage.getItem('fish_pro_stoplist')) || []);
+
         let currentTipAmount = 0;
         let currentTipType = "Нал";
         let currentBillPaymentMethod = "Нал";
         let manualTipModalType = "Перевод";
         let onlyAttentionFilter = false;
         let selectedActiveCourse = "⚡ Сразу";
-        let stopListSet = new Set(JSON.parse(localStorage.getItem('fish_pro_stoplist')) || []);
         let tableToOpenGuests = null;
-        let shiftTipGoal = Number(localStorage.getItem('fish_pro_goal')) || 3000;
         let selectedCheckoutGroup = null;
+        let simpleModalCallback = null;
+
+        // Переменные для календаря и профиля
+        let profileDate = new Date();
+        let selectedCalendarDateKey = null;
+        let currentProfileSubTab = 'calendar';
+        let isAddingPastShiftMode = false;
+
+        // Нормализация старых записей архива (если есть)
+        shiftArchive.forEach(s => {
+            if (!s.dateKey) {
+                const parts = (s.date || '').split('.');
+                if (parts.length === 3) {
+                    s.dateKey = `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+                } else {
+                    s.dateKey = getTodayDateKey();
+                }
+            }
+            if (s.hours === undefined) s.hours = 12;
+            if (s.rate === undefined) s.rate = hourlyRate;
+            if (s.wage === undefined) s.wage = Math.round(s.hours * s.rate);
+            if (s.cashTips === undefined) {
+                s.cashTips = (s.items || []).filter(i => i.tipType === 'Нал').reduce((sum, i) => sum + i.tip, 0);
+            }
+            if (s.cardTips === undefined) {
+                s.cardTips = (s.totalTips || 0) - s.cashTips;
+            }
+            if (s.totalEarned === undefined) s.totalEarned = s.wage + (s.totalTips || 0);
+        });
+
+        function getTodayDateKey() {
+            const d = new Date();
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
+
+        function formatDateKeyToRu(dateKey) {
+            if (!dateKey) return '';
+            const [y, m, d] = dateKey.split('-');
+            return `${d}.${m}.${y}`;
+        }
 
         function saveData() {
             localStorage.setItem('fish_pro_tables', JSON.stringify(tables));
@@ -554,31 +824,32 @@
             localStorage.setItem('fish_pro_shift_archive', JSON.stringify(shiftArchive));
             localStorage.setItem('fish_pro_stoplist', JSON.stringify([...stopListSet]));
             localStorage.setItem('fish_pro_goal', shiftTipGoal);
+            localStorage.setItem('fish_pro_hourly_rate', hourlyRate);
         }
 
-        function finishCurrentShift() {
-            if (closedHistory.length === 0) {
-                alert("За смену не было закрытых счетов.");
-                return;
-            }
-            if (confirm("Завершить текущую смену и сохранить её в архив? Статистика смены обнулится.")) {
-                const totalTips = closedHistory.reduce((s, h) => s + h.tip, 0);
-                const shiftRecord = {
-                    date: new Date().toLocaleDateString(),
-                    tablesCount: closedHistory.length,
-                    totalTips: totalTips,
-                    items: [...closedHistory]
-                };
-                shiftArchive.unshift(shiftRecord);
-                closedHistory = [];
-                saveData();
-                renderStats();
-                renderShiftArchive();
-                updateTipGoalUI();
-                alert("Смена успешно сохранена в архив!");
-            }
+        // Универсальная модалка вместо системного prompt
+        function openSimpleModal(title, desc, defaultValue, callback) {
+            document.getElementById('simpleModalTitle').innerText = title;
+            document.getElementById('simpleModalDesc').innerText = desc;
+            const inp = document.getElementById('simpleModalInput');
+            inp.value = defaultValue || '';
+            simpleModalCallback = callback;
+            document.getElementById('simpleInputModal').classList.remove('hidden');
+            setTimeout(() => inp.focus(), 50);
         }
 
+        function closeSimpleModal() {
+            document.getElementById('simpleInputModal').classList.add('hidden');
+            simpleModalCallback = null;
+        }
+
+        function confirmSimpleModal() {
+            const val = document.getElementById('simpleModalInput').value;
+            if (simpleModalCallback) simpleModalCallback(val);
+            closeSimpleModal();
+        }
+
+        // Переключение основных вкладок
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             if(tabId === 'hall') {
@@ -592,26 +863,409 @@
             } else if(tabId === 'history') {
                 document.getElementById('tabHistory').classList.remove('hidden');
                 renderStats();
-                renderShiftArchive();
                 updateTipGoalUI();
             } else if(tabId === 'stopList') {
                 document.getElementById('tabStopList').classList.remove('hidden');
                 renderStopList();
+            } else if(tabId === 'profile') {
+                document.getElementById('tabProfile').classList.remove('hidden');
+                renderProfileAll();
             }
 
             document.getElementById('mainScrollContainer').scrollTop = 0;
 
-            ['Hall', 'MyTables', 'History', 'StopList'].forEach(id => {
-                const btn = document.getElementById('navBtn' + id);
+            const map = { hall: 'Hall', myTables: 'MyTables', history: 'History', stopList: 'StopList', profile: 'Profile' };
+            Object.keys(map).forEach(key => {
+                const btn = document.getElementById('navBtn' + map[key]);
                 if(btn) {
-                    if(id.toLowerCase() === tabId.toLowerCase() || (id === 'Hall' && tabId === 'hall')) {
-                        btn.className = "flex flex-col items-center justify-center py-2.5 rounded-2xl text-slate-950 font-extrabold bg-slate-100 border border-slate-200 transition tap-scale shadow";
+                    if(key === tabId) {
+                        btn.className = "flex flex-col items-center justify-center py-2 rounded-2xl text-slate-950 font-extrabold bg-slate-100 border border-slate-200 transition tap-scale shadow";
                     } else {
-                        btn.className = "flex flex-col items-center justify-center py-2.5 rounded-2xl text-slate-400 font-medium hover:bg-slate-800/50 transition tap-scale";
+                        btn.className = "flex flex-col items-center justify-center py-2 rounded-2xl text-slate-400 font-medium hover:bg-slate-800/50 transition tap-scale";
                     }
                 }
             });
         }
+
+        // ================= ЛОГИКА ЗАВЕРШЕНИЯ СМЕНЫ И КАЛЕНДАРЯ =================
+
+        function openFinishShiftModal() {
+            isAddingPastShiftMode = false;
+            document.getElementById('finishShiftModalTitle').innerText = "🏁 Завершение текущей смены";
+            document.getElementById('finishShiftDateInput').value = getTodayDateKey();
+            document.getElementById('finishShiftHoursInput').value = 13;
+            document.getElementById('finishShiftRateInput').value = hourlyRate;
+            document.getElementById('pastShiftManualTipsBox').classList.add('hidden');
+            recalcFinishShiftPreview();
+            document.getElementById('finishShiftModal').classList.remove('hidden');
+        }
+
+        function openAddPastShiftModal() {
+            isAddingPastShiftMode = true;
+            document.getElementById('finishShiftModalTitle').innerText = "📅 Добавить смену в календарь";
+            document.getElementById('finishShiftDateInput').value = selectedCalendarDateKey || getTodayDateKey();
+            document.getElementById('finishShiftHoursInput').value = 13;
+            document.getElementById('finishShiftRateInput').value = hourlyRate;
+            document.getElementById('pastShiftCashTipsInput').value = 0;
+            document.getElementById('pastShiftCardTipsInput').value = 0;
+            document.getElementById('pastShiftManualTipsBox').classList.remove('hidden');
+            recalcFinishShiftPreview();
+            document.getElementById('finishShiftModal').classList.remove('hidden');
+        }
+
+        function closeFinishShiftModal() {
+            document.getElementById('finishShiftModal').classList.add('hidden');
+        }
+
+        function setShiftHoursQuick(h) {
+            document.getElementById('finishShiftHoursInput').value = h;
+            recalcFinishShiftPreview();
+        }
+
+        function recalcFinishShiftPreview() {
+            const hours = Number(document.getElementById('finishShiftHoursInput').value) || 0;
+            const rate = Number(document.getElementById('finishShiftRateInput').value) || 0;
+            const wage = Math.round(hours * rate);
+
+            let totalTips = 0;
+            if (isAddingPastShiftMode) {
+                const cashT = Number(document.getElementById('pastShiftCashTipsInput').value) || 0;
+                const cardT = Number(document.getElementById('pastShiftCardTipsInput').value) || 0;
+                totalTips = cashT + cardT;
+            } else {
+                totalTips = closedHistory.reduce((s, h) => s + h.tip, 0);
+            }
+
+            document.getElementById('finishPreviewWage').innerText = wage.toLocaleString('ru-RU') + ' ₽';
+            document.getElementById('finishPreviewTips').innerText = totalTips.toLocaleString('ru-RU') + ' ₽';
+            document.getElementById('finishPreviewTotal').innerText = (wage + totalTips).toLocaleString('ru-RU') + ' ₽';
+        }
+
+        function confirmSaveShiftToArchive() {
+            const dateKey = document.getElementById('finishShiftDateInput').value || getTodayDateKey();
+            const hours = Number(document.getElementById('finishShiftHoursInput').value) || 0;
+            const rate = Number(document.getElementById('finishShiftRateInput').value) || hourlyRate;
+            
+            if (hours <= 0) {
+                alert("Укажите количество отработанных часов.");
+                return;
+            }
+
+            hourlyRate = rate;
+            const wage = Math.round(hours * rate);
+
+            let cashTips = 0;
+            let cardTips = 0;
+            let itemsToSave = [];
+
+            if (isAddingPastShiftMode) {
+                cashTips = Number(document.getElementById('pastShiftCashTipsInput').value) || 0;
+                cardTips = Number(document.getElementById('pastShiftCardTipsInput').value) || 0;
+            } else {
+                cashTips = closedHistory.filter(h => h.tipType === 'Нал').reduce((s, h) => s + h.tip, 0);
+                cardTips = closedHistory.filter(h => h.tipType !== 'Нал').reduce((s, h) => s + h.tip, 0);
+                itemsToSave = [...closedHistory];
+            }
+
+            const totalTips = cashTips + cardTips;
+            const totalEarned = wage + totalTips;
+
+            // Если за эту дату уже есть запись в архиве — перезаписываем или суммируем
+            const existingIdx = shiftArchive.findIndex(s => s.dateKey === dateKey);
+            const shiftRecord = {
+                dateKey: dateKey,
+                date: formatDateKeyToRu(dateKey),
+                hours: hours,
+                rate: rate,
+                wage: wage,
+                cashTips: cashTips,
+                cardTips: cardTips,
+                totalTips: totalTips,
+                totalEarned: totalEarned,
+                tablesCount: itemsToSave.length,
+                items: itemsToSave
+            };
+
+            if (existingIdx > -1) {
+                shiftArchive[existingIdx] = shiftRecord;
+            } else {
+                shiftArchive.unshift(shiftRecord);
+            }
+
+            if (!isAddingPastShiftMode) {
+                closedHistory = [];
+            }
+
+            selectedCalendarDateKey = dateKey;
+            const [y, m] = dateKey.split('-');
+            profileDate = new Date(Number(y), Number(m) - 1, 1);
+
+            saveData();
+            closeFinishShiftModal();
+            updateHeaderTips();
+            switchTab('profile');
+        }
+
+        function openRateModal() {
+            openSimpleModal("💼 Почасовая ставка", "Введите вашу ставку в рублях за 1 час работы:", hourlyRate, (val) => {
+                const num = Number(val);
+                if (num && num > 0) {
+                    hourlyRate = num;
+                    saveData();
+                    renderProfileAll();
+                    renderStats();
+                }
+            });
+        }
+
+        // ================= РЕНДЕР ПРОФИЛЯ: КАЛЕНДАРЬ И ОТЧЕТ =================
+
+        function switchProfileSubTab(subTab) {
+            currentProfileSubTab = subTab;
+            const calView = document.getElementById('profileCalendarView');
+            const repView = document.getElementById('profileReportView');
+            const btnCal = document.getElementById('profileSubBtnCalendar');
+            const btnRep = document.getElementById('profileSubBtnReport');
+
+            if (subTab === 'calendar') {
+                calView.classList.remove('hidden');
+                repView.classList.add('hidden');
+                btnCal.className = "py-2.5 rounded-xl text-xs font-extrabold bg-slate-100 text-slate-950 shadow tap-scale";
+                btnRep.className = "py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-200 tap-scale";
+            } else {
+                calView.classList.add('hidden');
+                repView.classList.remove('hidden');
+                btnRep.className = "py-2.5 rounded-xl text-xs font-extrabold bg-slate-100 text-slate-950 shadow tap-scale";
+                btnCal.className = "py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-200 tap-scale";
+            }
+            renderProfileAll();
+        }
+
+        function changeProfileMonth(delta) {
+            profileDate.setMonth(profileDate.getMonth() + delta);
+            selectedCalendarDateKey = null;
+            renderProfileAll();
+        }
+
+        function renderProfileAll() {
+            document.getElementById('profileHourlyRateDisplay').innerText = `${hourlyRate} ₽ / час`;
+            document.getElementById('currentRateInfoBadge').innerText = `${hourlyRate} ₽/ч`;
+
+            const year = profileDate.getFullYear();
+            const month = profileDate.getMonth();
+            const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
+            document.getElementById('profileCurrentMonthLabel').innerText = `${monthNames[month]} ${year}`;
+
+            const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
+            const monthShifts = shiftArchive.filter(s => (s.dateKey || '').startsWith(monthPrefix));
+            const monthTotalEarned = monthShifts.reduce((sum, s) => sum + (s.totalEarned || 0), 0);
+
+            document.getElementById('profileMonthQuickSummary').innerText = `Смен: ${monthShifts.length} • Заработано: ${monthTotalEarned.toLocaleString('ru-RU')} ₽`;
+
+            renderCalendarGrid(year, month, monthShifts);
+            renderSelectedDayArchive();
+            renderMonthlyReport(monthShifts, monthNames[month], year);
+        }
+
+        function renderCalendarGrid(year, month, monthShifts) {
+            const grid = document.getElementById('calendarDaysGrid');
+            grid.innerHTML = '';
+
+            const firstDayOfMonth = new Date(year, month, 1).getDay();
+            const startOffset = (firstDayOfMonth + 6) % 7; // Пн = 0 ... Вс = 6
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const todayKey = getTodayDateKey();
+
+            const shiftsMap = {};
+            monthShifts.forEach(s => { shiftsMap[s.dateKey] = s; });
+
+            for (let i = 0; i < startOffset; i++) {
+                const empty = document.createElement('div');
+                empty.className = "h-12 rounded-2xl bg-slate-900/20";
+                grid.appendChild(empty);
+            }
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const shift = shiftsMap[dateKey];
+                const isSelected = selectedCalendarDateKey === dateKey;
+                const isToday = dateKey === todayKey;
+
+                const cell = document.createElement('button');
+                let baseClass = "h-12 rounded-2xl flex flex-col items-center justify-between p-1.5 text-xs transition tap-scale border ";
+
+                if (shift) {
+                    baseClass += isSelected 
+                        ? "bg-emerald-500 text-slate-950 font-extrabold border-emerald-300 shadow-lg shadow-emerald-500/30" 
+                        : "bg-emerald-500/15 border-emerald-500/40 text-emerald-300 font-bold hover:bg-emerald-500/25";
+                } else {
+                    baseClass += isSelected
+                        ? "bg-slate-200 text-slate-950 font-extrabold border-white"
+                        : "glass-element border-slate-800/80 text-slate-300 hover:border-slate-700";
+                }
+
+                if (isToday && !isSelected) {
+                    baseClass += " ring-1 ring-sky-400";
+                }
+
+                cell.className = baseClass;
+                cell.onclick = () => {
+                    selectedCalendarDateKey = dateKey;
+                    renderProfileAll();
+                };
+
+                const sumShort = shift ? (shift.totalEarned >= 1000 ? (shift.totalEarned / 1000).toFixed(1) + 'к' : shift.totalEarned) : '';
+
+                cell.innerHTML = `
+                    <span class="text-[11px] leading-none">${day}</span>
+                    ${shift ? `<span class="text-[8px] leading-none font-extrabold ${isSelected ? 'text-slate-950' : 'text-emerald-400'}">${sumShort}</span>` : `<span class="text-[8px] opacity-20">•</span>`}
+                `;
+                grid.appendChild(cell);
+            }
+        }
+
+        function renderSelectedDayArchive() {
+            const titleEl = document.getElementById('selectedDayTitle');
+            const subEl = document.getElementById('selectedDaySubtitle');
+            const contentEl = document.getElementById('selectedDayContent');
+            const actionsEl = document.getElementById('selectedDayActions');
+
+            if (!selectedCalendarDateKey) {
+                titleEl.innerText = "Выберите день в календаре";
+                subEl.innerText = "Нажмите на любую дату выше, чтобы посмотреть детали смены";
+                contentEl.classList.add('hidden');
+                actionsEl.classList.add('hidden');
+                return;
+            }
+
+            const shift = shiftArchive.find(s => s.dateKey === selectedCalendarDateKey);
+            titleEl.innerText = `📅 Дата: ${formatDateKeyToRu(selectedCalendarDateKey)}`;
+
+            if (!shift) {
+                subEl.innerText = "В этот день нет сохраненной смены (выходной)";
+                contentEl.classList.add('hidden');
+                actionsEl.classList.add('hidden');
+                return;
+            }
+
+            subEl.innerText = `Смена закрыта • Ставка ${shift.rate} ₽/ч`;
+            contentEl.classList.remove('hidden');
+            actionsEl.classList.remove('hidden');
+
+            document.getElementById('dayArchiveWage').innerText = `${shift.wage.toLocaleString('ru-RU')} ₽`;
+            document.getElementById('dayArchiveHours').innerText = `${shift.hours} ч`;
+            document.getElementById('dayArchiveTips').innerText = `${shift.totalTips.toLocaleString('ru-RU')} ₽`;
+            document.getElementById('dayArchiveTipsSplit').innerText = `Нал ${shift.cashTips} / Бн ${shift.cardTips}`;
+            document.getElementById('dayArchiveTotal').innerText = `${shift.totalEarned.toLocaleString('ru-RU')} ₽`;
+            document.getElementById('dayArchiveTablesCount').innerText = `Счетов: ${(shift.items || []).length}`;
+
+            const billsList = document.getElementById('dayArchiveBillsList');
+            billsList.innerHTML = '';
+
+            if (!shift.items || shift.items.length === 0) {
+                billsList.innerHTML = '<div class="text-slate-500 italic text-center py-3 text-[11px]">Смена добавлена без детальных чеков</div>';
+            } else {
+                shift.items.forEach((h, idx) => {
+                    const div = document.createElement('div');
+                    div.className = "glass-element p-3 rounded-2xl border border-slate-800 flex justify-between items-center text-xs cursor-pointer tap-scale";
+                    div.onclick = () => openArchiveBillDetail(shift.dateKey, idx);
+                    div.innerHTML = `
+                        <div>
+                            <span class="font-extrabold text-slate-200">${h.tableName}</span> <span class="text-[10px] text-slate-400">(${h.time || ''})</span>
+                            <div class="text-[10px] text-slate-400 mt-0.5">Чек: ${h.subtotal} ₽ • Чай: <span class="text-amber-300">${h.tipType}</span></div>
+                        </div>
+                        <span class="text-emerald-400 font-extrabold">+${h.tip} ₽</span>
+                    `;
+                    billsList.appendChild(div);
+                });
+            }
+        }
+
+        function deleteSelectedDayShift() {
+            if (!selectedCalendarDateKey) return;
+            const idx = shiftArchive.findIndex(s => s.dateKey === selectedCalendarDateKey);
+            if (idx > -1) {
+                shiftArchive.splice(idx, 1);
+                saveData();
+                renderProfileAll();
+            }
+        }
+
+        function openArchiveBillDetail(dateKey, itemIndex) {
+            const shift = shiftArchive.find(s => s.dateKey === dateKey);
+            if (!shift || !shift.items || !shift.items[itemIndex]) return;
+            showBillHistoryModalObject(shift.items[itemIndex]);
+        }
+
+        function renderMonthlyReport(monthShifts, monthName, year) {
+            const shiftsCount = monthShifts.length;
+            const totalHours = monthShifts.reduce((s, sh) => s + (sh.hours || 0), 0);
+            const totalWage = monthShifts.reduce((s, sh) => s + (sh.wage || 0), 0);
+            const totalCashTips = monthShifts.reduce((s, sh) => s + (sh.cashTips || 0), 0);
+            const totalCardTips = monthShifts.reduce((s, sh) => s + (sh.cardTips || 0), 0);
+            const totalTips = totalCashTips + totalCardTips;
+            const totalIncome = totalWage + totalTips;
+
+            let totalBills = 0;
+            let totalRevenue = 0;
+            monthShifts.forEach(sh => {
+                const items = sh.items || [];
+                totalBills += items.length;
+                totalRevenue += items.reduce((acc, it) => acc + (it.subtotal || 0), 0);
+            });
+
+            const avgIncome = shiftsCount > 0 ? Math.round(totalIncome / shiftsCount) : 0;
+            const avgHours = shiftsCount > 0 ? (totalHours / shiftsCount).toFixed(1) : 0;
+
+            const wagePct = totalIncome > 0 ? Math.round((totalWage / totalIncome) * 100) : 50;
+            const tipsPct = totalIncome > 0 ? (100 - wagePct) : 50;
+
+            document.getElementById('reportTotalIncome').innerText = `${totalIncome.toLocaleString('ru-RU')} ₽`;
+            document.getElementById('reportShiftsCountBadge').innerText = `${shiftsCount} смен`;
+            document.getElementById('reportWageBar').style.width = `${wagePct}%`;
+            document.getElementById('reportTipsBar').style.width = `${tipsPct}%`;
+            document.getElementById('reportWagePercent').innerText = `${wagePct}%`;
+            document.getElementById('reportTipsPercent').innerText = `${tipsPct}%`;
+
+            document.getElementById('reportTotalHours').innerText = `${totalHours} ч`;
+            document.getElementById('reportAvgHours').innerText = `В среднем ${avgHours} ч/смена`;
+            document.getElementById('reportTotalWage').innerText = `${totalWage.toLocaleString('ru-RU')} ₽`;
+            document.getElementById('reportRateNote').innerText = `Текущая ставка ${hourlyRate} ₽/ч`;
+            document.getElementById('reportTotalTips').innerText = `${totalTips.toLocaleString('ru-RU')} ₽`;
+            document.getElementById('reportTipsSplit').innerText = `Нал: ${totalCashTips.toLocaleString('ru-RU')} ₽ • Б/н: ${totalCardTips.toLocaleString('ru-RU')} ₽`;
+            document.getElementById('reportAvgShiftIncome').innerText = `${avgIncome.toLocaleString('ru-RU')} ₽`;
+            document.getElementById('reportTotalBillsCount').innerText = `Закрыто счетов: ${totalBills}`;
+            document.getElementById('reportTotalRevenue').innerText = `${totalRevenue.toLocaleString('ru-RU')} ₽`;
+        }
+
+        function copyMonthlyReportToClipboard() {
+            const year = profileDate.getFullYear();
+            const month = profileDate.getMonth();
+            const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
+            const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
+            const monthShifts = shiftArchive.filter(s => (s.dateKey || '').startsWith(monthPrefix));
+
+            const shiftsCount = monthShifts.length;
+            const totalHours = monthShifts.reduce((s, sh) => s + (sh.hours || 0), 0);
+            const totalWage = monthShifts.reduce((s, sh) => s + (sh.wage || 0), 0);
+            const totalCashTips = monthShifts.reduce((s, sh) => s + (sh.cashTips || 0), 0);
+            const totalCardTips = monthShifts.reduce((s, sh) => s + (sh.cardTips || 0), 0);
+            const totalTips = totalCashTips + totalCardTips;
+            const totalIncome = totalWage + totalTips;
+
+            const reportText = `📊 ОТЧЕТ ЗА МЕСЯЦ: ${monthNames[month]} ${year}\n` +
+                `• Отработано смен: ${shiftsCount}\n` +
+                `• Часов: ${totalHours} ч\n` +
+                `• По ставке: ${totalWage.toLocaleString('ru-RU')} ₽\n` +
+                `• Чаевые всего: ${totalTips.toLocaleString('ru-RU')} ₽ (Нал: ${totalCashTips} ₽ | Безнал: ${totalCardTips} ₽)\n` +
+                `💰 ИТОГО ДОХОД: ${totalIncome.toLocaleString('ru-RU')} ₽`;
+
+            navigator.clipboard.writeText(reportText).then(() => {
+                alert("Отчет за месяц скопирован в буфер обмена! Можешь вставить его в Telegram.");
+            });
+        }
+
+        // ================= ОСТАЛЬНАЯ ЛОГИКА ЗАЛА, СТОЛОВ И СЧЕТОВ =================
 
         function updateTipGoalUI() {
             const totalTips = closedHistory.reduce((s, h) => s + h.tip, 0);
@@ -637,12 +1291,14 @@
         }
 
         function openEditGoalModal() {
-            const newGoal = prompt("Введите вашу цель по чаевым на смену (рублей):", shiftTipGoal);
-            if(newGoal && !isNaN(newGoal) && Number(newGoal) > 0) {
-                shiftTipGoal = Number(newGoal);
-                saveData();
-                updateTipGoalUI();
-            }
+            openSimpleModal("🎯 Цель на смену", "Введите желаемую сумму чаевых за смену (₽):", shiftTipGoal, (val) => {
+                const num = Number(val);
+                if(num && num > 0) {
+                    shiftTipGoal = num;
+                    saveData();
+                    updateTipGoalUI();
+                }
+            });
         }
 
         function renderStopList() {
@@ -949,34 +1605,34 @@
         function renameGuest(index) {
             const t = tables[currentTable];
             const oldName = t.guestNames[index] || `Гость ${index}`;
-            const newName = prompt(`Введите примету или имя для гостя (например: бородач, в очках):`, "");
-            if(newName && newName.trim() !== "") {
-                const trimmed = newName.trim();
-                if(t.activeGuest === oldName) t.activeGuest = trimmed;
-                t.guestNames[index] = trimmed;
-                
-                if(t.splitGroups) {
-                    for(let g in t.splitGroups) {
-                        let i = t.splitGroups[g].indexOf(oldName);
-                        if(i > -1) t.splitGroups[g][i] = trimmed;
+            openSimpleModal("👤 Примета или имя гостя", "Например: Бородач, Девушка в очках, Папа:", oldName, (newName) => {
+                if(newName && newName.trim() !== "") {
+                    const trimmed = newName.trim();
+                    if(t.activeGuest === oldName) t.activeGuest = trimmed;
+                    t.guestNames[index] = trimmed;
+                    t.items.forEach(it => { if(it.guest === oldName) it.guest = trimmed; });
+                    if(t.splitGroups) {
+                        for(let g in t.splitGroups) {
+                            let i = t.splitGroups[g].indexOf(oldName);
+                            if(i > -1) t.splitGroups[g][i] = trimmed;
+                        }
                     }
+                    saveData();
+                    renderTableCard();
                 }
-
-                saveData();
-                renderTableCard();
-            }
+            });
         }
 
         function editItemModifier(idx) {
             const t = tables[currentTable];
             const item = t.items[idx];
-            const currentMod = item.modifier || "";
-            const newMod = prompt(`Укажите пометку к блюду "${item.name}" (например: без лука, соус отдельно):`, "");
-            if(newMod !== null) {
-                item.modifier = newMod.trim();
-                saveData();
-                renderTableCard();
-            }
+            openSimpleModal("✏️ Пометка к блюду", `Комментарий для "${item.name}" (без лука, соус отдельно):`, item.modifier || "", (newMod) => {
+                if(newMod !== null) {
+                    item.modifier = newMod.trim();
+                    saveData();
+                    renderTableCard();
+                }
+            });
         }
 
         function setCourseActive(courseName) {
@@ -1310,7 +1966,6 @@
                 switchTab('hall');
             } else {
                 renderTableCard();
-                alert("Счет успешно закрыт! Остальные гости остаются за столом.");
             }
             
             if(!document.getElementById('tabMyTables').classList.contains('hidden')) {
@@ -1332,6 +1987,7 @@
             document.getElementById('statsCashTips').innerText = cashTips + ' ₽';
             document.getElementById('statsCardTips').innerText = cardTips + ' ₽';
             document.getElementById('statsTotalTables').innerText = closedHistory.length;
+            document.getElementById('currentRateInfoBadge').innerText = `${hourlyRate} ₽/ч`;
 
             const container = document.getElementById('closedTablesHistory');
             container.innerHTML = '';
@@ -1355,32 +2011,14 @@
             }
         }
 
-        function renderShiftArchive() {
-            const container = document.getElementById('shiftArchiveList');
-            container.innerHTML = '';
-            if (shiftArchive.length === 0) {
-                container.innerHTML = '<p class="text-slate-500 text-center py-4 italic">Нет сохраненных смен в архиве</p>';
-                return;
-            }
-            shiftArchive.forEach((shift, sIdx) => {
-                const shiftTips = shift.items.reduce((s, i) => s + i.tip, 0);
-                const div = document.createElement('div');
-                div.className = "glass-element p-3 rounded-xl border border-slate-800 flex justify-between items-center text-xs";
-                div.innerHTML = `
-                    <div>
-                        <div class="font-extrabold text-slate-200">📅 Смена от ${shift.date}</div>
-                        <div class="text-[10px] text-slate-400">Счетов: ${shift.tablesCount} • Чаевые: <span class="text-emerald-400 font-bold">${shiftTips} ₽</span></div>
-                    </div>
-                    <button onclick="alert('Детали смены за ${shift.date}: счетов закрыто - ${shift.tablesCount}, чаевые - ${shiftTips} ₽')" class="glass-panel px-3 py-1.5 rounded-xl font-bold text-slate-300">👁️</button>
-                `;
-                container.appendChild(div);
-            });
-        }
-
         function openHistoryDetail(index) {
             const h = closedHistory[index];
+            showBillHistoryModalObject(h);
+        }
+
+        function showBillHistoryModalObject(h) {
             document.getElementById('historyModalTableName').innerText = h.tableName;
-            document.getElementById('historyModalTime').innerText = `${h.date} в ${h.time} • Оплата: ${h.paymentMethod || 'Нал'}`;
+            document.getElementById('historyModalTime').innerText = `${h.date || ''} в ${h.time || ''} • Оплата: ${h.paymentMethod || 'Нал'}`;
             document.getElementById('historyModalSubtotal').innerText = h.subtotal + ' ₽';
             document.getElementById('historyModalTip').innerText = h.tip + ' ₽';
             document.getElementById('historyModalTipType').innerText = h.tipType;
@@ -1388,7 +2026,7 @@
             const listEl = document.getElementById('historyModalItemsList');
             listEl.innerHTML = '';
 
-            if(h.items.length === 0) {
+            if(!h.items || h.items.length === 0) {
                 listEl.innerHTML += '<p class="text-slate-500 italic text-center py-3">Нет позиций</p>';
             } else {
                 h.items.forEach(item => {
@@ -1467,6 +2105,7 @@
 
         setInterval(() => { renderTables(); if(currentTable) renderTableCard(); renderMyTables(); }, 60000);
         
+        selectedCalendarDateKey = getTodayDateKey();
         updateHeaderTips();
         switchTab('hall');
     </script>
