@@ -12,7 +12,7 @@
         html, body {
             font-family: 'Plus Jakarta Sans', sans-serif;
             -webkit-tap-highlight-color: transparent;
-            background-color: #07090b; /* Ультра-глубокий угольный фон из видео */
+            background-color: #07090b;
             color: #f8fafc;
             height: 100vh;
             height: 100dvh;
@@ -21,7 +21,6 @@
             width: 100%;
         }
 
-        /* Премиальный Glassmorphism в стиле топовых TG Mini Apps */
         .glass-panel { 
             background: linear-gradient(135deg, rgba(17, 24, 32, 0.85) 0%, rgba(10, 14, 19, 0.95) 100%); 
             backdrop-filter: blur(28px); 
@@ -184,7 +183,7 @@
             <div id="myActiveTablesList" class="space-y-3"></div>
         </div>
 
-        <!-- ВКЛАДКА 3: История и Календарь смен -->
+        <!-- ВКЛАДКА 3: История и Сплит-счета -->
         <div id="tabHistory" class="tab-content space-y-4 hidden">
             <div class="glass-panel rounded-3xl p-4 flex justify-between items-center shadow-lg border border-slate-700/50 bg-gradient-to-r from-slate-900 to-slate-950">
                 <div>
@@ -251,7 +250,7 @@
 
     </main>
 
-    <!-- Плавающая нижняя панель в стиле GX Planner -->
+    <!-- Плавающая нижняя панель -->
     <nav class="bg-[#07090b]/90 backdrop-blur-2xl border-t border-slate-800/60 shrink-0 fixed bottom-0 left-0 right-0 z-50 px-4 py-3 shadow-2xl">
         <div class="max-w-md mx-auto glass-panel rounded-[28px] p-1.5 grid grid-cols-4 gap-1 border border-slate-700/50 shadow-2xl">
             <button onclick="switchTab('hall')" id="navBtnHall" class="flex flex-col items-center justify-center py-2.5 rounded-2xl text-slate-950 font-extrabold bg-slate-100 border border-slate-200 transition tap-scale shadow">
@@ -296,6 +295,20 @@
                     <button onclick="submitCustomGuests()" class="bg-slate-100 text-slate-950 font-extrabold px-5 py-3 rounded-2xl text-xs tap-scale">OK</button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- МОДАЛКА УПРАВЛЕНИЯ СЧЕТАМИ И ГРУППИРОВКОЙ ГОСТЕЙ -->
+    <div id="splitBillModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-panel rounded-[32px] max-w-sm w-full p-6 space-y-4 shadow-2xl border border-slate-700/50 max-h-[85vh] flex flex-col">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 class="font-extrabold text-sm text-slate-100">🧾 Сплит-счета и группы гостей</h3>
+                <button onclick="closeSplitBillModal()" class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs">✕</button>
+            </div>
+            <div class="text-[11px] text-slate-400">Объедините гостей в семьи/группы, чтобы сформировать раздельные чеки для расчета.</div>
+            <div id="splitGroupsContainer" class="space-y-3 overflow-y-auto flex-1 pr-1 text-xs"></div>
+            <button onclick="addGroupToSplit()" class="w-full glass-element border-dashed border-slate-600 text-slate-300 font-bold py-2.5 rounded-2xl text-xs tap-scale">＋ Добавить счет (группу)</button>
+            <button onclick="closeSplitBillModal()" class="w-full bg-slate-100 text-slate-950 font-extrabold py-3 rounded-2xl text-xs">Готово</button>
         </div>
     </div>
 
@@ -453,9 +466,9 @@
         let tables = JSON.parse(localStorage.getItem('fish_pro_tables')) || {};
         if(Object.keys(tables).length === 0) {
             for(let i=1; i<=15; i++) {
-                tables[`Стол ${i}`] = { items: [], guests: 2, guestNames: {1: "Гость 1", 2: "Гость 2"}, activeGuest: "В стол", course: "⚡ Сразу", lastVisited: null };
+                tables[`Стол ${i}`] = { items: [], guests: 2, guestNames: {1: "Гость 1", 2: "Гость 2"}, activeGuest: "Гость 1", course: "⚡ Сразу", lastVisited: null, splitGroups: {} };
             }
-            tables["Банкет"] = { items: [], guests: 4, guestNames: {1: "Гость 1", 2: "Гость 2", 3: "Гость 3", 4: "Гость 4"}, activeGuest: "В стол", course: "⚡ Сразу", lastVisited: null };
+            tables["Банкет"] = { items: [], guests: 4, guestNames: {1: "Гость 1", 2: "Гость 2", 3: "Гость 3", 4: "Гость 4"}, activeGuest: "Гость 1", course: "⚡ Сразу", lastVisited: null, splitGroups: {} };
         }
 
         let currentTable = "Стол 1";
@@ -661,6 +674,7 @@
             for(let i=1; i<=count; i++) {
                 if(!t.guestNames[i]) t.guestNames[i] = `Гость ${i}`;
             }
+            if(!t.activeGuest) t.activeGuest = t.guestNames[1];
 
             selectTable(tableToOpenGuests);
             
@@ -730,14 +744,9 @@
 
             const guestsContainer = document.getElementById('guestsListBtns');
             guestsContainer.innerHTML = '';
-            
-            let gBtnAll = document.createElement('button');
-            gBtnAll.className = `px-3.5 py-2 rounded-xl text-xs font-bold tap-scale ${t.activeGuest === 'В стол' ? 'bg-slate-100 text-slate-950 shadow' : 'glass-element text-slate-300'}`;
-            gBtnAll.innerText = '📌 В стол';
-            gBtnAll.onclick = () => { t.activeGuest = 'В стол'; renderTableCard(); };
-            guestsContainer.appendChild(gBtnAll);
 
             if(!t.guestNames) t.guestNames = {};
+            if(!t.activeGuest) t.activeGuest = t.guestNames[1] || "Гость 1";
 
             for(let i=1; i<=t.guests; i++) {
                 if(!t.guestNames[i]) t.guestNames[i] = `Гость ${i}`;
@@ -750,6 +759,13 @@
                 
                 guestsContainer.appendChild(gBtn);
             }
+
+            // Кнопка настройки сплит-счетов (группировки гостей)
+            let splitBtn = document.createElement('button');
+            splitBtn.className = "px-3.5 py-2 rounded-xl text-xs font-bold tap-scale glass-element text-sky-400 border border-sky-500/30";
+            splitBtn.innerHTML = "🧾 Сплит-счета";
+            splitBtn.onclick = openSplitBillModal;
+            guestsContainer.appendChild(splitBtn);
 
             const itemsContainer = document.getElementById('currentTableItems');
             itemsContainer.innerHTML = '';
@@ -783,6 +799,102 @@
             document.getElementById('currentTableTotal').innerText = total + ' ₽';
         }
 
+        function openSplitBillModal() {
+            const t = tables[currentTable];
+            const container = document.getElementById('splitGroupsContainer');
+            container.innerHTML = '';
+
+            if (!t.splitGroups) t.splitGroups = {};
+
+            // Собираем всех гостей
+            let allGuests = [];
+            for(let i=1; i<=t.guests; i++) {
+                if(t.guestNames[i]) allGuests.push(t.guestNames[i]);
+            }
+
+            // Если групп нет, создадим по умолчанию Счет 1 со всеми гостями
+            if (Object.keys(t.splitGroups).length === 0) {
+                t.splitGroups["Счет №1"] = [...allGuests];
+            }
+
+            for(let groupName in t.splitGroups) {
+                const groupGuests = t.splitGroups[groupName];
+                
+                // Считаем сумму по этой группе
+                let groupSum = t.items
+                    .filter(item => groupGuests.includes(item.guest))
+                    .reduce((sum, item) => sum + item.price, 0);
+
+                const div = document.createElement('div');
+                div.className = "glass-panel p-3.5 rounded-2xl space-y-2 border border-slate-800";
+                
+                let guestsCheckboxesHtml = allGuests.map(gName => {
+                    let isChecked = groupGuests.includes(gName);
+                    return `<label class="flex items-center space-x-2 text-xs text-slate-300"><input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleGuestInGroup('${groupName}', '${gName}')" class="rounded bg-slate-900 border-slate-700"><span>${gName}</span></label>`;
+                }).join('');
+
+                div.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <input type="text" value="${groupName}" onchange="renameSplitGroup('${groupName}', this.value)" class="bg-slate-900 font-extrabold text-slate-200 px-2.5 py-1 rounded-xl text-xs outline-none border border-slate-700 w-36">
+                        <span class="font-extrabold text-emerald-400">${groupSum} ₽</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-1.5 pt-1">${guestsCheckboxesHtml}</div>
+                    <button onclick="removeSplitGroup('${groupName}')" class="text-[10px] text-rose-400 hover:underline pt-1">Удалить этот счет</button>
+                `;
+                container.appendChild(div);
+            }
+
+            document.getElementById('splitBillModal').classList.remove('hidden');
+        }
+
+        function closeSplitBillModal() {
+            document.getElementById('splitBillModal').classList.add('hidden');
+            renderTableCard();
+        }
+
+        function addGroupToSplit() {
+            const t = tables[currentTable];
+            if(!t.splitGroups) t.splitGroups = {};
+            let newName = `Счет №${Object.keys(t.splitGroups).length + 1}`;
+            t.splitGroups[newName] = [];
+            saveData();
+            openSplitBillModal();
+        }
+
+        function removeSplitGroup(groupName) {
+            const t = tables[currentTable];
+            delete t.splitGroups[groupName];
+            saveData();
+            openSplitBillModal();
+        }
+
+        function renameSplitGroup(oldName, newName) {
+            const t = tables[currentTable];
+            if(!newName || newName.trim() === "" || t.splitGroups[newName]) return;
+            t.splitGroups[newName] = t.splitGroups[oldName];
+            delete t.splitGroups[oldName];
+            saveData();
+        }
+
+        function toggleGuestInGroup(groupName, guestName) {
+            const t = tables[currentTable];
+            if(!t.splitGroups[groupName]) t.splitGroups[groupName] = [];
+            
+            let idx = t.splitGroups[groupName].indexOf(guestName);
+            if(idx > -1) {
+                t.splitGroups[groupName].splice(idx, 1);
+            } else {
+                // Удаляем гостя из других групп, чтобы он не двоился
+                for(let g in t.splitGroups) {
+                    let i = t.splitGroups[g].indexOf(guestName);
+                    if(i > -1) t.splitGroups[g].splice(i, 1);
+                }
+                t.splitGroups[groupName].push(guestName);
+            }
+            saveData();
+            openSplitBillModal();
+        }
+
         function renameGuest(index) {
             const t = tables[currentTable];
             const oldName = t.guestNames[index] || `Гость ${index}`;
@@ -791,6 +903,15 @@
                 const trimmed = newName.trim();
                 if(t.activeGuest === oldName) t.activeGuest = trimmed;
                 t.guestNames[index] = trimmed;
+                
+                // Обновляем в группах сплита тоже
+                if(t.splitGroups) {
+                    for(let g in t.splitGroups) {
+                        let i = t.splitGroups[g].indexOf(oldName);
+                        if(i > -1) t.splitGroups[g][i] = trimmed;
+                    }
+                }
+
                 saveData();
                 renderTableCard();
             }
@@ -1010,10 +1131,11 @@
                 tip: currentTipAmount, 
                 tipType: currentTipType, 
                 guests: t.guests,
-                items: [...t.items]
+                items: [...t.items],
+                splitGroups: t.splitGroups || {}
             });
 
-            tables[currentTable] = { items: [], guests: 2, guestNames: {1: "Гость 1", 2: "Гость 2"}, activeGuest: "В стол", course: "⚡ Сразу", lastVisited: null };
+            tables[currentTable] = { items: [], guests: 2, guestNames: {1: "Гость 1", 2: "Гость 2"}, activeGuest: "Гость 1", course: "⚡ Сразу", lastVisited: null, splitGroups: {} };
             
             closeCheckoutModal();
             saveData();
@@ -1096,8 +1218,21 @@
             const listEl = document.getElementById('historyModalItemsList');
             listEl.innerHTML = '';
 
+            // Если есть сплит-группы, покажем их суммы
+            let splitHtml = "";
+            if (h.splitGroups && Object.keys(h.splitGroups).length > 0) {
+                splitHtml += `<div class="bg-slate-900/80 p-3 rounded-2xl border border-slate-800 space-y-1 mb-2"><div class="font-bold text-xs text-sky-400">🧾 Раздельные счета:</div>`;
+                for (let gName in h.splitGroups) {
+                    let gGuests = h.splitGroups[gName];
+                    let gSum = h.items.filter(item => gGuests.includes(item.guest)).reduce((s, i) => s + i.price, 0);
+                    splitHtml += `<div class="flex justify-between text-[11px] text-slate-300"><span>${gName} (${gGuests.join(', ')})</span><span class="font-bold text-emerald-400">${gSum} ₽</span></div>`;
+                }
+                splitHtml += `</div>`;
+                listEl.innerHTML += splitHtml;
+            }
+
             if(h.items.length === 0) {
-                listEl.innerHTML = '<p class="text-slate-500 italic text-center py-3">Нет позиций</p>';
+                listEl.innerHTML += '<p class="text-slate-500 italic text-center py-3">Нет позиций</p>';
             } else {
                 h.items.forEach(item => {
                     const row = document.createElement('div');
@@ -1130,7 +1265,8 @@
                     tip: Number(sum),
                     tipType: "Перевод",
                     guests: 1,
-                    items: []
+                    items: [],
+                    splitGroups: {}
                 });
                 saveData();
                 updateHeaderTips();
