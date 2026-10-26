@@ -273,7 +273,19 @@
 
         <!-- ВКЛАДКА 5: ПРОФИЛЬ -->
         <div id="tabProfile" class="tab-content space-y-4 hidden">
-            <!-- Аккуратная кнопка промокода внизу профиля или под ставкой -->
+            <div id="proStatusCard" class="glass-panel rounded-2xl p-3.5 flex justify-between items-center shadow border border-amber-500/30 bg-gradient-to-r from-amber-950/20 to-slate-900">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-sm">👑</div>
+                    <div>
+                        <div class="text-[9px] uppercase font-bold text-amber-400 tracking-wider" id="proStatusTitle">PRO СТАТУС</div>
+                        <div class="text-xs font-extrabold text-slate-100" id="proStatusSubtitle">Бесплатный период</div>
+                    </div>
+                </div>
+                <button onclick="openPromoModal()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-3 py-2 rounded-xl text-xs font-extrabold tap-scale shadow">
+                    🔑 Промокод
+                </button>
+            </div>
+
             <div class="glass-panel rounded-2xl p-3 flex justify-between items-center shadow border border-slate-700/50">
                 <div class="flex items-center space-x-2.5">
                     <div class="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-sm">💼</div>
@@ -285,10 +297,9 @@
                         </div>
                     </div>
                 </div>
-                <div class="flex items-center space-x-2">
-                    <button onclick="openPromoModal()" class="bg-amber-500/15 text-amber-300 border border-amber-500/30 px-3 py-2 rounded-xl text-xs font-extrabold tap-scale shadow" title="Ввести промокод">🔑 PRO</button>
-                    <button onclick="openAddPastShiftModal()" class="bg-slate-100 hover:bg-white text-slate-950 px-3 py-2 rounded-xl text-xs font-extrabold tap-scale shadow">＋ Смена</button>
-                </div>
+                <button onclick="openAddPastShiftModal()" class="bg-slate-100 hover:bg-white text-slate-950 px-3 py-2 rounded-xl text-xs font-extrabold tap-scale shadow">
+                    ＋ Смена
+                </button>
             </div>
 
             <div class="glass-panel p-1.5 rounded-2xl grid grid-cols-2 gap-1.5 border border-slate-800">
@@ -466,7 +477,7 @@
                 <h3 class="font-extrabold text-sm text-amber-400">🔑 Активация промокода</h3>
                 <button onclick="closePromoModal()" class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs">✕</button>
             </div>
-            <p class="text-[11px] text-slate-400">Введите промокод из рекламы или для друзей (например: <b>TEST</b> или <b>1BEZLEMIT</b>):</p>
+            <p class="text-[11px] text-slate-400">Введите промокод для активации PRO-доступа (например: <b>TEST</b> или <b>1BEZLEMIT</b>):</p>
             <input type="text" id="promoCodeInput" placeholder="TEST или 1BEZLEMIT" class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs text-slate-100 outline-none font-bold uppercase tracking-wider">
             <button onclick="applyPromoCode()" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-extrabold py-3.5 rounded-2xl text-xs tap-scale shadow-lg">✨ Активировать код</button>
         </div>
@@ -890,7 +901,6 @@
         let userId = 'default_user';
         let lastCloudError = null;
 
-        // Чистое базовое меню (очищено под кастомизацию через ИИ-сканер)
         let menuItems = [
             { name: "Фирменный бургер", price: 790, cat: "Горячее" },
             { name: "Цезарь с курицей", price: 690, cat: "Салаты" },
@@ -1076,13 +1086,13 @@
         function applyPromoCode() {
             const code = document.getElementById('promoCodeInput').value.trim().toUpperCase();
             
-            // Промокоды из твоей бизнес-модели: TEST (7 дней) и 1BEZLEMIT (вечный)
+            // Фиксация промокодов: TEST (7 дней) и 1BEZLEMIT (вечный)
             if (code === "TEST" || code === "1BEZLEMIT" || code === "PROMO2026") {
                 isProActive = true;
                 saveData();
                 updateProStatusUI();
                 closePromoModal();
-                alert(code === "TEST" ? "🎉 Промокод TEST активирован! PRO-доступ на 7 дней успешно подключен." : "👑 Промокод 1BEZLEMIT активирован! Вечный PRO-доступ подключен.");
+                alert(code === "TEST" ? "🎉 Промокод TEST активирован! Доступ на 7 дней успешно подключен." : "👑 Промокод 1BEZLEMIT активирован! Безлимитный PRO-доступ подключен.");
             } else {
                 alert("❌ Неверный промокод.");
             }
