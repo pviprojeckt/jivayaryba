@@ -10,6 +10,10 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         
+        :root {
+            --safe-top: calc(var(--tg-safe-area-inset-top, env(safe-area-inset-top, 0px)) + var(--tg-content-safe-area-inset-top, 0px));
+        }
+
         html, body {
             font-family: 'Plus Jakarta Sans', sans-serif;
             -webkit-tap-highlight-color: transparent;
@@ -20,6 +24,11 @@
             overflow: hidden;
             position: fixed;
             width: 100%;
+        }
+
+        /* Защита от перекрытия системными кнопками Telegram "Закрыть" и часами iOS в полноэкранном режиме */
+        body.fullscreen-safe-pad {
+            padding-top: max(var(--safe-top), 84px);
         }
 
         .glass-panel { 
@@ -68,7 +77,7 @@
             </div>
 
             <div class="space-y-2.5 pt-1">
-                <input type="text" id="gatePromoInput" placeholder="Введите промокод..." class="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-2xl px-4 py-3.5 text-center text-sm text-slate-100 outline-none font-extrabold uppercase tracking-widest">
+                <input type="text" id="gatePromoInput" placeholder="Введите промокод..." onkeydown="if(event.key==='Enter') activatePromoFromGate()" class="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-2xl px-4 py-3.5 text-center text-sm text-slate-100 outline-none font-extrabold uppercase tracking-widest">
                 <button onclick="activatePromoFromGate()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 font-extrabold py-4 rounded-2xl text-xs shadow-xl tap-scale uppercase tracking-wider">
                     🚀 Активировать доступ
                 </button>
@@ -85,10 +94,10 @@
     </div>
 
     <!-- Шапка -->
-    <header class="bg-[#07090b]/90 backdrop-blur-2xl border-b border-slate-800/60 shrink-0 px-5 py-3.5 z-40">
+    <header id="mainAppHeader" class="bg-[#07090b]/90 backdrop-blur-2xl border-b border-slate-800/60 shrink-0 px-5 py-3 z-40">
         <div class="max-w-md mx-auto flex items-center justify-between">
             <div class="flex items-center space-x-3">
-                <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/60 flex items-center justify-center text-xl shadow-inner">⚡</div>
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/60 flex items-center justify-center text-lg shadow-inner">⚡</div>
                 <div>
                     <h1 class="font-extrabold text-xs tracking-wider text-slate-100 uppercase">Пульт Официанта PRO</h1>
                     <button onclick="handleCloudStatusClick()" class="flex items-center space-x-1.5 mt-0.5 tap-scale text-left">
@@ -98,17 +107,17 @@
                 </div>
             </div>
             <div class="flex items-center space-x-2">
-                <div onclick="switchTab('history')" class="cursor-pointer glass-element text-emerald-400 px-3.5 py-2 rounded-2xl text-xs font-extrabold flex items-center space-x-1.5 shadow-lg tap-scale">
+                <div onclick="switchTab('history')" class="cursor-pointer glass-element text-emerald-400 px-3 py-2 rounded-2xl text-xs font-extrabold flex items-center space-x-1.5 shadow-lg tap-scale">
                     <span class="text-[10px] text-slate-400 font-medium">Чай:</span>
                     <span id="headerTipSum">0 ₽</span>
                 </div>
-                <button onclick="resetAllTimers()" class="glass-element hover:bg-slate-800 text-slate-300 p-2.5 rounded-2xl text-xs tap-scale shadow" title="Сбросить таймеры">🔄</button>
+                <button onclick="resetAllTimers()" class="glass-element hover:bg-slate-800 text-slate-300 p-2 rounded-2xl text-xs tap-scale shadow" title="Сбросить таймеры">🔄</button>
             </div>
         </div>
     </header>
 
     <!-- Основной контейнер со скроллом -->
-    <main id="mainScrollContainer" class="max-w-md w-full mx-auto p-4 space-y-4 overflow-y-auto flex-1 pb-32">
+    <main id="mainScrollContainer" class="max-w-md w-full mx-auto p-3.5 space-y-4 overflow-y-auto flex-1 pb-32">
 
         <!-- ПЛАШКА ПРЕДУПРЕЖДЕНИЯ (ПОЯВЛЯЕТСЯ ТОЛЬКО КОГДА ОСТАЛОСЬ <= 3 ДНЯ ПОДПИСКИ) -->
         <div id="expiringProBanner" class="glass-panel rounded-2xl p-3.5 hidden justify-between items-center shadow-lg border border-amber-500/40 bg-gradient-to-r from-amber-950/30 to-slate-900">
@@ -142,82 +151,94 @@
             </div>
 
             <!-- КАРТОЧКА АКТИВНОГО СТОЛА -->
-            <div id="activeTableCard" class="glass-panel rounded-[36px] p-5 shadow-2xl space-y-4 hidden border border-slate-700/50">
-                <div class="flex justify-between items-center border-b border-slate-800/80 pb-3.5">
+            <div id="activeTableCard" class="glass-panel rounded-[32px] p-4 shadow-2xl space-y-3.5 hidden border border-slate-700/50">
+                <!-- Верхняя шапка стола (скрывается при активном поиске) -->
+                <div id="tableCardTopHeader" class="flex justify-between items-center border-b border-slate-800/80 pb-3">
                     <div>
-                        <div class="flex items-center space-x-2.5">
-                            <h3 id="currentTableName" class="text-lg font-extrabold text-slate-100 tracking-wide">Стол 1</h3>
-                            <span id="tableTimerBadge" class="text-[10px] px-3 py-1 rounded-full font-mono font-extrabold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow hidden">0 мин</span>
+                        <div class="flex items-center space-x-2">
+                            <h3 id="currentTableName" class="text-base font-extrabold text-slate-100 tracking-wide">Стол 1</h3>
+                            <span id="tableTimerBadge" class="text-[10px] px-2.5 py-0.5 rounded-full font-mono font-extrabold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow hidden">0 мин</span>
                         </div>
-                        <p class="text-[11px] text-slate-400 mt-1 font-semibold" id="tableGuestsCountInfo">Гостей: 2</p>
+                        <p class="text-[10px] text-slate-400 mt-0.5 font-semibold" id="tableGuestsCountInfo">Гостей: 2</p>
                     </div>
-                    <div class="flex space-x-2">
-                        <button onclick="backToHallGrid()" class="glass-element text-slate-300 font-bold px-3.5 py-2 rounded-2xl text-xs tap-scale shadow">← Назад</button>
-                        <button onclick="markTableVisited()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-2 rounded-2xl text-xs font-extrabold tap-scale shadow-lg">👁️ Был</button>
+                    <div class="flex space-x-1.5">
+                        <button onclick="backToHallGrid()" class="glass-element text-slate-300 font-bold px-3 py-2 rounded-2xl text-xs tap-scale shadow">← Назад</button>
+                        <button onclick="markTableVisited()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-2xl text-xs font-extrabold tap-scale shadow-lg">👁️ Был</button>
                     </div>
                 </div>
 
-                <div id="orderEditingSection" class="space-y-4">
-                    <div class="space-y-2 bg-slate-950/60 p-3.5 rounded-[24px] border border-slate-800/80 shadow-inner">
+                <div id="orderEditingSection" class="space-y-3">
+                    <!-- Выбор гостя (всегда под рукой, компактный) -->
+                    <div class="space-y-1.5 bg-slate-950/60 p-2.5 rounded-2xl border border-slate-800/80 shadow-inner">
                         <div class="flex justify-between items-center">
-                            <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Гость для заказа (клик ✏️ для приметы):</span>
+                            <span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Гость (✏️ — дать имя):</span>
+                            <span id="compactCourseIndicator" class="text-[9px] font-extrabold text-emerald-400 hidden">Курс: ⚡ Сразу</span>
                         </div>
-                        <div id="guestsListBtns" class="flex flex-wrap gap-1.5 mt-1"></div>
+                        <div id="guestsListBtns" class="flex flex-wrap gap-1.5"></div>
                     </div>
 
-                    <div class="space-y-1.5">
-                        <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Курс подачи блюд:</span>
+                    <!-- Курс подачи (скрывается при фокусе в поиск для экономии места над клавиатурой) -->
+                    <div id="tableCoursesBlock" class="space-y-1">
+                        <span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Курс подачи блюд:</span>
                         <div class="grid grid-cols-4 gap-1.5">
-                            <button onclick="setCourseActive('⚡ Сразу')" id="courseBtn_Сразу" class="course-active-btn bg-slate-100 text-slate-950 py-2.5 rounded-2xl text-[11px] font-extrabold shadow-md">⚡ Сразу</button>
-                            <button onclick="setCourseActive('1 курс')" id="courseBtn_1к" class="course-active-btn glass-element text-slate-300 py-2.5 rounded-2xl text-[11px] font-semibold">1к Закуски</button>
-                            <button onclick="setCourseActive('2 курс')" id="courseBtn_2к" class="course-active-btn glass-element text-slate-300 py-2.5 rounded-2xl text-[11px] font-semibold">2к Супы</button>
-                            <button onclick="setCourseActive('3 курс')" id="courseBtn_3к" class="course-active-btn glass-element text-slate-300 py-2.5 rounded-2xl text-[11px] font-semibold">3к Горячее</button>
+                            <button onclick="setCourseActive('⚡ Сразу')" id="courseBtn_Сразу" class="course-active-btn bg-slate-100 text-slate-950 py-2 rounded-xl text-[11px] font-extrabold shadow-md">⚡ Сразу</button>
+                            <button onclick="setCourseActive('1 курс')" id="courseBtn_1к" class="course-active-btn glass-element text-slate-300 py-2 rounded-xl text-[11px] font-semibold">1к Закуски</button>
+                            <button onclick="setCourseActive('2 курс')" id="courseBtn_2к" class="course-active-btn glass-element text-slate-300 py-2 rounded-xl text-[11px] font-semibold">2к Супы</button>
+                            <button onclick="setCourseActive('3 курс')" id="courseBtn_3к" class="course-active-btn glass-element text-slate-300 py-2 rounded-xl text-[11px] font-semibold">3к Горячее</button>
                         </div>
                     </div>
 
-                    <div class="space-y-3 pt-1 border-t border-slate-800/80">
-                        <div class="relative">
-                            <input type="text" id="menuSearch" placeholder="🔍 Поиск по меню (или добавьте свое через ИИ)..." oninput="renderMenuDirect()" class="w-full glass-element border-slate-800 focus:border-slate-500 rounded-2xl px-4 py-3 text-xs text-slate-100 outline-none placeholder-slate-500 shadow-inner">
+                    <!-- Поиск и список меню -->
+                    <div class="space-y-2.5 pt-1 border-t border-slate-800/80">
+                        <div class="flex items-center space-x-1.5">
+                            <div class="relative flex-1">
+                                <input type="text" id="menuSearch" placeholder="🔍 Поиск блюда или напитка..." onfocus="enterMenuSearchMode()" oninput="renderMenuDirect()" onkeydown="if(event.key==='Enter'){ this.blur(); exitMenuSearchMode(); }" class="w-full glass-element border-slate-700 focus:border-emerald-500 rounded-2xl pl-3.5 pr-8 py-2.5 text-xs text-slate-100 outline-none placeholder-slate-500 shadow-inner">
+                                <button id="clearSearchTextBtn" onclick="clearMenuSearchInput()" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-slate-800 text-slate-300 text-[10px] flex items-center justify-center">✕</button>
+                            </div>
+                            <button id="exitSearchModeBtn" onclick="exitMenuSearchMode()" class="hidden bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold px-3.5 py-2.5 rounded-2xl text-xs shadow-lg tap-scale shrink-0">
+                                ✓ Готово
+                            </button>
                         </div>
 
                         <div id="menuCategories" class="flex space-x-1.5 overflow-x-auto pb-1 text-xs">
-                            <button onclick="filterCat('all')" class="cat-tab bg-slate-100 text-slate-950 px-3.5 py-2 rounded-2xl font-extrabold whitespace-nowrap shadow">Все</button>
-                            <button onclick="filterCat('Закуски')" class="cat-tab glass-element text-slate-300 px-3.5 py-2 rounded-2xl whitespace-nowrap font-medium">Закуски</button>
-                            <button onclick="filterCat('Салаты')" class="cat-tab glass-element text-slate-300 px-3.5 py-2 rounded-2xl whitespace-nowrap font-medium">Салаты</button>
-                            <button onclick="filterCat('Супы')" class="cat-tab glass-element text-slate-300 px-3.5 py-2 rounded-2xl whitespace-nowrap font-medium">Супы</button>
-                            <button onclick="filterCat('Горячее')" class="cat-tab glass-element text-slate-300 px-3.5 py-2 rounded-2xl whitespace-nowrap font-medium">Горячее</button>
-                            <button onclick="filterCat('Пицца')" class="cat-tab glass-element text-slate-300 px-3.5 py-2 rounded-2xl whitespace-nowrap font-medium">Пицца</button>
-                            <button onclick="filterCat('Десерты')" class="cat-tab glass-element text-slate-300 px-3.5 py-2 rounded-2xl whitespace-nowrap font-medium">Десерты</button>
-                            <button onclick="filterCat('Бар')" class="cat-tab glass-element text-sky-400 border border-sky-500/30 px-3.5 py-2 rounded-2xl whitespace-nowrap font-bold">🍸 Бар и Напитки</button>
+                            <button onclick="filterCat('all')" class="cat-tab bg-slate-100 text-slate-950 px-3 py-1.5 rounded-xl font-extrabold whitespace-nowrap shadow">Все</button>
+                            <button onclick="filterCat('Закуски')" class="cat-tab glass-element text-slate-300 px-3 py-1.5 rounded-xl whitespace-nowrap font-medium">Закуски</button>
+                            <button onclick="filterCat('Салаты')" class="cat-tab glass-element text-slate-300 px-3 py-1.5 rounded-xl whitespace-nowrap font-medium">Салаты</button>
+                            <button onclick="filterCat('Супы')" class="cat-tab glass-element text-slate-300 px-3 py-1.5 rounded-xl whitespace-nowrap font-medium">Супы</button>
+                            <button onclick="filterCat('Горячее')" class="cat-tab glass-element text-slate-300 px-3 py-1.5 rounded-xl whitespace-nowrap font-medium">Горячее</button>
+                            <button onclick="filterCat('Пицца')" class="cat-tab glass-element text-slate-300 px-3 py-1.5 rounded-xl whitespace-nowrap font-medium">Пицца</button>
+                            <button onclick="filterCat('Десерты')" class="cat-tab glass-element text-slate-300 px-3 py-1.5 rounded-xl whitespace-nowrap font-medium">Десерты</button>
+                            <button onclick="filterCat('Бар')" class="cat-tab glass-element text-sky-400 border border-sky-500/30 px-3 py-1.5 rounded-xl whitespace-nowrap font-bold">🍸 Бар</button>
                         </div>
 
-                        <div id="directMenuList" class="space-y-2 max-h-60 overflow-y-auto pr-1"></div>
+                        <div id="directMenuList" class="space-y-1.5 max-h-56 overflow-y-auto pr-1"></div>
                     </div>
                 </div>
 
                 <div id="showMenuToggleBtnContainer" class="hidden">
-                    <button onclick="toggleOrderReviewMode(false)" class="w-full glass-element bg-slate-800/50 border border-slate-700 text-slate-200 font-extrabold py-3.5 rounded-2xl text-xs tap-scale flex items-center justify-center space-x-2 shadow-lg">
+                    <button onclick="toggleOrderReviewMode(false)" class="w-full glass-element bg-slate-800/50 border border-slate-700 text-slate-200 font-extrabold py-3 rounded-2xl text-xs tap-scale flex items-center justify-center space-x-2 shadow-lg">
                         <span>➕</span>
                         <span>Добавить еще позиции в заказ</span>
                     </button>
                 </div>
 
-                <div class="pt-3 border-t border-slate-800/80 space-y-3">
-                    <div class="flex justify-between items-center text-xs px-3 bg-slate-950/70 p-3 rounded-2xl border border-slate-800 shadow">
+                <!-- Блок состава заказа и кнопок расчета (скрывается во время ввода в поиске, чтобы не занимать место над клавиатурой) -->
+                <div id="tableOrderBottomSummary" class="pt-2.5 border-t border-slate-800/80 space-y-2.5">
+                    <div class="flex justify-between items-center text-xs px-3 bg-slate-950/70 p-2.5 rounded-2xl border border-slate-800 shadow">
                         <span class="font-bold text-slate-400 uppercase tracking-wide">Сумма заказа:</span>
-                        <span id="currentTableTotal" class="font-extrabold text-slate-100 text-base">0 ₽</span>
+                        <span id="currentTableTotal" class="font-extrabold text-slate-100 text-sm">0 ₽</span>
                     </div>
                     
-                    <div id="currentTableItems" class="space-y-2 max-h-[50vh] overflow-y-auto pr-1 text-xs">
-                        <p class="text-slate-500 italic text-center py-4">Стол пустой</p>
+                    <div id="currentTableItems" class="space-y-1.5 max-h-[38vh] overflow-y-auto pr-1 text-xs">
+                        <p class="text-slate-500 italic text-center py-3">Стол пустой</p>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-2.5 pt-2">
-                        <button onclick="saveTableToWork()" class="bg-slate-100 hover:bg-white text-slate-950 font-extrabold py-4 rounded-2xl text-xs shadow-xl tap-scale flex items-center justify-center space-x-1.5">
+                    <div class="grid grid-cols-2 gap-2 pt-1">
+                        <button onclick="saveTableToWork()" class="bg-slate-100 hover:bg-white text-slate-950 font-extrabold py-3.5 rounded-2xl text-xs shadow-xl tap-scale flex items-center justify-center space-x-1.5">
                             <span>💾</span>
                             <span>Сохранить в работу</span>
                         </button>
-                        <button onclick="openCheckoutModal()" class="bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-extrabold py-4 rounded-2xl text-xs shadow-xl tap-scale flex items-center justify-center space-x-1.5">
+                        <button onclick="openCheckoutModal()" class="bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-extrabold py-3.5 rounded-2xl text-xs shadow-xl tap-scale flex items-center justify-center space-x-1.5">
                             <span>✅</span>
                             <span>Расчет стола</span>
                         </button>
@@ -475,8 +496,8 @@
 
     </main>
 
-    <!-- Нижняя панель -->
-    <nav class="bg-[#07090b]/90 backdrop-blur-2xl border-t border-slate-800/60 shrink-0 fixed bottom-0 left-0 right-0 z-50 px-3 py-2.5 shadow-2xl">
+    <!-- Нижняя панель (автоматически прячется при поиске блюда с клавиатурой) -->
+    <nav id="bottomNav" class="bg-[#07090b]/90 backdrop-blur-2xl border-t border-slate-800/60 shrink-0 fixed bottom-0 left-0 right-0 z-50 px-3 py-2.5 shadow-2xl">
         <div class="max-w-md mx-auto glass-panel rounded-[26px] p-1 grid grid-cols-5 gap-1 border border-slate-700/50 shadow-2xl">
             <button onclick="switchTab('hall')" id="navBtnHall" class="flex flex-col items-center justify-center py-2 rounded-2xl text-slate-950 font-extrabold bg-slate-100 border border-slate-200 transition tap-scale shadow">
                 <span class="text-sm">🗺️</span>
@@ -502,7 +523,7 @@
     </nav>
 
     <!-- МОДАЛКА АКТИВАЦИИ ПРОМОКОДА ВНУТРИ ПРИЛОЖЕНИЯ -->
-    <div id="promoModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-50 hidden flex items-center justify-center p-4">
+    <div id="promoModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-[80] hidden flex items-center justify-center p-4">
         <div class="glass-panel rounded-[32px] max-w-xs w-full p-6 space-y-4 shadow-2xl border border-amber-500/30">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
                 <h3 class="font-extrabold text-sm text-amber-400">🔑 Доступ и промокод</h3>
@@ -512,13 +533,13 @@
                 Проверка статуса...
             </div>
             <p class="text-[11px] text-slate-400">Введите промокод для активации или продления PRO-доступа:</p>
-            <input type="text" id="promoCodeInput" placeholder="Введите промокод..." class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs text-slate-100 outline-none font-bold uppercase tracking-wider">
+            <input type="text" id="promoCodeInput" placeholder="Введите промокод..." onkeydown="if(event.key==='Enter') applyPromoCode()" class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs text-slate-100 outline-none font-bold uppercase tracking-wider">
             <button onclick="applyPromoCode()" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-extrabold py-3.5 rounded-2xl text-xs tap-scale shadow-lg">✨ Активировать код</button>
         </div>
     </div>
 
     <!-- МОДАЛКА ВИРУСНОЙ КАРТОЧКИ СТОРИС -->
-    <div id="viralShareModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-2xl z-50 hidden flex items-center justify-center p-3">
+    <div id="viralShareModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-2xl z-[80] hidden flex items-center justify-center p-3">
         <div class="max-w-sm w-full flex flex-col space-y-3 max-h-[95vh] overflow-y-auto">
             <div class="flex justify-between items-center px-2">
                 <div class="flex items-center space-x-2">
@@ -597,7 +618,7 @@
     </div>
 
     <!-- МОДАЛКА ИИ-СКАНЕРА МЕНЮ -->
-    <div id="aiScannerModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-50 hidden flex items-center justify-center p-4">
+    <div id="aiScannerModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-[80] hidden flex items-center justify-center p-4">
         <div class="glass-panel rounded-[32px] max-w-sm w-full p-6 space-y-4 shadow-2xl border border-emerald-500/30 max-h-[90vh] flex flex-col">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
                 <div>
@@ -647,7 +668,7 @@
     </div>
 
     <!-- МОДАЛКА КОНСТРУКТОРА ЗАЛА И СТОЛОВ -->
-    <div id="hallConstructorModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-50 hidden flex items-center justify-center p-4">
+    <div id="hallConstructorModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-[80] hidden flex items-center justify-center p-4">
         <div class="glass-panel rounded-[32px] max-w-sm w-full p-6 space-y-4 shadow-2xl border border-slate-700/50 max-h-[90vh] flex flex-col">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
                 <div>
@@ -683,7 +704,7 @@
                 <div class="space-y-1.5">
                     <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Добавить свой стол или зону:</span>
                     <div class="flex space-x-2">
-                        <input type="text" id="customTableNameInput" placeholder="Напр: Бар 1, Веранда 2, VIP..." class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 outline-none">
+                        <input type="text" id="customTableNameInput" placeholder="Напр: Бар 1, Веранда 2, VIP..." onkeydown="if(event.key==='Enter') addCustomTableFromConstructor()" class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 outline-none">
                         <button onclick="addCustomTableFromConstructor()" class="bg-emerald-600 text-white font-extrabold px-4 py-2.5 rounded-xl text-xs tap-scale shadow">＋ Добавить</button>
                     </div>
                 </div>
@@ -702,7 +723,7 @@
     </div>
 
     <!-- ОСТАЛЬНЫЕ МОДАЛКИ -->
-    <div id="finishShiftModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-50 hidden flex items-center justify-center p-4">
+    <div id="finishShiftModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-[80] hidden flex items-center justify-center p-4">
         <div class="glass-panel rounded-[32px] max-w-sm w-full p-6 space-y-4 shadow-2xl border border-slate-700/50">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
                 <h3 id="finishShiftModalTitle" class="font-extrabold text-sm text-emerald-400">🏁 Завершение смены</h3>
@@ -753,19 +774,19 @@
         </div>
     </div>
 
-    <div id="simpleInputModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-50 hidden flex items-center justify-center p-4">
+    <div id="simpleInputModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-[90] hidden flex items-center justify-center p-4">
         <div class="glass-panel rounded-[32px] max-w-xs w-full p-6 space-y-4 shadow-2xl border border-slate-700/50">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
                 <h3 id="simpleModalTitle" class="font-extrabold text-sm text-slate-100">Настройка</h3>
                 <button onclick="closeSimpleModal()" class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs">✕</button>
             </div>
             <p id="simpleModalDesc" class="text-[11px] text-slate-400"></p>
-            <input type="text" id="simpleModalInput" class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs text-slate-100 outline-none font-bold">
+            <input type="text" id="simpleModalInput" onkeydown="if(event.key==='Enter') confirmSimpleModal()" class="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-2xl px-4 py-3 text-xs text-slate-100 outline-none font-bold">
             <button onclick="confirmSimpleModal()" class="w-full bg-slate-100 text-slate-950 font-extrabold py-3 rounded-2xl text-xs tap-scale shadow">Сохранить</button>
         </div>
     </div>
 
-    <div id="guestsSelectModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-50 hidden flex items-center justify-center p-4">
+    <div id="guestsSelectModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-[80] hidden flex items-center justify-center p-4">
         <div class="glass-panel rounded-[32px] max-w-xs w-full p-6 space-y-4 shadow-2xl border border-slate-700/50">
             <div class="flex justify-between items-center">
                 <h3 id="guestsModalTitle" class="font-extrabold text-sm text-slate-100">Количество гостей</h3>
@@ -783,14 +804,14 @@
             </div>
             <div class="pt-2 border-t border-slate-800 space-y-2">
                 <div class="flex space-x-2">
-                    <input type="number" id="customGuestsInput" placeholder="Свой ввод..." class="flex-1 bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs text-slate-100 outline-none">
+                    <input type="number" id="customGuestsInput" placeholder="Свой ввод..." onkeydown="if(event.key==='Enter') submitCustomGuests()" class="flex-1 bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs text-slate-100 outline-none">
                     <button onclick="submitCustomGuests()" class="bg-slate-100 text-slate-950 font-extrabold px-5 py-3 rounded-2xl text-xs tap-scale">OK</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="checkoutModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-50 hidden flex items-center justify-center p-4">
+    <div id="checkoutModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-[80] hidden flex items-center justify-center p-4">
         <div class="glass-panel rounded-[32px] max-w-sm w-full p-6 space-y-3.5 shadow-2xl border border-slate-700/50 max-h-[92vh] flex flex-col overflow-y-auto">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
                 <h3 id="checkoutModalTitle" class="font-extrabold text-sm text-emerald-400">Расчет стола</h3>
@@ -846,7 +867,7 @@
         </div>
     </div>
 
-    <div id="manualTipModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-50 hidden flex items-center justify-center p-4">
+    <div id="manualTipModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-[80] hidden flex items-center justify-center p-4">
         <div class="glass-panel rounded-[32px] max-w-xs w-full p-6 space-y-4 shadow-2xl border border-slate-700/50">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
                 <h3 class="font-extrabold text-sm text-slate-100">＋ Добавить чаевые</h3>
@@ -854,7 +875,7 @@
             </div>
             <div class="space-y-1">
                 <label class="text-[11px] text-slate-400">Сумма (₽):</label>
-                <input type="number" id="manualTipSumInput" placeholder="Например: 300" class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs text-slate-100 outline-none">
+                <input type="number" id="manualTipSumInput" placeholder="Например: 300" onkeydown="if(event.key==='Enter') confirmManualTipModal()" class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs text-slate-100 outline-none">
             </div>
             <div class="space-y-1">
                 <label class="text-[11px] text-slate-400">Как оставили:</label>
@@ -867,7 +888,7 @@
         </div>
     </div>
 
-    <div id="splitBillModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-50 hidden flex items-center justify-center p-4">
+    <div id="splitBillModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-[85] hidden flex items-center justify-center p-4">
         <div class="glass-panel rounded-[32px] max-w-sm w-full p-6 space-y-4 shadow-2xl border border-slate-700/50 max-h-[85vh] flex flex-col">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
                 <h3 class="font-extrabold text-sm text-slate-100">🧾 Объединение счетов</h3>
@@ -880,7 +901,7 @@
         </div>
     </div>
 
-    <div id="historyDetailModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-50 hidden flex items-center justify-center p-4">
+    <div id="historyDetailModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-[80] hidden flex items-center justify-center p-4">
         <div class="glass-panel rounded-[32px] max-w-sm w-full p-6 space-y-4 shadow-2xl border border-slate-700/50 max-h-[85vh] flex flex-col">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
                 <div>
@@ -898,7 +919,7 @@
         </div>
     </div>
 
-    <div id="hospersModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-50 hidden flex items-center justify-center p-4">
+    <div id="hospersModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-[85] hidden flex items-center justify-center p-4">
         <div class="glass-panel rounded-[32px] max-w-xs w-full p-6 space-y-4 shadow-2xl border border-slate-700/50">
             <h3 id="hosperItemTitle" class="font-extrabold text-sm text-slate-100">Вес позиции</h3>
             <div class="grid grid-cols-3 gap-2">
@@ -911,7 +932,7 @@
             </div>
             <div class="pt-2 border-t border-slate-800 space-y-2">
                 <div class="flex space-x-2">
-                    <input type="number" id="customWeightInput" placeholder="Грамм..." class="flex-1 bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs text-slate-100 outline-none">
+                    <input type="number" id="customWeightInput" placeholder="Грамм..." onkeydown="if(event.key==='Enter') submitCustomWeight()" class="flex-1 bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs text-slate-100 outline-none">
                     <button onclick="submitCustomWeight()" class="bg-slate-100 text-slate-950 font-extrabold px-5 py-3 rounded-2xl text-xs tap-scale">OK</button>
                 </div>
             </div>
@@ -925,7 +946,10 @@
             window.Telegram.WebApp.ready();
             window.Telegram.WebApp.expand();
             if (window.Telegram.WebApp.requestFullscreen) {
-                try { window.Telegram.WebApp.requestFullscreen(); } catch(e) {}
+                try { 
+                    window.Telegram.WebApp.requestFullscreen(); 
+                    document.body.classList.add('fullscreen-safe-pad');
+                } catch(e) {}
             }
         }
 
@@ -933,13 +957,11 @@
         const SUPABASE_KEY = 'sb_publishable_uobDghP-DOkp-xtBc5Q5JA_V1eZwstM';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // Ссылка на платежного бота (Tribute или свой бот), куда перекидывает кнопка покупки подписки
         const PAYMENT_BOT_URL = 'https://t.me/waiter_pro_bot';
 
         let userId = 'default_user';
         let lastCloudError = null;
 
-        // Базовое стартовое меню (чистая база под сканирование)
         let menuItems = [
             { name: "Фирменный бургер", price: 790, cat: "Горячее" },
             { name: "Цезарь с курицей", price: 690, cat: "Салаты" },
@@ -959,10 +981,10 @@
         let shiftTipGoal = 3000;
         let stopListSet = new Set();
         let aiScannedParsedItems = [];
+        let isMenuSearchActive = false;
 
-        // Переменные PRO-доступа
         let proUnlimited = false;
-        let proExpiresAt = null; // timestamp в миллисекундах
+        let proExpiresAt = null;
 
         let currentTipAmount = 0;
         let currentTipType = "Нал";
@@ -990,6 +1012,59 @@
             hideMoney: false,
             allowHoursEdit: true
         };
+
+        // ================= УМНЫЙ РЕЖИМ ФОКУСА ПРИ ПОИСКЕ МЕНЮ =================
+
+        function enterMenuSearchMode() {
+            isMenuSearchActive = true;
+            document.getElementById('mainAppHeader').classList.add('hidden');
+            document.getElementById('bottomNav').classList.add('hidden');
+            document.getElementById('tableCardTopHeader').classList.add('hidden');
+            document.getElementById('tableCoursesBlock').classList.add('hidden');
+            document.getElementById('tableOrderBottomSummary').classList.add('hidden');
+            document.getElementById('compactCourseIndicator').classList.remove('hidden');
+            document.getElementById('exitSearchModeBtn').classList.remove('hidden');
+
+            const menuList = document.getElementById('directMenuList');
+            menuList.className = "space-y-1.5 max-h-[46vh] overflow-y-auto pr-1";
+
+            updateSearchExitBtnLabel();
+            document.getElementById('mainScrollContainer').scrollTop = 0;
+        }
+
+        function exitMenuSearchMode() {
+            isMenuSearchActive = false;
+            const searchInp = document.getElementById('menuSearch');
+            if (searchInp) searchInp.blur();
+
+            document.getElementById('mainAppHeader').classList.remove('hidden');
+            document.getElementById('bottomNav').classList.remove('hidden');
+            document.getElementById('tableCardTopHeader').classList.remove('hidden');
+            document.getElementById('tableCoursesBlock').classList.remove('hidden');
+            document.getElementById('tableOrderBottomSummary').classList.remove('hidden');
+            document.getElementById('compactCourseIndicator').classList.add('hidden');
+            document.getElementById('exitSearchModeBtn').classList.add('hidden');
+
+            const menuList = document.getElementById('directMenuList');
+            menuList.className = "space-y-1.5 max-h-56 overflow-y-auto pr-1";
+            document.getElementById('mainScrollContainer').scrollTop = 0;
+        }
+
+        function clearMenuSearchInput() {
+            const inp = document.getElementById('menuSearch');
+            inp.value = '';
+            document.getElementById('clearSearchTextBtn').classList.add('hidden');
+            renderMenuDirect();
+            inp.focus();
+        }
+
+        function updateSearchExitBtnLabel() {
+            const btn = document.getElementById('exitSearchModeBtn');
+            if (!btn || !currentTable || !tables[currentTable]) return;
+            const t = tables[currentTable];
+            const count = (t.items || []).length;
+            btn.innerText = count > 0 ? `✓ Готово (${count})` : `✓ Готово`;
+        }
 
         function createEmptyTableObj(guestsCount = 2) {
             const gNames = {};
@@ -1175,7 +1250,6 @@
                 return true;
             }
 
-            // Дополнительные коды для ручной выдачи на 1, 3, 6, 12 месяцев
             const monthCodes = { "PRO1M": 30, "PRO3M": 90, "PRO6M": 180, "PRO12M": 365 };
             if (monthCodes[code]) {
                 const days = monthCodes[code];
@@ -1228,7 +1302,6 @@
             const bannerEl = document.getElementById('expiringProBanner');
             const bannerSub = document.getElementById('expiringProSubtitle');
 
-            // 1. Проверяем, активен ли доступ вообще
             if (!isProCurrentlyActive()) {
                 gateEl.classList.remove('hidden');
                 bannerEl.classList.add('hidden');
@@ -1236,10 +1309,8 @@
                 return;
             }
 
-            // Если доступ активен — убираем экран блокировки
             gateEl.classList.add('hidden');
 
-            // 2. Плашка внутри приложения скрыта всегда, КРОМЕ случая когда осталось <= 3 дней
             const daysLeft = getProRemainingDays();
             if (!proUnlimited && daysLeft <= 3 && daysLeft > 0) {
                 bannerEl.classList.remove('hidden');
@@ -1600,7 +1671,7 @@
             const oldName = keys[idx];
             if (!oldName) return;
 
-            openSimpleModal("✏️ Переименовать", `Новое название для "${oldName}":`, oldName, (newName) => {
+            openSimpleModal("✏️ Переименовать", `Новое название для "${oldName}":`, "", (newName) => {
                 if (!newName || !newName.trim() || newName.trim() === oldName) return;
                 const trimmed = newName.trim();
                 if (tables[trimmed]) { alert("Такое название уже занято!"); return; }
@@ -1614,7 +1685,7 @@
                 saveData();
                 renderHallConstructorList();
                 renderTables();
-            });
+            }, oldName);
         }
 
         function deleteTableInConstructorByIdx(idx) {
@@ -1672,14 +1743,15 @@
             return `${d}.${m}.${y}`;
         }
 
-        function openSimpleModal(title, desc, defaultValue, callback) {
+        function openSimpleModal(title, desc, defaultValue, callback, placeholderText = '') {
             document.getElementById('simpleModalTitle').innerText = title;
             document.getElementById('simpleModalDesc').innerText = desc;
             const inp = document.getElementById('simpleModalInput');
             inp.value = defaultValue !== undefined && defaultValue !== null ? defaultValue : '';
+            inp.placeholder = placeholderText || 'Введите значение...';
             simpleModalCallback = callback;
             document.getElementById('simpleInputModal').classList.remove('hidden');
-            setTimeout(() => inp.focus(), 50);
+            setTimeout(() => inp.focus(), 60);
         }
 
         function closeSimpleModal() {
@@ -1694,6 +1766,7 @@
         }
 
         function switchTab(tabId) {
+            if (isMenuSearchActive) exitMenuSearchMode();
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             if(tabId === 'hall') {
                 document.getElementById('tabHall').classList.remove('hidden');
@@ -1843,7 +1916,7 @@
         }
 
         function openRateModal() {
-            openSimpleModal("💼 Почасовая ставка", "Введите ставку в рублях за 1 час:", hourlyRate, (val) => {
+            openSimpleModal("💼 Почасовая ставка", "Введите ставку в рублях за 1 час:", "", (val) => {
                 const num = Number(val);
                 if (num && num > 0) {
                     hourlyRate = num;
@@ -1851,7 +1924,7 @@
                     renderProfileAll();
                     renderStats();
                 }
-            });
+            }, String(hourlyRate));
         }
 
         function switchProfileSubTab(subTab) {
@@ -2113,14 +2186,14 @@
         }
 
         function openEditGoalModal() {
-            openSimpleModal("🎯 Цель", "Сумма чаевых за смену (₽):", shiftTipGoal, (val) => {
+            openSimpleModal("🎯 Цель", "Сумма чаевых за смену (₽):", "", (val) => {
                 const num = Number(val);
                 if(num && num > 0) {
                     shiftTipGoal = num;
                     saveData();
                     updateTipGoalUI();
                 }
-            });
+            }, String(shiftTipGoal));
         }
 
         function renderStopList() {
@@ -2235,8 +2308,8 @@
                 t.activeGuest = t.guestNames[1] || "Гость 1";
             }
 
-            // Закрываем модалку гостей СРАЗУ и переключаем вид на карточку стола
             closeGuestsModal();
+            if (isMenuSearchActive) exitMenuSearchMode();
             document.getElementById('hallGridView').classList.add('hidden');
             document.getElementById('activeTableCard').classList.remove('hidden');
             document.getElementById('orderEditingSection').classList.remove('hidden');
@@ -2263,12 +2336,14 @@
         }
 
         function backToHallGrid() {
+            if (isMenuSearchActive) exitMenuSearchMode();
             document.getElementById('activeTableCard').classList.add('hidden');
             document.getElementById('hallGridView').classList.remove('hidden');
             renderTables();
         }
 
         function toggleOrderReviewMode(reviewMode) {
+            if (isMenuSearchActive) exitMenuSearchMode();
             const editingSection = document.getElementById('orderEditingSection');
             const showMenuBtn = document.getElementById('showMenuToggleBtnContainer');
             
@@ -2307,8 +2382,8 @@
                 let gLabel = t.guestNames[i];
 
                 let gBtn = document.createElement('button');
-                gBtn.className = `px-3.5 py-2 rounded-xl text-xs font-bold tap-scale flex items-center space-x-1.5 ${t.activeGuest === gLabel ? 'bg-slate-100 text-slate-950 shadow' : 'glass-element text-slate-300'}`;
-                gBtn.innerHTML = `<span>👤 ${gLabel}</span> <span onclick="event.stopPropagation(); renameGuest(${i})" class="text-[10px] opacity-70 ml-1 hover:opacity-100">✏️</span>`;
+                gBtn.className = `px-3 py-1.5 rounded-xl text-xs font-bold tap-scale flex items-center space-x-1 ${t.activeGuest === gLabel ? 'bg-slate-100 text-slate-950 shadow' : 'glass-element text-slate-300'}`;
+                gBtn.innerHTML = `<span>👤 ${gLabel}</span> <span onclick="event.stopPropagation(); renameGuest(${i})" class="text-[10px] opacity-75 ml-1 px-1 hover:opacity-100">✏️</span>`;
                 gBtn.onclick = (function(nameLabel) { return () => { t.activeGuest = nameLabel; renderTableCard(); }; })(gLabel);
                 
                 guestsContainer.appendChild(gBtn);
@@ -2319,31 +2394,32 @@
             let total = 0;
 
             if(!t.items || t.items.length === 0) {
-                itemsContainer.innerHTML = '<p class="text-slate-500 italic text-center py-4 text-xs">Стол пустой</p>';
+                itemsContainer.innerHTML = '<p class="text-slate-500 italic text-center py-3 text-xs">Стол пустой</p>';
             } else {
                 t.items.forEach((item, idx) => {
                     total += item.price;
                     const div = document.createElement('div');
-                    div.className = "flex justify-between items-center glass-element px-4 py-3 rounded-2xl text-xs border border-slate-800/80";
+                    div.className = "flex justify-between items-center glass-element px-3.5 py-2.5 rounded-2xl text-xs border border-slate-800/80";
                     div.innerHTML = `
                         <div>
-                            <div class="font-extrabold text-slate-100 text-sm tracking-wide">${item.name}</div>
-                            <div class="text-[11px] text-slate-400 mt-1 flex items-center space-x-1.5 flex-wrap">
+                            <div class="font-extrabold text-slate-100 text-xs tracking-wide">${item.name}</div>
+                            <div class="text-[10px] text-slate-400 mt-0.5 flex items-center space-x-1.5 flex-wrap">
                                 <span class="text-slate-300 font-bold">${item.course}</span> • 
                                 <span class="text-emerald-400 font-semibold">${item.guest}</span>
                                 <span class="text-rose-300 font-medium">${item.modifier ? '(' + item.modifier + ')' : ''}</span>
                                 <button onclick="editItemModifier(${idx})" class="text-slate-300 hover:text-white ml-1">✏️</button>
                             </div>
                         </div>
-                        <div class="flex items-center space-x-3.5">
-                            <span class="font-extrabold text-slate-100 text-sm">${item.price} ₽</span>
-                            <button onclick="removeItem(${idx})" class="w-7 h-7 rounded-full bg-rose-500/10 text-rose-400 font-bold flex items-center justify-center">✕</button>
+                        <div class="flex items-center space-x-3">
+                            <span class="font-extrabold text-slate-100 text-xs">${item.price} ₽</span>
+                            <button onclick="removeItem(${idx})" class="w-6 h-6 rounded-full bg-rose-500/10 text-rose-400 font-bold flex items-center justify-center">✕</button>
                         </div>
                     `;
                     itemsContainer.appendChild(div);
                 });
             }
             document.getElementById('currentTableTotal').innerText = total + ' ₽';
+            updateSearchExitBtnLabel();
         }
 
         // ================= МЕНЮ, ПОКУПКИ, СПЛИТ-СЧЕТА И РАСЧЕТ =================
@@ -2354,7 +2430,6 @@
             for(let i=1; i<=t.guests; i++) {
                 if(t.guestNames && t.guestNames[i]) allGuests.push(t.guestNames[i]);
             }
-            // Также проверяем гостей из уже заказанных блюд, чтобы никто не потерялся
             (t.items || []).forEach(it => {
                 if (it.guest && !allGuests.includes(it.guest)) allGuests.push(it.guest);
             });
@@ -2362,7 +2437,6 @@
             if (Object.keys(t.splitGroups).length === 0) {
                 t.splitGroups["Счет №1"] = [...allGuests];
             } else {
-                // Проверяем, есть ли гости, не попавшие ни в одну группу
                 const assigned = new Set();
                 for (let g in t.splitGroups) {
                     (t.splitGroups[g] || []).forEach(gn => assigned.add(gn));
@@ -2458,10 +2532,11 @@
             openSplitBillModal();
         }
 
+        // Поле ввода при переименовании гостя всегда открывается ПУСТЫМ, чтобы не стирать "Гость 1" вручную
         function renameGuest(index) {
             const t = tables[currentTable];
             const oldName = t.guestNames[index] || `Гость ${index}`;
-            openSimpleModal("👤 Примета или имя гостя", "Например: Бородач, Девушка в очках, Папа:", oldName, (newName) => {
+            openSimpleModal("👤 Примета или имя гостя", "Например: Бородач, Девушка в очках, Папа:", "", (newName) => {
                 if(newName && newName.trim() !== "") {
                     const trimmed = newName.trim();
                     if(t.activeGuest === oldName) t.activeGuest = trimmed;
@@ -2476,7 +2551,7 @@
                     saveData();
                     renderTableCard();
                 }
-            });
+            }, oldName);
         }
 
         function editItemModifier(idx) {
@@ -2489,19 +2564,21 @@
                     saveData();
                     renderTableCard();
                 }
-            });
+            }, "Например: без лука, соус отдельно...");
         }
 
         function setCourseActive(courseName) {
             selectedActiveCourse = courseName;
+            const ind = document.getElementById('compactCourseIndicator');
+            if (ind) ind.innerText = `Курс: ${courseName}`;
             ['⚡ Сразу', '1к', '2к', '3к'].forEach(c => {
                 let key = c === '⚡ Сразу' ? 'Сразу' : c;
                 const btn = document.getElementById('courseBtn_' + key);
                 if(btn) {
                     if(courseName.includes(key === 'Сразу' ? 'Сразу' : key[0])) {
-                        btn.className = "course-active-btn bg-slate-100 text-slate-950 py-2.5 rounded-2xl text-[11px] font-extrabold shadow-md";
+                        btn.className = "course-active-btn bg-slate-100 text-slate-950 py-2 rounded-xl text-[11px] font-extrabold shadow-md";
                     } else {
-                        btn.className = "course-active-btn glass-element text-slate-300 py-2.5 rounded-2xl text-[11px] font-semibold";
+                        btn.className = "course-active-btn glass-element text-slate-300 py-2 rounded-xl text-[11px] font-semibold";
                     }
                 }
             });
@@ -2511,7 +2588,14 @@
             const list = document.getElementById('directMenuList');
             if (!list) return;
             list.innerHTML = '';
-            const search = (document.getElementById('menuSearch').value || '').toLowerCase().trim();
+            const rawSearch = document.getElementById('menuSearch').value || '';
+            const search = rawSearch.toLowerCase().trim();
+
+            const clearBtn = document.getElementById('clearSearchTextBtn');
+            if (clearBtn) {
+                if (rawSearch.length > 0) clearBtn.classList.remove('hidden');
+                else clearBtn.classList.add('hidden');
+            }
 
             if (menuItems.length === 0) {
                 list.innerHTML = `<div class="text-center py-6 text-slate-400 text-xs">Меню пустое. Загрузите своё меню через <b onclick="openAiScannerModal()" class="text-emerald-400 underline cursor-pointer">🤖 ИИ-сканер</b>!</div>`;
@@ -2525,7 +2609,7 @@
 
                 const isStopped = stopListSet.has(item.name);
                 const div = document.createElement('div');
-                div.className = `flex justify-between items-center p-3.5 rounded-2xl border transition ${isStopped ? 'bg-rose-500/5 border-rose-500/20 opacity-50' : 'glass-element border-slate-800 hover:border-slate-600'}`;
+                div.className = `flex justify-between items-center px-3.5 py-2.5 rounded-2xl border transition ${isStopped ? 'bg-rose-500/5 border-rose-500/20 opacity-50' : 'glass-element border-slate-800 hover:border-slate-600'}`;
                 div.innerHTML = `
                     <div class="pr-2 flex-1">
                         <div class="font-bold text-xs ${isStopped ? 'text-rose-300 line-through' : 'text-slate-200'}">${item.name}</div>
@@ -2533,7 +2617,7 @@
                             ${isStopped ? '🛑 В СТОПЕ' : item.price + ' ₽'}
                         </div>
                     </div>
-                    <button ${isStopped ? 'disabled' : ''} onclick="orderMenuItemByIdx(${idx})" class="${isStopped ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : 'bg-slate-100 hover:bg-white text-slate-950 shadow-lg'} font-extrabold px-4 py-2.5 rounded-xl text-xs tap-scale shrink-0">
+                    <button ${isStopped ? 'disabled' : ''} onclick="orderMenuItemByIdx(${idx}, this)" class="${isStopped ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : 'bg-slate-100 hover:bg-white text-slate-950 shadow-lg'} font-extrabold px-3.5 py-2 rounded-xl text-xs tap-scale shrink-0">
                         ${isStopped ? 'Стоп' : '+ Добавить'}
                     </button>
                 `;
@@ -2545,20 +2629,19 @@
             currentCat = cat;
             document.querySelectorAll('#menuCategories button').forEach(b => {
                 if(b.innerText.includes(cat) || (cat === 'all' && b.innerText === 'Все')) {
-                    b.className = "cat-tab bg-slate-100 text-slate-950 px-3.5 py-2 rounded-2xl font-extrabold whitespace-nowrap text-xs shadow";
+                    b.className = "cat-tab bg-slate-100 text-slate-950 px-3 py-1.5 rounded-xl font-extrabold whitespace-nowrap text-xs shadow";
                 } else if(cat === 'Бар' && b.innerText.includes('Бар')) {
-                    b.className = "cat-tab bg-slate-100 text-slate-950 px-3.5 py-2 rounded-2xl font-extrabold whitespace-nowrap text-xs shadow";
+                    b.className = "cat-tab bg-slate-100 text-slate-950 px-3 py-1.5 rounded-xl font-extrabold whitespace-nowrap text-xs shadow";
                 } else {
-                    b.className = "cat-tab glass-element text-slate-300 px-3.5 py-2 rounded-2xl whitespace-nowrap text-xs font-medium";
+                    b.className = "cat-tab glass-element text-slate-300 px-3 py-1.5 rounded-xl whitespace-nowrap text-xs font-medium";
                 }
             });
             renderMenuDirect();
         }
 
-        function orderMenuItemByIdx(idx) {
+        function orderMenuItemByIdx(idx, btnEl) {
             const item = menuItems[idx];
             if(!item || !currentTable || stopListSet.has(item.name)) return;
-            document.getElementById('menuSearch').value = '';
             
             if(item.isHosper) {
                 pendingHosperItem = { name: item.name, price: item.price };
@@ -2567,7 +2650,19 @@
                 document.getElementById('hospersModal').classList.remove('hidden');
                 return;
             }
+
             addItemToTableDirect(item.name, item.price, null);
+
+            // Мгновенный визуальный отклик на кнопке при добавлении
+            if (btnEl) {
+                const orig = btnEl.innerText;
+                btnEl.innerText = "✓ ОК";
+                btnEl.classList.add('bg-emerald-400');
+                setTimeout(() => {
+                    btnEl.innerText = orig;
+                    btnEl.classList.remove('bg-emerald-400');
+                }, 400);
+            }
         }
 
         function selectHosperWeight(weight) {
@@ -2605,6 +2700,7 @@
         }
 
         function saveTableToWork() {
+            if (isMenuSearchActive) exitMenuSearchMode();
             if(!currentTable || !tables[currentTable]) return;
             const t = tables[currentTable];
             if (t.items.length > 0 && !t.lastVisited) {
@@ -2668,6 +2764,7 @@
         }
 
         function openCheckoutModal() {
+            if (isMenuSearchActive) exitMenuSearchMode();
             if(!currentTable || !tables[currentTable]) return;
             const t = tables[currentTable];
             if(!t.items || t.items.length === 0) {
