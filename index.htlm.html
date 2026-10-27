@@ -26,7 +26,6 @@
             width: 100%;
         }
 
-        /* Защита от перекрытия системными кнопками Telegram "Закрыть" и часами iOS в полноэкранном режиме */
         body.fullscreen-safe-pad {
             padding-top: max(var(--safe-top), 84px);
         }
@@ -67,27 +66,26 @@
 </head>
 <body class="flex flex-col justify-between selection:bg-emerald-500 selection:text-slate-950">
 
-    <!-- ЭКРАН ДОСТУПА (ПОЯВЛЯЕТСЯ ТОЛЬКО ЕСЛИ НЕТ АКТИВНОГО ПРОМОКОДА ИЛИ ПОДПИСКИ) -->
+    <!-- ЭКРАН ДОСТУПА (БЛОКИРОВКА ПРИ ИСТЕЧЕНИИ ПОДПИСКИ) -->
     <div id="proGateOverlay" class="fixed inset-0 bg-[#07090b] z-[100] hidden flex flex-col items-center justify-center p-6">
-        <div class="glass-panel rounded-[36px] max-w-sm w-full p-7 space-y-5 border border-emerald-500/30 shadow-2xl text-center">
-            <div class="w-16 h-16 rounded-3xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-3xl mx-auto shadow-lg">⚡</div>
-            <div class="space-y-1.5">
-                <h2 class="text-lg font-extrabold text-slate-100 uppercase tracking-wider">Пульт Официанта PRO</h2>
-                <p id="proGateSubtitle" class="text-xs text-slate-400 leading-relaxed">Введите промокод для активации полного доступа к столам, ИИ-сканеру меню и учету чаевых</p>
+        <div class="glass-panel rounded-[36px] max-w-sm w-full p-7 space-y-4 border border-amber-500/40 shadow-2xl text-center">
+            <div class="w-16 h-16 rounded-3xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-3xl mx-auto shadow-lg">🔒</div>
+            <div class="space-y-1">
+                <h2 class="text-lg font-extrabold text-slate-100 uppercase tracking-wider">Период доступа истек</h2>
+                <p class="text-xs text-slate-400 leading-relaxed">Для продолжения работы продлите подписку или введите ваш промокод</p>
             </div>
 
             <div class="space-y-2.5 pt-1">
-                <input type="text" id="gatePromoInput" placeholder="Введите промокод..." onkeydown="if(event.key==='Enter') activatePromoFromGate()" class="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-2xl px-4 py-3.5 text-center text-sm text-slate-100 outline-none font-extrabold uppercase tracking-widest">
-                <button onclick="activatePromoFromGate()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 font-extrabold py-4 rounded-2xl text-xs shadow-xl tap-scale uppercase tracking-wider">
-                    🚀 Активировать доступ
+                <input type="text" id="gatePromoInput" placeholder="Введите промокод..." onkeydown="if(event.key==='Enter') activatePromoFromGate()" class="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-2xl px-4 py-3 text-center text-xs text-slate-100 outline-none font-extrabold uppercase tracking-widest">
+                <button onclick="activatePromoFromGate()" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-extrabold py-3.5 rounded-2xl text-xs shadow-xl tap-scale uppercase tracking-wider">
+                    ✨ Активировать промокод
                 </button>
             </div>
 
-            <div class="pt-3 border-t border-slate-800/80 space-y-2">
-                <p class="text-[10px] text-slate-500">Нет промокода или закончился пробный период?</p>
-                <button onclick="openPaymentBotLink()" class="w-full glass-element hover:bg-slate-800 text-amber-300 border border-amber-500/30 font-extrabold py-3 rounded-2xl text-xs tap-scale flex items-center justify-center space-x-1.5">
-                    <span>👑</span>
-                    <span>Получить доступ / Продлить подписку</span>
+            <div class="pt-2 border-t border-slate-800/80 space-y-2">
+                <button onclick="openCardPaymentModal()" class="w-full glass-element hover:bg-slate-800 text-emerald-400 border border-emerald-500/30 font-extrabold py-3.5 rounded-2xl text-xs tap-scale flex items-center justify-center space-x-1.5 shadow">
+                    <span>💳</span>
+                    <span>Купить PRO (Перевод на карту)</span>
                 </button>
             </div>
         </div>
@@ -119,16 +117,16 @@
     <!-- Основной контейнер со скроллом -->
     <main id="mainScrollContainer" class="max-w-md w-full mx-auto p-3.5 space-y-4 overflow-y-auto flex-1 pb-32">
 
-        <!-- ПЛАШКА ПРЕДУПРЕЖДЕНИЯ (ПОЯВЛЯЕТСЯ ТОЛЬКО КОГДА ОСТАЛОСЬ <= 3 ДНЯ ПОДПИСКИ) -->
+        <!-- ПЛАШКА ПРЕДУПРЕЖДЕНИЯ (ПОЯВЛЯЕТСЯ ТОЛЬКО КОГДА ОСТАЛОСЬ <= 3 ДНЕЙ) -->
         <div id="expiringProBanner" class="glass-panel rounded-2xl p-3.5 hidden justify-between items-center shadow-lg border border-amber-500/40 bg-gradient-to-r from-amber-950/30 to-slate-900">
             <div class="flex items-center space-x-2.5">
                 <div class="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-sm">⏳</div>
                 <div>
-                    <div class="text-[10px] uppercase font-extrabold text-amber-400 tracking-wider" id="expiringProTitle">Подписка заканчивается</div>
+                    <div class="text-[10px] uppercase font-extrabold text-amber-400 tracking-wider">Подписка заканчивается</div>
                     <div class="text-[11px] font-bold text-slate-200" id="expiringProSubtitle">Осталось менее 3 дней</div>
                 </div>
             </div>
-            <button onclick="openPromoModal()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-3 py-2 rounded-xl text-xs font-extrabold tap-scale shadow">
+            <button onclick="openCardPaymentModal()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-3 py-2 rounded-xl text-xs font-extrabold tap-scale shadow">
                 Продлить
             </button>
         </div>
@@ -152,7 +150,6 @@
 
             <!-- КАРТОЧКА АКТИВНОГО СТОЛА -->
             <div id="activeTableCard" class="glass-panel rounded-[32px] p-4 shadow-2xl space-y-3.5 hidden border border-slate-700/50">
-                <!-- Верхняя шапка стола (скрывается при активном поиске) -->
                 <div id="tableCardTopHeader" class="flex justify-between items-center border-b border-slate-800/80 pb-3">
                     <div>
                         <div class="flex items-center space-x-2">
@@ -168,7 +165,6 @@
                 </div>
 
                 <div id="orderEditingSection" class="space-y-3">
-                    <!-- Выбор гостя (всегда под рукой, компактный) -->
                     <div class="space-y-1.5 bg-slate-950/60 p-2.5 rounded-2xl border border-slate-800/80 shadow-inner">
                         <div class="flex justify-between items-center">
                             <span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Гость (✏️ — дать имя):</span>
@@ -177,7 +173,6 @@
                         <div id="guestsListBtns" class="flex flex-wrap gap-1.5"></div>
                     </div>
 
-                    <!-- Курс подачи (скрывается при фокусе в поиск для экономии места над клавиатурой) -->
                     <div id="tableCoursesBlock" class="space-y-1">
                         <span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Курс подачи блюд:</span>
                         <div class="grid grid-cols-4 gap-1.5">
@@ -188,7 +183,6 @@
                         </div>
                     </div>
 
-                    <!-- Поиск и список меню -->
                     <div class="space-y-2.5 pt-1 border-t border-slate-800/80">
                         <div class="flex items-center space-x-1.5">
                             <div class="relative flex-1">
@@ -222,7 +216,6 @@
                     </button>
                 </div>
 
-                <!-- Блок состава заказа и кнопок расчета (скрывается во время ввода в поиске, чтобы не занимать место над клавиатурой) -->
                 <div id="tableOrderBottomSummary" class="pt-2.5 border-t border-slate-800/80 space-y-2.5">
                     <div class="flex justify-between items-center text-xs px-3 bg-slate-950/70 p-2.5 rounded-2xl border border-slate-800 shadow">
                         <span class="font-bold text-slate-400 uppercase tracking-wide">Сумма заказа:</span>
@@ -347,6 +340,7 @@
                 </div>
                 <div class="flex items-center space-x-1.5">
                     <button onclick="openPromoModal()" class="glass-element hover:bg-slate-800 text-slate-300 px-2.5 py-2 rounded-xl text-xs font-bold tap-scale" title="Промокод">🔑</button>
+                    <button onclick="openCardPaymentModal()" class="bg-amber-500/20 text-amber-300 border border-amber-500/40 px-3 py-2 rounded-xl text-xs font-extrabold tap-scale shadow" title="Купить PRO">💳 Купить PRO</button>
                     <button onclick="openAddPastShiftModal()" class="bg-slate-100 hover:bg-white text-slate-950 px-3 py-2 rounded-xl text-xs font-extrabold tap-scale shadow">
                         ＋ Смена
                     </button>
@@ -496,7 +490,7 @@
 
     </main>
 
-    <!-- Нижняя панель (автоматически прячется при поиске блюда с клавиатурой) -->
+    <!-- Нижняя панель -->
     <nav id="bottomNav" class="bg-[#07090b]/90 backdrop-blur-2xl border-t border-slate-800/60 shrink-0 fixed bottom-0 left-0 right-0 z-50 px-3 py-2.5 shadow-2xl">
         <div class="max-w-md mx-auto glass-panel rounded-[26px] p-1 grid grid-cols-5 gap-1 border border-slate-700/50 shadow-2xl">
             <button onclick="switchTab('hall')" id="navBtnHall" class="flex flex-col items-center justify-center py-2 rounded-2xl text-slate-950 font-extrabold bg-slate-100 border border-slate-200 transition tap-scale shadow">
@@ -522,24 +516,80 @@
         </div>
     </nav>
 
-    <!-- МОДАЛКА АКТИВАЦИИ ПРОМОКОДА ВНУТРИ ПРИЛОЖЕНИЯ -->
-    <div id="promoModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-[80] hidden flex items-center justify-center p-4">
+    <!-- МОДАЛКА ПЕРЕВОДА НА КАРТУ И АКТИВАЦИИ -->
+    <div id="cardPaymentModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-[85] hidden flex items-center justify-center p-4">
+        <div class="glass-panel rounded-[32px] max-w-sm w-full p-6 space-y-4 shadow-2xl border border-emerald-500/30 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 class="font-extrabold text-sm text-emerald-400">💳 Продление PRO-доступа</h3>
+                <button onclick="closeCardPaymentModal()" class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs">✕</button>
+            </div>
+            
+            <div class="space-y-2 text-xs text-slate-300">
+                <p class="font-bold text-slate-100">Выберите период подписки:</p>
+                <div class="grid grid-cols-2 gap-2">
+                    <div onclick="selectTariff('PRO1M', 290, '1 месяц')" id="tariffCard_PRO1M" class="tariff-box glass-element p-3 rounded-2xl border border-emerald-500/50 bg-emerald-500/10 cursor-pointer tap-scale text-center">
+                        <div class="font-extrabold text-slate-100">1 месяц</div>
+                        <div class="text-emerald-400 font-bold mt-0.5">290 ₽</div>
+                    </div>
+                    <div onclick="selectTariff('PRO3M', 790, '3 месяца')" id="tariffCard_PRO3M" class="tariff-box glass-element p-3 rounded-2xl border border-slate-800 cursor-pointer tap-scale text-center">
+                        <div class="font-extrabold text-slate-100">3 месяца</div>
+                        <div class="text-sky-400 font-bold mt-0.5">790 ₽</div>
+                    </div>
+                    <div onclick="selectTariff('PRO6M', 1490, '6 месяцев')" id="tariffCard_PRO6M" class="tariff-box glass-element p-3.5 rounded-2xl border border-slate-800 cursor-pointer tap-scale text-center">
+                        <div class="font-extrabold text-slate-100">6 месяцев</div>
+                        <div class="text-amber-400 font-bold mt-0.5">1 490 ₽</div>
+                    </div>
+                    <div onclick="selectTariff('PRO12M', 2490, '1 год')" id="tariffCard_PRO12M" class="tariff-box glass-element p-3.5 rounded-2xl border border-slate-800 cursor-pointer tap-scale text-center">
+                        <div class="font-extrabold text-slate-100">1 год (Хит 🔥)</div>
+                        <div class="text-emerald-400 font-bold mt-0.5">2 490 ₽</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-element p-3.5 rounded-2xl border border-slate-800 space-y-2.5 text-xs">
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-400">К оплате:</span>
+                    <span id="paymentModalPriceVal" class="font-extrabold text-emerald-400 text-sm">290 ₽</span>
+                </div>
+                <div class="space-y-1 pt-1 border-t border-slate-800">
+                    <span class="text-[10px] text-slate-400 uppercase font-bold">Номер карты (Сбер / Т-Банк):</span>
+                    <div class="flex items-center space-x-2">
+                        <input type="text" id="devCardNumberInput" value="2200 7021 9528 5189" readonly class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-200 outline-none">
+                        <button onclick="copyDevCard()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-xl font-bold tap-scale">📋</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-2 pt-1">
+                <button onclick="openCreatorTelegramChat()" class="w-full bg-gradient-to-r from-sky-600 to-blue-600 text-white font-extrabold py-3.5 rounded-2xl text-xs shadow-lg tap-scale flex items-center justify-center space-x-1.5">
+                    <span>📤</span>
+                    <span>Отправить чек в Telegram создателю</span>
+                </button>
+                <button onclick="openPromoModal(); closeCardPaymentModal();" class="w-full glass-element hover:bg-slate-800 text-amber-300 font-bold py-2.5 rounded-2xl text-xs tap-scale">
+                    🔑 У меня уже есть промокод (активировать)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- МОДАЛКА АКТИВАЦИИ ПРОМОКОДА -->
+    <div id="promoModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-[90] hidden flex items-center justify-center p-4">
         <div class="glass-panel rounded-[32px] max-w-xs w-full p-6 space-y-4 shadow-2xl border border-amber-500/30">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-                <h3 class="font-extrabold text-sm text-amber-400">🔑 Доступ и промокод</h3>
+                <h3 class="font-extrabold text-sm text-amber-400">🔑 Активация промокода</h3>
                 <button onclick="closePromoModal()" class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs">✕</button>
             </div>
             <div id="modalProStatusInfo" class="text-[11px] text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 p-2.5 rounded-xl text-center">
-                Проверка статуса...
+                Статус...
             </div>
-            <p class="text-[11px] text-slate-400">Введите промокод для активации или продления PRO-доступа:</p>
+            <p class="text-[11px] text-slate-400">Введите промокод (например: <b>TEST</b>, <b>1BEZLEMIT</b> или полученный после оплаты <b>PRO1M</b>):</p>
             <input type="text" id="promoCodeInput" placeholder="Введите промокод..." onkeydown="if(event.key==='Enter') applyPromoCode()" class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs text-slate-100 outline-none font-bold uppercase tracking-wider">
             <button onclick="applyPromoCode()" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-extrabold py-3.5 rounded-2xl text-xs tap-scale shadow-lg">✨ Активировать код</button>
         </div>
     </div>
 
     <!-- МОДАЛКА ВИРУСНОЙ КАРТОЧКИ СТОРИС -->
-    <div id="viralShareModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-2xl z-[80] hidden flex items-center justify-center p-3">
+    <div id="viralShareModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-xl z-[80] hidden flex items-center justify-center p-3">
         <div class="max-w-sm w-full flex flex-col space-y-3 max-h-[95vh] overflow-y-auto">
             <div class="flex justify-between items-center px-2">
                 <div class="flex items-center space-x-2">
@@ -957,7 +1007,7 @@
         const SUPABASE_KEY = 'sb_publishable_uobDghP-DOkp-xtBc5Q5JA_V1eZwstM';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        const PAYMENT_BOT_URL = 'https://t.me/waiter_pro_bot';
+        const CREATOR_TG_USERNAME = 'patricianw';
 
         let userId = 'default_user';
         let lastCloudError = null;
@@ -985,6 +1035,9 @@
 
         let proUnlimited = false;
         let proExpiresAt = null;
+        let selectedTariffCode = "PRO1M";
+        let selectedTariffPrice = 290;
+        let selectedTariffTitle = "1 месяц";
 
         let currentTipAmount = 0;
         let currentTipType = "Нал";
@@ -1202,7 +1255,7 @@
             }
         }
 
-        // ================= ПРОМОКОДЫ, ЗАЩИТА ВХОДА И ПЛАШКА <= 3 ДНЕЙ =================
+        // ================= СИСТЕМА ОПЛАТЫ НА КАРТУ И ПРОМОКОДОВ =================
 
         function isProCurrentlyActive() {
             if (proUnlimited) return true;
@@ -1257,11 +1310,11 @@
                 proExpiresAt = baseTime + (days * 24 * 60 * 60 * 1000);
                 saveData();
                 updateProStatusUI();
-                alert(`🎉 Подписка успешно продлена на ${days} дней!`);
+                alert(`🎉 Подписка успешно активирована на ${days} дней!`);
                 return true;
             }
 
-            alert("❌ Неверный промокод. Проверьте правильность ввода.");
+            alert("❌ Неверный промокод.");
             return false;
         }
 
@@ -1289,11 +1342,48 @@
             }
         }
 
-        function openPaymentBotLink() {
+        function openCardPaymentModal() {
+            selectTariff('PRO1M', 290, '1 месяц');
+            document.getElementById('cardPaymentModal').classList.remove('hidden');
+        }
+
+        function closeCardPaymentModal() {
+            document.getElementById('cardPaymentModal').classList.add('hidden');
+        }
+
+        function selectTariff(code, price, title) {
+            selectedTariffCode = code;
+            selectedTariffPrice = price;
+            selectedTariffTitle = title;
+            document.getElementById('paymentModalPriceVal').innerText = price + ' ₽';
+
+            ['PRO1M', 'PRO3M', 'PRO6M', 'PRO12M'].forEach(c => {
+                const el = document.getElementById('tariffCard_' + c);
+                if (el) {
+                    if (c === code) {
+                        el.className = "tariff-box glass-element p-3.5 rounded-2xl border border-emerald-500 bg-emerald-500/15 cursor-pointer tap-scale text-center shadow";
+                    } else {
+                        el.className = "tariff-box glass-element p-3.5 rounded-2xl border border-slate-800 cursor-pointer tap-scale text-center";
+                    }
+                }
+            });
+        }
+
+        function copyDevCard() {
+            const input = document.getElementById('devCardNumberInput');
+            input.select();
+            input.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(input.value.replace(/\s+/g, ''));
+            alert("Номер карты скопирован в буфер обмена!");
+        }
+
+        function openCreatorTelegramChat() {
+            const msg = encodeURIComponent(`Привет! Оплатил подписку "${selectedTariffTitle}" (${selectedTariffPrice} ₽) для Пульта Официанта PRO. Вот мой чек/скриншот:`);
+            const url = `https://t.me/${CREATOR_TG_USERNAME}?text=${msg}`;
             if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openTelegramLink) {
-                window.Telegram.WebApp.openTelegramLink(PAYMENT_BOT_URL);
+                window.Telegram.WebApp.openTelegramLink(url);
             } else {
-                window.open(PAYMENT_BOT_URL, '_blank');
+                window.open(url, '_blank');
             }
         }
 
@@ -1671,7 +1761,7 @@
             const oldName = keys[idx];
             if (!oldName) return;
 
-            openSimpleModal("✏️ Переименовать", `Новое название для "${oldName}":`, "", (newName) => {
+            openSimpleModal("✏️ Переименовать", `Новое название для "${oldName}":`, oldName, (newName) => {
                 if (!newName || !newName.trim() || newName.trim() === oldName) return;
                 const trimmed = newName.trim();
                 if (tables[trimmed]) { alert("Такое название уже занято!"); return; }
@@ -2532,7 +2622,6 @@
             openSplitBillModal();
         }
 
-        // Поле ввода при переименовании гостя всегда открывается ПУСТЫМ, чтобы не стирать "Гость 1" вручную
         function renameGuest(index) {
             const t = tables[currentTable];
             const oldName = t.guestNames[index] || `Гость ${index}`;
@@ -2653,7 +2742,6 @@
 
             addItemToTableDirect(item.name, item.price, null);
 
-            // Мгновенный визуальный отклик на кнопке при добавлении
             if (btnEl) {
                 const orig = btnEl.innerText;
                 btnEl.innerText = "✓ ОК";
