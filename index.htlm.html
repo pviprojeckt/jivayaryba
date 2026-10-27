@@ -58,6 +58,32 @@
 </head>
 <body class="flex flex-col justify-between selection:bg-emerald-500 selection:text-slate-950">
 
+    <!-- ЭКРАН ДОСТУПА (ПОЯВЛЯЕТСЯ ТОЛЬКО ЕСЛИ НЕТ АКТИВНОГО ПРОМОКОДА ИЛИ ПОДПИСКИ) -->
+    <div id="proGateOverlay" class="fixed inset-0 bg-[#07090b] z-[100] hidden flex flex-col items-center justify-center p-6">
+        <div class="glass-panel rounded-[36px] max-w-sm w-full p-7 space-y-5 border border-emerald-500/30 shadow-2xl text-center">
+            <div class="w-16 h-16 rounded-3xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-3xl mx-auto shadow-lg">⚡</div>
+            <div class="space-y-1.5">
+                <h2 class="text-lg font-extrabold text-slate-100 uppercase tracking-wider">Пульт Официанта PRO</h2>
+                <p id="proGateSubtitle" class="text-xs text-slate-400 leading-relaxed">Введите промокод для активации полного доступа к столам, ИИ-сканеру меню и учету чаевых</p>
+            </div>
+
+            <div class="space-y-2.5 pt-1">
+                <input type="text" id="gatePromoInput" placeholder="Введите промокод..." class="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-2xl px-4 py-3.5 text-center text-sm text-slate-100 outline-none font-extrabold uppercase tracking-widest">
+                <button onclick="activatePromoFromGate()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 font-extrabold py-4 rounded-2xl text-xs shadow-xl tap-scale uppercase tracking-wider">
+                    🚀 Активировать доступ
+                </button>
+            </div>
+
+            <div class="pt-3 border-t border-slate-800/80 space-y-2">
+                <p class="text-[10px] text-slate-500">Нет промокода или закончился пробный период?</p>
+                <button onclick="openPaymentBotLink()" class="w-full glass-element hover:bg-slate-800 text-amber-300 border border-amber-500/30 font-extrabold py-3 rounded-2xl text-xs tap-scale flex items-center justify-center space-x-1.5">
+                    <span>👑</span>
+                    <span>Получить доступ / Продлить подписку</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Шапка -->
     <header class="bg-[#07090b]/90 backdrop-blur-2xl border-b border-slate-800/60 shrink-0 px-5 py-3.5 z-40">
         <div class="max-w-md mx-auto flex items-center justify-between">
@@ -83,6 +109,20 @@
 
     <!-- Основной контейнер со скроллом -->
     <main id="mainScrollContainer" class="max-w-md w-full mx-auto p-4 space-y-4 overflow-y-auto flex-1 pb-32">
+
+        <!-- ПЛАШКА ПРЕДУПРЕЖДЕНИЯ (ПОЯВЛЯЕТСЯ ТОЛЬКО КОГДА ОСТАЛОСЬ <= 3 ДНЯ ПОДПИСКИ) -->
+        <div id="expiringProBanner" class="glass-panel rounded-2xl p-3.5 hidden justify-between items-center shadow-lg border border-amber-500/40 bg-gradient-to-r from-amber-950/30 to-slate-900">
+            <div class="flex items-center space-x-2.5">
+                <div class="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-sm">⏳</div>
+                <div>
+                    <div class="text-[10px] uppercase font-extrabold text-amber-400 tracking-wider" id="expiringProTitle">Подписка заканчивается</div>
+                    <div class="text-[11px] font-bold text-slate-200" id="expiringProSubtitle">Осталось менее 3 дней</div>
+                </div>
+            </div>
+            <button onclick="openPromoModal()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-3 py-2 rounded-xl text-xs font-extrabold tap-scale shadow">
+                Продлить
+            </button>
+        </div>
 
         <!-- ВКЛАДКА 1: Зал -->
         <div id="tabHall" class="tab-content space-y-4">
@@ -273,19 +313,6 @@
 
         <!-- ВКЛАДКА 5: ПРОФИЛЬ -->
         <div id="tabProfile" class="tab-content space-y-4 hidden">
-            <div id="proStatusCard" class="glass-panel rounded-2xl p-3.5 flex justify-between items-center shadow border border-amber-500/30 bg-gradient-to-r from-amber-950/20 to-slate-900">
-                <div class="flex items-center space-x-2.5">
-                    <div class="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-sm">👑</div>
-                    <div>
-                        <div class="text-[9px] uppercase font-bold text-amber-400 tracking-wider" id="proStatusTitle">PRO СТАТУС</div>
-                        <div class="text-xs font-extrabold text-slate-100" id="proStatusSubtitle">Бесплатный период</div>
-                    </div>
-                </div>
-                <button onclick="openPromoModal()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-3 py-2 rounded-xl text-xs font-extrabold tap-scale shadow">
-                    🔑 Промокод
-                </button>
-            </div>
-
             <div class="glass-panel rounded-2xl p-3 flex justify-between items-center shadow border border-slate-700/50">
                 <div class="flex items-center space-x-2.5">
                     <div class="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-sm">💼</div>
@@ -297,9 +324,12 @@
                         </div>
                     </div>
                 </div>
-                <button onclick="openAddPastShiftModal()" class="bg-slate-100 hover:bg-white text-slate-950 px-3 py-2 rounded-xl text-xs font-extrabold tap-scale shadow">
-                    ＋ Смена
-                </button>
+                <div class="flex items-center space-x-1.5">
+                    <button onclick="openPromoModal()" class="glass-element hover:bg-slate-800 text-slate-300 px-2.5 py-2 rounded-xl text-xs font-bold tap-scale" title="Промокод">🔑</button>
+                    <button onclick="openAddPastShiftModal()" class="bg-slate-100 hover:bg-white text-slate-950 px-3 py-2 rounded-xl text-xs font-extrabold tap-scale shadow">
+                        ＋ Смена
+                    </button>
+                </div>
             </div>
 
             <div class="glass-panel p-1.5 rounded-2xl grid grid-cols-2 gap-1.5 border border-slate-800">
@@ -363,6 +393,7 @@
                     </div>
                 </div>
 
+                <!-- КОМПАКТНЫЕ КНОПКИ НАСТРОЕК ПОД КАЛЕНДАРЕМ -->
                 <div class="grid grid-cols-2 gap-2 pt-2">
                     <button onclick="openAiScannerModal()" class="glass-panel hover:bg-slate-800 p-3 rounded-2xl flex items-center space-x-2.5 border border-emerald-500/20 tap-scale shadow">
                         <span class="text-lg">🤖</span>
@@ -470,15 +501,18 @@
         </div>
     </nav>
 
-    <!-- МОДАЛКА АКТИВАЦИИ ПРОМОКОДА -->
+    <!-- МОДАЛКА АКТИВАЦИИ ПРОМОКОДА ВНУТРИ ПРИЛОЖЕНИЯ -->
     <div id="promoModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-50 hidden flex items-center justify-center p-4">
         <div class="glass-panel rounded-[32px] max-w-xs w-full p-6 space-y-4 shadow-2xl border border-amber-500/30">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-                <h3 class="font-extrabold text-sm text-amber-400">🔑 Активация промокода</h3>
+                <h3 class="font-extrabold text-sm text-amber-400">🔑 Доступ и промокод</h3>
                 <button onclick="closePromoModal()" class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs">✕</button>
             </div>
-            <p class="text-[11px] text-slate-400">Введите промокод для активации PRO-доступа (например: <b>TEST</b> или <b>1BEZLEMIT</b>):</p>
-            <input type="text" id="promoCodeInput" placeholder="TEST или 1BEZLEMIT" class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs text-slate-100 outline-none font-bold uppercase tracking-wider">
+            <div id="modalProStatusInfo" class="text-[11px] text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 p-2.5 rounded-xl text-center">
+                Проверка статуса...
+            </div>
+            <p class="text-[11px] text-slate-400">Введите промокод для активации или продления PRO-доступа:</p>
+            <input type="text" id="promoCodeInput" placeholder="Введите промокод..." class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs text-slate-100 outline-none font-bold uppercase tracking-wider">
             <button onclick="applyPromoCode()" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-extrabold py-3.5 rounded-2xl text-xs tap-scale shadow-lg">✨ Активировать код</button>
         </div>
     </div>
@@ -582,7 +616,8 @@
                             <span>Выбрать фото</span>
                             <input type="file" id="menuPhotoInput" accept="image/*" onchange="handleMenuPhotoUpload(event)" class="hidden">
                         </label>
-                        <button onclick="loadDemoMenuPreset()" class="glass-element hover:bg-slate-800 border border-slate-700 px-4 py-3 rounded-2xl font-bold text-emerald-400 tap-scale">💡 Пример</button>
+                        <button onclick="loadDemoMenuPreset()" class="glass-element hover:bg-slate-800 border border-slate-700 px-3 py-3 rounded-2xl font-bold text-emerald-400 tap-scale">💡 Пример</button>
+                        <button onclick="clearCurrentMenuCompletely()" class="glass-element hover:bg-rose-950/40 border border-rose-500/30 px-3 py-3 rounded-2xl font-bold text-rose-400 tap-scale" title="Очистить старое меню">🗑</button>
                     </div>
                 </div>
 
@@ -605,7 +640,7 @@
                         <span class="text-[10px] text-emerald-400">Готово к сохранению</span>
                     </div>
                     <div id="aiScannedItemsList" class="space-y-1.5 max-h-40 overflow-y-auto pr-1"></div>
-                    <button onclick="saveAiScannedMenuToApp()" class="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-extrabold py-3.5 rounded-2xl text-xs shadow-xl tap-scale">💾 Сохранить в мое меню</button>
+                    <button onclick="saveAiScannedMenuToApp()" class="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-extrabold py-3.5 rounded-2xl text-xs shadow-xl tap-scale">💾 Добавить в мое меню</button>
                 </div>
             </div>
         </div>
@@ -857,7 +892,7 @@
             <div class="space-y-2 overflow-y-auto flex-1 pr-1 text-xs" id="historyModalItemsList"></div>
             <div class="pt-3 border-t border-slate-800 space-y-1.5 text-xs">
                 <div class="flex justify-between text-slate-400"><span>Сумма:</span><span id="historyModalSubtotal" class="font-bold text-slate-200">0 ₽</span></div>
-                <div class="flex justify-between text-emerald-400 font-bold"><span>Чай:</span><span id="historyModalTip">0 ₽</span></div>
+                <div class="flex justify-between text-emerald-400 font-bold"><span>Чай (<span id="historyModalTipType">Нал</span>):</span><span id="historyModalTip">0 ₽</span></div>
             </div>
             <button onclick="closeHistoryDetailModal()" class="w-full bg-slate-800 text-slate-300 font-bold py-3 rounded-2xl text-xs">Закрыть</button>
         </div>
@@ -898,9 +933,13 @@
         const SUPABASE_KEY = 'sb_publishable_uobDghP-DOkp-xtBc5Q5JA_V1eZwstM';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+        // Ссылка на платежного бота (Tribute или свой бот), куда перекидывает кнопка покупки подписки
+        const PAYMENT_BOT_URL = 'https://t.me/waiter_pro_bot';
+
         let userId = 'default_user';
         let lastCloudError = null;
 
+        // Базовое стартовое меню (чистая база под сканирование)
         let menuItems = [
             { name: "Фирменный бургер", price: 790, cat: "Горячее" },
             { name: "Цезарь с курицей", price: 690, cat: "Салаты" },
@@ -920,7 +959,10 @@
         let shiftTipGoal = 3000;
         let stopListSet = new Set();
         let aiScannedParsedItems = [];
-        let isProActive = false;
+
+        // Переменные PRO-доступа
+        let proUnlimited = false;
+        let proExpiresAt = null; // timestamp в миллисекундах
 
         let currentTipAmount = 0;
         let currentTipType = "Нал";
@@ -973,8 +1015,11 @@
         }
 
         function handleCloudStatusClick() {
-            if (lastCloudError) alert(`Ошибка облака (ID: ${userId})`);
-            else alert(`Облако активно!\nID: ${userId} | PRO: ${isProActive ? 'Активен' : 'Нет'}`);
+            if (lastCloudError) {
+                alert(`Ошибка облака (ID: ${userId}):\n${lastCloudError.message || ''}`);
+            } else {
+                alert(`Облако активно!\nТвой ID: ${userId}\nСтатус: ${getProHumanStatusText()}`);
+            }
             saveData();
         }
 
@@ -991,7 +1036,9 @@
                 hourlyRate = Number(localStorage.getItem('fish_pro_hourly_rate')) || 280;
                 shiftTipGoal = Number(localStorage.getItem('fish_pro_goal')) || 3000;
                 stopListSet = new Set(JSON.parse(localStorage.getItem('fish_pro_stoplist')) || []);
-                isProActive = localStorage.getItem('fish_pro_is_pro') === 'true';
+                proUnlimited = localStorage.getItem('fish_pro_unlimited') === 'true';
+                const expRaw = localStorage.getItem('fish_pro_expires_at');
+                proExpiresAt = expRaw ? Number(expRaw) : null;
             } catch(e) {}
         }
 
@@ -1032,8 +1079,13 @@
                     hourlyRate = s.hourlyRate !== undefined ? s.hourlyRate : 280;
                     shiftTipGoal = s.shiftTipGoal !== undefined ? s.shiftTipGoal : 3000;
                     stopListSet = new Set(s.stopListSet || []);
-                    if (s.isProActive !== undefined) isProActive = s.isProActive;
+                    if (s.proUnlimited !== undefined) proUnlimited = s.proUnlimited;
+                    if (s.proExpiresAt !== undefined) proExpiresAt = s.proExpiresAt;
                     
+                    const tableKeys = Object.keys(tables);
+                    if (tableKeys.length > 0 && !tables[currentTable]) currentTable = tableKeys[0];
+
+                    updateHeaderTips();
                     renderTables();
                     updateProStatusUI();
                     setCloudIndicator('ok', 'Облако ОК');
@@ -1054,13 +1106,16 @@
                 localStorage.setItem('fish_pro_stoplist', JSON.stringify([...stopListSet]));
                 localStorage.setItem('fish_pro_goal', shiftTipGoal);
                 localStorage.setItem('fish_pro_hourly_rate', hourlyRate);
-                localStorage.setItem('fish_pro_is_pro', isProActive);
+                localStorage.setItem('fish_pro_unlimited', proUnlimited ? 'true' : 'false');
+                if (proExpiresAt) localStorage.setItem('fish_pro_expires_at', String(proExpiresAt));
+                else localStorage.removeItem('fish_pro_expires_at');
 
                 const payload = {
                     telegram_id: userId,
                     state: {
                         tables, menuItems, closedHistory, shiftArchive,
-                        stopListSet: [...stopListSet], hourlyRate, shiftTipGoal, isProActive
+                        stopListSet: [...stopListSet], hourlyRate, shiftTipGoal,
+                        proUnlimited, proExpiresAt
                     },
                     updated_at: new Date().toISOString()
                 };
@@ -1072,10 +1127,80 @@
             }
         }
 
-        // ================= ПРОМОКОДЫ И PRO-СТАТУС =================
+        // ================= ПРОМОКОДЫ, ЗАЩИТА ВХОДА И ПЛАШКА <= 3 ДНЕЙ =================
+
+        function isProCurrentlyActive() {
+            if (proUnlimited) return true;
+            if (proExpiresAt && proExpiresAt > Date.now()) return true;
+            return false;
+        }
+
+        function getProRemainingDays() {
+            if (proUnlimited) return 9999;
+            if (!proExpiresAt) return 0;
+            const diffMs = proExpiresAt - Date.now();
+            if (diffMs <= 0) return 0;
+            return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+        }
+
+        function getProHumanStatusText() {
+            if (proUnlimited) return "👑 Безлимитный PRO";
+            const days = getProRemainingDays();
+            if (days > 0) return `🔥 PRO активен (осталось ${days} дн.)`;
+            return "🔒 Доступ не активирован";
+        }
+
+        function processPromoString(rawCode) {
+            const code = (rawCode || '').trim().toUpperCase();
+            if (!code) {
+                alert("Введите промокод!");
+                return false;
+            }
+
+            if (code === "1BEZLEMIT") {
+                proUnlimited = true;
+                proExpiresAt = null;
+                saveData();
+                updateProStatusUI();
+                alert("👑 Промокод 1BEZLEMIT активирован! Включен вечный безлимитный PRO-доступ.");
+                return true;
+            }
+
+            if (code === "TEST") {
+                proUnlimited = false;
+                proExpiresAt = Date.now() + (7 * 24 * 60 * 60 * 1000);
+                saveData();
+                updateProStatusUI();
+                alert("🎉 Промокод TEST активирован! Полный PRO-доступ открыт на 7 дней.");
+                return true;
+            }
+
+            // Дополнительные коды для ручной выдачи на 1, 3, 6, 12 месяцев
+            const monthCodes = { "PRO1M": 30, "PRO3M": 90, "PRO6M": 180, "PRO12M": 365 };
+            if (monthCodes[code]) {
+                const days = monthCodes[code];
+                const baseTime = (proExpiresAt && proExpiresAt > Date.now()) ? proExpiresAt : Date.now();
+                proExpiresAt = baseTime + (days * 24 * 60 * 60 * 1000);
+                saveData();
+                updateProStatusUI();
+                alert(`🎉 Подписка успешно продлена на ${days} дней!`);
+                return true;
+            }
+
+            alert("❌ Неверный промокод. Проверьте правильность ввода.");
+            return false;
+        }
+
+        function activatePromoFromGate() {
+            const val = document.getElementById('gatePromoInput').value;
+            if (processPromoString(val)) {
+                document.getElementById('gatePromoInput').value = '';
+            }
+        }
 
         function openPromoModal() {
             document.getElementById('promoCodeInput').value = '';
+            document.getElementById('modalProStatusInfo').innerText = getProHumanStatusText();
             document.getElementById('promoModal').classList.remove('hidden');
         }
 
@@ -1084,35 +1209,49 @@
         }
 
         function applyPromoCode() {
-            const code = document.getElementById('promoCodeInput').value.trim().toUpperCase();
-            
-            // Фиксация промокодов: TEST (7 дней) и 1BEZLEMIT (вечный)
-            if (code === "TEST" || code === "1BEZLEMIT" || code === "PROMO2026") {
-                isProActive = true;
-                saveData();
-                updateProStatusUI();
+            const val = document.getElementById('promoCodeInput').value;
+            if (processPromoString(val)) {
                 closePromoModal();
-                alert(code === "TEST" ? "🎉 Промокод TEST активирован! Доступ на 7 дней успешно подключен." : "👑 Промокод 1BEZLEMIT активирован! Безлимитный PRO-доступ подключен.");
+            }
+        }
+
+        function openPaymentBotLink() {
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openTelegramLink) {
+                window.Telegram.WebApp.openTelegramLink(PAYMENT_BOT_URL);
             } else {
-                alert("❌ Неверный промокод.");
+                window.open(PAYMENT_BOT_URL, '_blank');
             }
         }
 
         function updateProStatusUI() {
-            const titleEl = document.getElementById('proStatusTitle');
-            const subEl = document.getElementById('proStatusSubtitle');
-            const cardEl = document.getElementById('proStatusCard');
+            const gateEl = document.getElementById('proGateOverlay');
+            const bannerEl = document.getElementById('expiringProBanner');
+            const bannerSub = document.getElementById('expiringProSubtitle');
 
-            if (isProActive) {
-                titleEl.innerText = "👑 PRO СТАТУС АКТИВЕН";
-                subEl.innerText = "Безлимитный полный функционал";
-                cardEl.className = "glass-panel rounded-2xl p-3.5 flex justify-between items-center shadow border border-emerald-500/40 bg-gradient-to-r from-emerald-950/30 to-slate-900";
+            // 1. Проверяем, активен ли доступ вообще
+            if (!isProCurrentlyActive()) {
+                gateEl.classList.remove('hidden');
+                bannerEl.classList.add('hidden');
+                bannerEl.classList.remove('flex');
+                return;
+            }
+
+            // Если доступ активен — убираем экран блокировки
+            gateEl.classList.add('hidden');
+
+            // 2. Плашка внутри приложения скрыта всегда, КРОМЕ случая когда осталось <= 3 дней
+            const daysLeft = getProRemainingDays();
+            if (!proUnlimited && daysLeft <= 3 && daysLeft > 0) {
+                bannerEl.classList.remove('hidden');
+                bannerEl.classList.add('flex');
+                bannerSub.innerText = `Осталось дней доступа: ${daysLeft} дн.`;
             } else {
-                titleEl.innerText = "⭐ БАЗОВЫЙ ДОСТУП";
-                subEl.innerText = "Введите промокод для активации PRO";
-                cardEl.className = "glass-panel rounded-2xl p-3.5 flex justify-between items-center shadow border border-amber-500/30 bg-gradient-to-r from-amber-950/20 to-slate-900";
+                bannerEl.classList.add('hidden');
+                bannerEl.classList.remove('flex');
             }
         }
+
+        // ================= ВИРУСНАЯ КАРТОЧКА СТОРИС =================
 
         function formatHumanDateRu(dateKeyStr) {
             const monthsGen = ["ЯНВАРЯ", "ФЕВРАЛЯ", "МАРТА", "АПРЕЛЯ", "МАЯ", "ИЮНЯ", "ИЮЛЯ", "АВГУСТА", "СЕНТЯБРЯ", "ОКТЯБРЯ", "НОЯБРЯ", "ДЕКАБРЯ"];
@@ -1225,6 +1364,8 @@
             }
         }
 
+        // ================= ИИ-СКАНЕР МЕНЮ =================
+
         function openAiScannerModal() {
             document.getElementById('aiMenuTextInput').value = '';
             document.getElementById('aiScanResultsBox').classList.add('hidden');
@@ -1246,6 +1387,16 @@
             document.getElementById('aiMenuTextInput').value = demoText;
         }
 
+        function clearCurrentMenuCompletely() {
+            if (confirm("Очистить все текущие позиции меню, чтобы загрузить новое с нуля?")) {
+                menuItems = [];
+                stopListSet.clear();
+                saveData();
+                renderMenuDirect();
+                alert("Меню очищено! Теперь вы можете отсканировать или вставить свое меню.");
+            }
+        }
+
         function handleMenuPhotoUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -1260,14 +1411,17 @@
 Капучино 290`;
                 document.getElementById('aiMenuTextInput').value = simulatedParsedText;
                 setCloudIndicator('ok', 'Облако ОК');
-                alert("ИИ распознал позиции с фотографии!");
+                alert("🤖 ИИ распознал позиции с фотографии! Проверьте список ниже.");
                 processAiMenuScan();
             }, 1200);
         }
 
         function processAiMenuScan() {
             const rawText = document.getElementById('aiMenuTextInput').value.trim();
-            if (!rawText) return;
+            if (!rawText) {
+                alert("Введите текст меню или выберите фото.");
+                return;
+            }
 
             aiScannedParsedItems = [];
             const lines = rawText.split('\n');
@@ -1282,17 +1436,18 @@
                     let price = parseInt(match[2], 10);
                     let cat = "Горячее";
                     const lowerName = name.toLowerCase();
-                    if (lowerName.includes('салат') || lowerName.includes('цезарь')) cat = "Салаты";
-                    else if (lowerName.includes('суп')) cat = "Супы";
+                    if (lowerName.includes('салат') || lowerName.includes('цезарь') || lowerName.includes('тартар') || lowerName.includes('брускетт')) cat = "Салаты";
+                    else if (lowerName.includes('суп') || lowerName.includes('том ям') || lowerName.includes('борщ') || lowerName.includes('уха')) cat = "Супы";
                     else if (lowerName.includes('пицц') || lowerName.includes('бургер')) cat = "Пицца";
-                    else if (lowerName.includes('чай') || lowerName.includes('кофе') || lowerName.includes('лимонад') || lowerName.includes('кола')) cat = "Бар";
-                    else if (lowerName.includes('десерт') || lowerName.includes('медовик')) cat = "Десерты";
+                    else if (lowerName.includes('чай') || lowerName.includes('кофе') || lowerName.includes('лимонад') || lowerName.includes('кола') || lowerName.includes('пиво') || lowerName.includes('ipa') || lowerName.includes('вино') || lowerName.includes('коктейл') || lowerName.includes('спритц') || lowerName.includes('капучино')) cat = "Бар";
+                    else if (lowerName.includes('десерт') || lowerName.includes('медовик') || lowerName.includes('чизкейк') || lowerName.includes('морожен')) cat = "Десерты";
+                    else if (lowerName.includes('хлеб') || lowerName.includes('гренк') || lowerName.includes('сырн') || lowerName.includes('фри')) cat = "Закуски";
                     aiScannedParsedItems.push({ name, price, cat });
                 }
             });
 
             if (aiScannedParsedItems.length === 0) {
-                alert("Не удалось распознать цены.");
+                alert("Не удалось распознать цены. Убедитесь, что строки имеют формат: 'Название 590'");
                 return;
             }
 
@@ -1324,9 +1479,11 @@
             menuItems = [...aiScannedParsedItems, ...menuItems];
             saveData();
             closeAiScannerModal();
-            alert(`Добавлено ${aiScannedParsedItems.length} позиций в меню!`);
+            alert(`Добавлено ${aiScannedParsedItems.length} позиций в ваше меню!`);
             renderMenuDirect();
         }
+
+        // ================= КОНСТРУКТОР ЗАЛА =================
 
         function getStandardTablesCount() {
             let maxNum = 0;
@@ -1370,7 +1527,7 @@
                 if (match) {
                     const num = parseInt(match[1], 10);
                     if (num > targetCount && tables[name].items && tables[name].items.length > 0) {
-                        alert(`На столе "${name}" есть открытый заказ!`);
+                        alert(`На столе "${name}" есть открытый заказ! Сначала рассчитайте его.`);
                         return;
                     }
                 }
@@ -1402,7 +1559,7 @@
 
         function applyHallPreset(presetType) {
             const hasActiveOrders = Object.values(tables).some(t => t.items && t.items.length > 0);
-            if (hasActiveOrders) { alert("В зале есть открытые заказы!"); return; }
+            if (hasActiveOrders) { alert("В зале есть открытые заказы! Сначала закройте их."); return; }
 
             const newTables = {};
             if (presetType === 'restaurant') {
@@ -1429,7 +1586,7 @@
             const inp = document.getElementById('customTableNameInput');
             const name = inp.value.trim();
             if (!name) return;
-            if (tables[name]) { alert("Уже существует!"); return; }
+            if (tables[name]) { alert("Стол с таким названием уже существует!"); return; }
             tables[name] = createEmptyTableObj(2);
             inp.value = '';
             saveData();
@@ -1438,11 +1595,15 @@
             renderTables();
         }
 
-        function renameTableInConstructor(oldName) {
+        function renameTableInConstructorByIdx(idx) {
+            const keys = Object.keys(tables);
+            const oldName = keys[idx];
+            if (!oldName) return;
+
             openSimpleModal("✏️ Переименовать", `Новое название для "${oldName}":`, oldName, (newName) => {
                 if (!newName || !newName.trim() || newName.trim() === oldName) return;
                 const trimmed = newName.trim();
-                if (tables[trimmed]) return;
+                if (tables[trimmed]) { alert("Такое название уже занято!"); return; }
                 const updated = {};
                 for (let k in tables) {
                     if (k === oldName) updated[trimmed] = tables[oldName];
@@ -1456,10 +1617,13 @@
             });
         }
 
-        function deleteTableInConstructor(name) {
-            if (Object.keys(tables).length <= 1) return;
+        function deleteTableInConstructorByIdx(idx) {
+            const keys = Object.keys(tables);
+            const name = keys[idx];
+            if (!name) return;
+            if (keys.length <= 1) { alert("В зале должен остаться хотя бы один стол!"); return; }
             if (tables[name] && tables[name].items && tables[name].items.length > 0) {
-                alert("Стол занят!");
+                alert("На этом столе открыт заказ! Сначала рассчитайте его.");
                 return;
             }
             delete tables[name];
@@ -1476,7 +1640,7 @@
             const keys = Object.keys(tables);
             document.getElementById('constructorTotalBadge').innerText = `Всего: ${keys.length}`;
 
-            keys.forEach(name => {
+            keys.forEach((name, idx) => {
                 const t = tables[name];
                 const hasOrder = t.items && t.items.length > 0;
                 const row = document.createElement('div');
@@ -1487,13 +1651,15 @@
                         ${hasOrder ? '<span class="text-[9px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-bold">В работе</span>' : ''}
                     </div>
                     <div class="flex items-center space-x-1.5">
-                        <button onclick="renameTableInConstructor('${name.replace(/'/g, "\\'")}')" class="w-7 h-7 rounded-lg bg-slate-800 text-slate-300 flex items-center justify-center text-[10px] tap-scale">✏️</button>
-                        <button onclick="deleteTableInConstructor('${name.replace(/'/g, "\\'")}')" class="w-7 h-7 rounded-lg bg-rose-500/15 text-rose-400 flex items-center justify-center text-xs font-bold tap-scale">✕</button>
+                        <button onclick="renameTableInConstructorByIdx(${idx})" class="w-7 h-7 rounded-lg bg-slate-800 text-slate-300 flex items-center justify-center text-[10px] tap-scale">✏️</button>
+                        <button onclick="deleteTableInConstructorByIdx(${idx})" class="w-7 h-7 rounded-lg bg-rose-500/15 text-rose-400 flex items-center justify-center text-xs font-bold tap-scale">✕</button>
                     </div>
                 `;
                 list.appendChild(row);
             });
         }
+
+        // ================= НАВИГАЦИЯ И ПРОФИЛЬ =================
 
         function getTodayDateKey() {
             const d = new Date();
@@ -1510,7 +1676,7 @@
             document.getElementById('simpleModalTitle').innerText = title;
             document.getElementById('simpleModalDesc').innerText = desc;
             const inp = document.getElementById('simpleModalInput');
-            inp.value = defaultValue || '';
+            inp.value = defaultValue !== undefined && defaultValue !== null ? defaultValue : '';
             simpleModalCallback = callback;
             document.getElementById('simpleInputModal').classList.remove('hidden');
             setTimeout(() => inp.focus(), 50);
@@ -1621,7 +1787,10 @@
             const hours = Number(document.getElementById('finishShiftHoursInput').value) || 0;
             const rate = Number(document.getElementById('finishShiftRateInput').value) || hourlyRate;
             
-            if (hours <= 0) return;
+            if (hours <= 0) {
+                alert("Укажите количество отработанных часов!");
+                return;
+            }
 
             hourlyRate = rate;
             const wage = Math.round(hours * rate);
@@ -1918,15 +2087,29 @@
 
             const reportText = `📊 ОТЧЕТ: ${monthNames[month]} ${year}\nСмен: ${shiftsCount} | Часов: ${totalHours}ч\nДоход: ${totalIncome.toLocaleString('ru-RU')} ₽ (Чай: ${totalTips} ₽)\n👉 @waiter_pro_bot`;
 
-            navigator.clipboard.writeText(reportText).then(() => alert("Скопировано!"));
+            navigator.clipboard.writeText(reportText).then(() => alert("Отчет за месяц скопирован в буфер обмена!"));
         }
 
         function updateTipGoalUI() {
             const totalTips = closedHistory.reduce((s, h) => s + h.tip, 0);
+            const cashTips = closedHistory.filter(h => h.tipType === 'Нал').reduce((s, h) => s + h.tip, 0);
+            const cardTips = totalTips - cashTips;
             const percent = Math.min(Math.round((totalTips / shiftTipGoal) * 100), 100);
             
             document.getElementById('tipGoalProgressBar').style.width = percent + '%';
-            document.getElementById('tipGoalSubtitle').innerText = `Заработано ${totalTips} ₽ из ${shiftTipGoal} ₽ (${percent}%)`;
+            document.getElementById('tipGoalSubtitle').innerText = `Заработано ${totalTips} ₽ из ${shiftTipGoal} ₽ (${percent}%) [Нал: ${cashTips} ₽ | Б/н: ${cardTips} ₽]`;
+
+            const msgEl = document.getElementById('tipGoalMessage');
+            if(percent >= 100) {
+                msgEl.innerText = "🔥 Цель выполнена! Ты просто машина смены!";
+                msgEl.className = "text-[11px] text-emerald-400 font-bold text-center";
+            } else if(percent >= 50) {
+                msgEl.innerText = "💪 Экватор пройден, продолжай в том же духе!";
+                msgEl.className = "text-[11px] text-slate-200 font-medium text-center";
+            } else {
+                msgEl.innerText = "🚀 Отличное начало смены, догоняем цель!";
+                msgEl.className = "text-[11px] text-slate-300 font-medium text-center italic";
+            }
         }
 
         function openEditGoalModal() {
@@ -1944,10 +2127,10 @@
             const container = document.getElementById('stopListContainer');
             container.innerHTML = '';
             const search = document.getElementById('stopListSearch').value.toLowerCase().trim();
-            const filtered = menuItems.filter(i => i.name.toLowerCase().includes(search));
             document.getElementById('stopListCountBadge').innerText = stopListSet.size + ' в стопе';
 
-            filtered.forEach(item => {
+            menuItems.forEach((item, idx) => {
+                if (!item.name.toLowerCase().includes(search)) return;
                 const isStopped = stopListSet.has(item.name);
                 const div = document.createElement('div');
                 div.className = `flex justify-between items-center p-3 rounded-2xl border ${isStopped ? 'bg-rose-500/10 border-rose-500/30' : 'glass-panel border-slate-800'}`;
@@ -1956,7 +2139,7 @@
                         <div class="font-bold text-xs ${isStopped ? 'text-rose-300 line-through' : 'text-slate-200'}">${item.name}</div>
                         <div class="text-[10px] text-slate-400">${item.price} ₽</div>
                     </div>
-                    <button onclick="toggleStopItem('${item.name.replace(/'/g, "\\'")}')" class="px-3.5 py-2 rounded-xl text-xs font-extrabold tap-scale shadow ${isStopped ? 'bg-rose-600 text-white' : 'glass-panel text-slate-300'}">
+                    <button onclick="toggleStopItemByIdx(${idx})" class="px-3.5 py-2 rounded-xl text-xs font-extrabold tap-scale shadow ${isStopped ? 'bg-rose-600 text-white' : 'glass-panel text-slate-300'}">
                         ${isStopped ? '❌ В стопе' : '✅ Активно'}
                     </button>
                 `;
@@ -1964,13 +2147,17 @@
             });
         }
 
-        function toggleStopItem(name) {
-            if(stopListSet.has(name)) stopListSet.delete(name);
-            else stopListSet.add(name);
+        function toggleStopItemByIdx(idx) {
+            const item = menuItems[idx];
+            if (!item) return;
+            if(stopListSet.has(item.name)) stopListSet.delete(item.name);
+            else stopListSet.add(item.name);
             saveData();
             renderStopList();
             renderMenuDirect();
         }
+
+        // ================= ЗАЛ, СТОЛЫ И КАРТОЧКА ЗАКАЗА =================
 
         function renderTables() {
             const grid = document.getElementById('tablesGrid');
@@ -1982,7 +2169,7 @@
 
             for(let name of keys) {
                 const t = tables[name];
-                const hasOrder = t.items.length > 0;
+                const hasOrder = t.items && t.items.length > 0;
                 let timerDisplay = "";
                 let timerColor = "glass-panel text-slate-300";
                 
@@ -1997,7 +2184,7 @@
 
                 if(onlyAttentionFilter && (!t.lastVisited || Math.floor((Date.now() - t.lastVisited) / 60000) < 10)) continue;
 
-                const totalSum = t.items.reduce((s, i) => s + i.price, 0);
+                const totalSum = (t.items || []).reduce((s, i) => s + i.price, 0);
 
                 const btn = document.createElement('button');
                 btn.className = `tap-scale p-3.5 rounded-[28px] border text-left flex flex-col justify-between h-24 ${currentTable === name ? 'ring-2 ring-slate-300 border-slate-500 ' + timerColor : timerColor}`;
@@ -2030,24 +2217,32 @@
         }
 
         function confirmGuestsCount(count) {
-            if(!tableToOpenGuests) return;
-            const t = tables[tableToOpenGuests];
+            if(!tableToOpenGuests || !tables[tableToOpenGuests]) {
+                closeGuestsModal();
+                return;
+            }
+            const targetTable = tableToOpenGuests;
+            const t = tables[targetTable];
             t.guests = count;
             
             if(!t.guestNames) t.guestNames = {};
+            const validGuestNames = [];
             for(let i=1; i<=count; i++) {
                 if(!t.guestNames[i]) t.guestNames[i] = `Гость ${i}`;
+                validGuestNames.push(t.guestNames[i]);
             }
-            if(!t.activeGuest) t.activeGuest = t.guestNames[1];
+            if(!t.activeGuest || !validGuestNames.includes(t.activeGuest)) {
+                t.activeGuest = t.guestNames[1] || "Гость 1";
+            }
 
-            selectTable(tableToOpenGuests);
-            
+            // Закрываем модалку гостей СРАЗУ и переключаем вид на карточку стола
+            closeGuestsModal();
             document.getElementById('hallGridView').classList.add('hidden');
             document.getElementById('activeTableCard').classList.remove('hidden');
             document.getElementById('orderEditingSection').classList.remove('hidden');
             document.getElementById('showMenuToggleBtnContainer').classList.add('hidden');
 
-            closeGuestsModal();
+            selectTable(targetTable);
             saveData();
             document.getElementById('mainScrollContainer').scrollTop = 0;
         }
@@ -2123,7 +2318,7 @@
             itemsContainer.innerHTML = '';
             let total = 0;
 
-            if(t.items.length === 0) {
+            if(!t.items || t.items.length === 0) {
                 itemsContainer.innerHTML = '<p class="text-slate-500 italic text-center py-4 text-xs">Стол пустой</p>';
             } else {
                 t.items.forEach((item, idx) => {
@@ -2151,13 +2346,626 @@
             document.getElementById('currentTableTotal').innerText = total + ' ₽';
         }
 
+        // ================= МЕНЮ, ПОКУПКИ, СПЛИТ-СЧЕТА И РАСЧЕТ =================
+
+        function syncTableSplitGroups(t) {
+            if (!t.splitGroups) t.splitGroups = {};
+            let allGuests = [];
+            for(let i=1; i<=t.guests; i++) {
+                if(t.guestNames && t.guestNames[i]) allGuests.push(t.guestNames[i]);
+            }
+            // Также проверяем гостей из уже заказанных блюд, чтобы никто не потерялся
+            (t.items || []).forEach(it => {
+                if (it.guest && !allGuests.includes(it.guest)) allGuests.push(it.guest);
+            });
+
+            if (Object.keys(t.splitGroups).length === 0) {
+                t.splitGroups["Счет №1"] = [...allGuests];
+            } else {
+                // Проверяем, есть ли гости, не попавшие ни в одну группу
+                const assigned = new Set();
+                for (let g in t.splitGroups) {
+                    (t.splitGroups[g] || []).forEach(gn => assigned.add(gn));
+                }
+                const firstGroupKey = Object.keys(t.splitGroups)[0];
+                allGuests.forEach(gn => {
+                    if (!assigned.has(gn)) {
+                        t.splitGroups[firstGroupKey].push(gn);
+                    }
+                });
+            }
+            return allGuests;
+        }
+
+        function openSplitBillModal() {
+            const t = tables[currentTable];
+            const container = document.getElementById('splitGroupsContainer');
+            container.innerHTML = '';
+
+            const allGuests = syncTableSplitGroups(t);
+            const groupKeys = Object.keys(t.splitGroups);
+
+            groupKeys.forEach((groupName, gIdx) => {
+                const groupGuests = t.splitGroups[groupName];
+                let groupSum = t.items.filter(item => groupGuests.includes(item.guest)).reduce((sum, item) => sum + item.price, 0);
+
+                const div = document.createElement('div');
+                div.className = "glass-panel p-3.5 rounded-2xl space-y-2 border border-slate-800";
+                
+                let guestsCheckboxesHtml = allGuests.map((gName, guestIdx) => {
+                    let isChecked = groupGuests.includes(gName);
+                    return `<label class="flex items-center space-x-2 text-xs text-slate-300"><input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleGuestInGroupByIdx(${gIdx}, ${guestIdx})" class="rounded bg-slate-900 border-slate-700"><span>${gName}</span></label>`;
+                }).join('');
+
+                div.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <span class="font-extrabold text-slate-200 text-xs">${groupName}</span>
+                        <span class="font-extrabold text-emerald-400">${groupSum} ₽</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-1.5 pt-1">${guestsCheckboxesHtml}</div>
+                    ${groupKeys.length > 1 ? `<button onclick="removeSplitGroupByIdx(${gIdx})" class="text-[10px] text-rose-400 hover:underline pt-1">Удалить счет</button>` : ''}
+                `;
+                container.appendChild(div);
+            });
+            document.getElementById('splitBillModal').classList.remove('hidden');
+        }
+
+        function closeSplitBillModal() {
+            document.getElementById('splitBillModal').classList.add('hidden');
+            renderCheckoutBillsPreview();
+        }
+
+        function addGroupToSplit() {
+            const t = tables[currentTable];
+            if(!t.splitGroups) t.splitGroups = {};
+            let num = Object.keys(t.splitGroups).length + 1;
+            while (t.splitGroups[`Счет №${num}`]) num++;
+            t.splitGroups[`Счет №${num}`] = [];
+            saveData();
+            openSplitBillModal();
+        }
+
+        function removeSplitGroupByIdx(gIdx) {
+            const t = tables[currentTable];
+            const keys = Object.keys(t.splitGroups);
+            const groupName = keys[gIdx];
+            if (!groupName || keys.length <= 1) return;
+            delete t.splitGroups[groupName];
+            syncTableSplitGroups(t);
+            saveData();
+            openSplitBillModal();
+        }
+
+        function toggleGuestInGroupByIdx(gIdx, guestIdx) {
+            const t = tables[currentTable];
+            const allGuests = syncTableSplitGroups(t);
+            const groupKeys = Object.keys(t.splitGroups);
+            const groupName = groupKeys[gIdx];
+            const guestName = allGuests[guestIdx];
+            if (!groupName || !guestName) return;
+
+            let idx = t.splitGroups[groupName].indexOf(guestName);
+            if(idx > -1) {
+                t.splitGroups[groupName].splice(idx, 1);
+            } else {
+                for(let g in t.splitGroups) {
+                    let i = t.splitGroups[g].indexOf(guestName);
+                    if(i > -1) t.splitGroups[g].splice(i, 1);
+                }
+                t.splitGroups[groupName].push(guestName);
+            }
+            saveData();
+            openSplitBillModal();
+        }
+
+        function renameGuest(index) {
+            const t = tables[currentTable];
+            const oldName = t.guestNames[index] || `Гость ${index}`;
+            openSimpleModal("👤 Примета или имя гостя", "Например: Бородач, Девушка в очках, Папа:", oldName, (newName) => {
+                if(newName && newName.trim() !== "") {
+                    const trimmed = newName.trim();
+                    if(t.activeGuest === oldName) t.activeGuest = trimmed;
+                    t.guestNames[index] = trimmed;
+                    t.items.forEach(it => { if(it.guest === oldName) it.guest = trimmed; });
+                    if(t.splitGroups) {
+                        for(let g in t.splitGroups) {
+                            let i = t.splitGroups[g].indexOf(oldName);
+                            if(i > -1) t.splitGroups[g][i] = trimmed;
+                        }
+                    }
+                    saveData();
+                    renderTableCard();
+                }
+            });
+        }
+
+        function editItemModifier(idx) {
+            const t = tables[currentTable];
+            const item = t.items[idx];
+            if (!item) return;
+            openSimpleModal("✏️ Пометка к блюду", `Комментарий для "${item.name}":`, item.modifier || "", (newMod) => {
+                if(newMod !== null) {
+                    item.modifier = newMod.trim();
+                    saveData();
+                    renderTableCard();
+                }
+            });
+        }
+
+        function setCourseActive(courseName) {
+            selectedActiveCourse = courseName;
+            ['⚡ Сразу', '1к', '2к', '3к'].forEach(c => {
+                let key = c === '⚡ Сразу' ? 'Сразу' : c;
+                const btn = document.getElementById('courseBtn_' + key);
+                if(btn) {
+                    if(courseName.includes(key === 'Сразу' ? 'Сразу' : key[0])) {
+                        btn.className = "course-active-btn bg-slate-100 text-slate-950 py-2.5 rounded-2xl text-[11px] font-extrabold shadow-md";
+                    } else {
+                        btn.className = "course-active-btn glass-element text-slate-300 py-2.5 rounded-2xl text-[11px] font-semibold";
+                    }
+                }
+            });
+        }
+
+        function renderMenuDirect() {
+            const list = document.getElementById('directMenuList');
+            if (!list) return;
+            list.innerHTML = '';
+            const search = (document.getElementById('menuSearch').value || '').toLowerCase().trim();
+
+            if (menuItems.length === 0) {
+                list.innerHTML = `<div class="text-center py-6 text-slate-400 text-xs">Меню пустое. Загрузите своё меню через <b onclick="openAiScannerModal()" class="text-emerald-400 underline cursor-pointer">🤖 ИИ-сканер</b>!</div>`;
+                return;
+            }
+
+            menuItems.forEach((item, idx) => {
+                const matchCat = currentCat === 'all' || item.cat === currentCat;
+                const matchSearch = item.name.toLowerCase().includes(search);
+                if (search.length > 0 ? !matchSearch : !matchCat) return;
+
+                const isStopped = stopListSet.has(item.name);
+                const div = document.createElement('div');
+                div.className = `flex justify-between items-center p-3.5 rounded-2xl border transition ${isStopped ? 'bg-rose-500/5 border-rose-500/20 opacity-50' : 'glass-element border-slate-800 hover:border-slate-600'}`;
+                div.innerHTML = `
+                    <div class="pr-2 flex-1">
+                        <div class="font-bold text-xs ${isStopped ? 'text-rose-300 line-through' : 'text-slate-200'}">${item.name}</div>
+                        <div class="text-[10px] ${isStopped ? 'text-rose-400 font-extrabold' : 'text-slate-300 font-extrabold'} mt-0.5">
+                            ${isStopped ? '🛑 В СТОПЕ' : item.price + ' ₽'}
+                        </div>
+                    </div>
+                    <button ${isStopped ? 'disabled' : ''} onclick="orderMenuItemByIdx(${idx})" class="${isStopped ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : 'bg-slate-100 hover:bg-white text-slate-950 shadow-lg'} font-extrabold px-4 py-2.5 rounded-xl text-xs tap-scale shrink-0">
+                        ${isStopped ? 'Стоп' : '+ Добавить'}
+                    </button>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function filterCat(cat) {
+            currentCat = cat;
+            document.querySelectorAll('#menuCategories button').forEach(b => {
+                if(b.innerText.includes(cat) || (cat === 'all' && b.innerText === 'Все')) {
+                    b.className = "cat-tab bg-slate-100 text-slate-950 px-3.5 py-2 rounded-2xl font-extrabold whitespace-nowrap text-xs shadow";
+                } else if(cat === 'Бар' && b.innerText.includes('Бар')) {
+                    b.className = "cat-tab bg-slate-100 text-slate-950 px-3.5 py-2 rounded-2xl font-extrabold whitespace-nowrap text-xs shadow";
+                } else {
+                    b.className = "cat-tab glass-element text-slate-300 px-3.5 py-2 rounded-2xl whitespace-nowrap text-xs font-medium";
+                }
+            });
+            renderMenuDirect();
+        }
+
+        function orderMenuItemByIdx(idx) {
+            const item = menuItems[idx];
+            if(!item || !currentTable || stopListSet.has(item.name)) return;
+            document.getElementById('menuSearch').value = '';
+            
+            if(item.isHosper) {
+                pendingHosperItem = { name: item.name, price: item.price };
+                document.getElementById('hosperItemTitle').innerText = item.name;
+                document.getElementById('customWeightInput').value = '';
+                document.getElementById('hospersModal').classList.remove('hidden');
+                return;
+            }
+            addItemToTableDirect(item.name, item.price, null);
+        }
+
+        function selectHosperWeight(weight) {
+            if(!pendingHosperItem || !currentTable) return;
+            const finalPrice = Math.round((pendingHosperItem.price * weight) / 100);
+            addItemToTableDirect(`${pendingHosperItem.name} (${weight}г)`, finalPrice, null);
+            closeHosperModal();
+        }
+
+        function submitCustomWeight() {
+            const weightVal = Number(document.getElementById('customWeightInput').value);
+            if(!weightVal || weightVal <= 0) return;
+            selectHosperWeight(weightVal);
+        }
+
+        function closeHosperModal() {
+            document.getElementById('hospersModal').classList.add('hidden');
+            pendingHosperItem = null;
+        }
+
+        function addItemToTableDirect(name, price, modifier) {
+            const t = tables[currentTable];
+            t.items.push({ name, price, modifier, guest: t.activeGuest || "Гость 1", course: selectedActiveCourse });
+            saveData();
+            renderTableCard();
+            renderTables();
+        }
+
+        function removeItem(idx) {
+            if(!currentTable || !tables[currentTable]) return;
+            tables[currentTable].items.splice(idx, 1);
+            saveData();
+            renderTableCard();
+            renderTables();
+        }
+
+        function saveTableToWork() {
+            if(!currentTable || !tables[currentTable]) return;
+            const t = tables[currentTable];
+            if (t.items.length > 0 && !t.lastVisited) {
+                t.lastVisited = Date.now(); 
+            }
+            saveData();
+            document.getElementById('activeTableCard').classList.add('hidden');
+            document.getElementById('hallGridView').classList.remove('hidden');
+            switchTab('hall');
+        }
+
+        function openTableFromMyTablesByIdx(idx) {
+            const keys = Object.keys(tables);
+            const name = keys[idx];
+            if (!name) return;
+            switchTab('hall');
+            document.getElementById('hallGridView').classList.add('hidden');
+            document.getElementById('activeTableCard').classList.remove('hidden');
+            currentTable = name;
+            document.getElementById('currentTableName').innerText = name;
+            toggleOrderReviewMode(true);
+            renderTableCard();
+            renderMenuDirect();
+        }
+
+        function renderMyTables() {
+            const container = document.getElementById('myActiveTablesList');
+            container.innerHTML = '';
+            let activeCount = 0;
+
+            const keys = Object.keys(tables);
+            keys.forEach((name, idx) => {
+                const t = tables[name];
+                if(!t.items || t.items.length === 0) return;
+                activeCount++;
+                const total = t.items.reduce((s, i) => s + i.price, 0);
+
+                const card = document.createElement('div');
+                card.className = "glass-panel rounded-[32px] p-4 space-y-2.5 shadow-lg border border-slate-800";
+                card.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <span class="font-extrabold text-sm text-slate-100">${name}</span>
+                        <span class="font-extrabold text-sm text-emerald-400">${total} ₽</span>
+                    </div>
+                    <div class="text-xs text-slate-400">Позиций: ${t.items.length} • Гостей: ${t.guests}</div>
+                    <button onclick="openTableFromMyTablesByIdx(${idx})" class="w-full bg-slate-100 hover:bg-white text-slate-950 py-3 rounded-2xl text-xs font-extrabold tap-scale shadow">✏️ Открыть заказ</button>
+                `;
+                container.appendChild(card);
+            });
+            if(activeCount === 0) container.innerHTML = '<div class="text-center py-16 text-slate-500 text-xs italic">Нет активных столов в работе.</div>';
+            document.getElementById('activeTablesCountBadge').innerText = activeCount + ' в работе';
+        }
+
+        function markTableVisited() {
+            if(!currentTable || !tables[currentTable]) return;
+            const t = tables[currentTable];
+            t.lastVisited = Date.now(); 
+            saveData();
+            renderTableCard();
+            renderTables();
+        }
+
+        function openCheckoutModal() {
+            if(!currentTable || !tables[currentTable]) return;
+            const t = tables[currentTable];
+            if(!t.items || t.items.length === 0) {
+                alert("Стол пустой!");
+                return;
+            }
+            currentTipAmount = 0;
+            selectedCheckoutGroup = null;
+            document.getElementById('customTipInput').value = '';
+            document.getElementById('cashGivenInput').value = '';
+            document.getElementById('quickChangeDisplay').innerText = 'Сдача: 0 ₽';
+            
+            syncTableSplitGroups(t);
+            setBillPaymentMethod('Нал');
+            setTipType('Нал');
+            renderCheckoutBillsPreview();
+            document.getElementById('checkoutModal').classList.remove('hidden');
+        }
+
+        function renderCheckoutBillsPreview() {
+            const t = tables[currentTable];
+            const container = document.getElementById('checkoutBillsPreview');
+            container.innerHTML = '';
+
+            syncTableSplitGroups(t);
+
+            let firstGroup = null;
+            for(let groupName in t.splitGroups) {
+                if(!firstGroup) firstGroup = groupName;
+            }
+            if(!selectedCheckoutGroup || !t.splitGroups[selectedCheckoutGroup]) {
+                selectedCheckoutGroup = firstGroup;
+            }
+
+            for(let groupName in t.splitGroups) {
+                const groupGuests = t.splitGroups[groupName];
+                let groupItems = t.items.filter(item => groupGuests.includes(item.guest));
+                let groupSum = groupItems.reduce((sum, item) => sum + item.price, 0);
+                let isSelected = selectedCheckoutGroup === groupName;
+
+                let itemsListText = groupItems.length > 0 ? groupItems.map(i => `${i.name} (${i.price}₽)`).join(', ') : 'Нет позиций';
+
+                const div = document.createElement('div');
+                div.className = `p-2.5 rounded-2xl border cursor-pointer transition ${isSelected ? 'bg-emerald-500/10 border-emerald-500/40 shadow' : 'glass-element border-slate-800'}`;
+                div.onclick = () => { selectedCheckoutGroup = groupName; renderCheckoutBillsPreview(); };
+                div.innerHTML = `
+                    <div class="flex justify-between items-center font-extrabold text-slate-200 text-xs">
+                        <span>🧾 ${groupName} <span class="text-[10px] text-slate-400 font-normal">(${groupGuests.join(', ') || 'нет'})</span></span>
+                        <span class="text-emerald-400">${groupSum} ₽</span>
+                    </div>
+                    <div class="text-[10px] text-slate-400 truncate mt-0.5">${itemsListText}</div>
+                `;
+                container.appendChild(div);
+            }
+        }
+
+        function setBillPaymentMethod(method) {
+            currentBillPaymentMethod = method;
+            ['Nal', 'Card', 'Sbp'].forEach(m => {
+                const btn = document.getElementById('payMethod' + m);
+                if(m.toLowerCase() === (method === 'Нал' ? 'nal' : method === 'Карта' ? 'card' : 'sbp')) {
+                    btn.className = "bg-emerald-600 text-white py-2 rounded-xl text-xs font-extrabold tap-scale shadow";
+                } else {
+                    btn.className = "glass-element text-slate-300 py-2 rounded-xl text-xs font-extrabold tap-scale";
+                }
+            });
+
+            const cashSection = document.getElementById('cashChangeSection');
+            if (method === 'Нал') cashSection.classList.remove('hidden');
+            else cashSection.classList.add('hidden');
+        }
+
+        function setCashGiven(amount) {
+            document.getElementById('cashGivenInput').value = amount;
+            calculateChange(amount);
+        }
+
+        function setCashGivenExact() {
+            const t = tables[currentTable];
+            const groupGuests = t.splitGroups[selectedCheckoutGroup] || [];
+            const groupSum = t.items.filter(item => groupGuests.includes(item.guest)).reduce((sum, item) => sum + item.price, 0);
+            setCashGiven(groupSum);
+        }
+
+        function calculateChange(givenVal) {
+            const t = tables[currentTable];
+            const groupGuests = t.splitGroups[selectedCheckoutGroup] || [];
+            const groupSum = t.items.filter(item => groupGuests.includes(item.guest)).reduce((sum, item) => sum + item.price, 0);
+            
+            const given = Number(givenVal) || 0;
+            const change = given - groupSum;
+
+            const changeDisplay = document.getElementById('quickChangeDisplay');
+            if (change >= 0) {
+                changeDisplay.innerText = `Сдача: ${change} ₽`;
+                changeDisplay.className = "font-extrabold text-emerald-400";
+            } else {
+                changeDisplay.innerText = `Не хватает: ${Math.abs(change)} ₽`;
+                changeDisplay.className = "font-extrabold text-rose-400";
+            }
+        }
+
+        function closeCheckoutModal() { document.getElementById('checkoutModal').classList.add('hidden'); }
+        function setTipPercent(p) {
+            const t = tables[currentTable];
+            const groupGuests = t.splitGroups[selectedCheckoutGroup] || [];
+            const groupSum = t.items.filter(item => groupGuests.includes(item.guest)).reduce((sum, item) => sum + item.price, 0);
+            currentTipAmount = Math.round((groupSum * p) / 100);
+            document.getElementById('customTipInput').value = currentTipAmount;
+        }
+        function updateCustomTip(val) { currentTipAmount = Number(val) || 0; }
+        function setTipType(type) {
+            currentTipType = type;
+            ['Nal', 'Card', 'Sbp'].forEach(t => {
+                const btn = document.getElementById('tipType' + t);
+                if(t.toLowerCase() === (type === 'Нал' ? 'nal' : type === 'Перевод' ? 'card' : 'sbp')) {
+                    btn.className = "bg-emerald-600 text-white py-2 rounded-xl text-xs font-extrabold tap-scale shadow";
+                } else {
+                    btn.className = "glass-element text-slate-300 py-2 rounded-xl text-xs font-extrabold tap-scale";
+                }
+            });
+        }
+
+        function confirmBillCheckout() {
+            if(!currentTable || !selectedCheckoutGroup) return;
+            const t = tables[currentTable];
+            const groupGuests = t.splitGroups[selectedCheckoutGroup] || [];
+            
+            let groupItems = t.items.filter(item => groupGuests.includes(item.guest));
+            if (groupItems.length === 0) {
+                alert("В выбранном счете нет блюд для расчета!");
+                return;
+            }
+
+            const groupSubtotal = groupItems.reduce((sum, item) => sum + item.price, 0);
+
+            closedHistory.unshift({
+                tableName: `${currentTable} (${selectedCheckoutGroup})`,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                date: new Date().toLocaleDateString(),
+                subtotal: groupSubtotal, 
+                tip: currentTipAmount, 
+                tipType: currentTipType,
+                paymentMethod: currentBillPaymentMethod,
+                guests: groupGuests.length,
+                items: [...groupItems],
+                splitGroups: { [selectedCheckoutGroup]: groupGuests }
+            });
+
+            t.items = t.items.filter(item => !groupGuests.includes(item.guest));
+            delete t.splitGroups[selectedCheckoutGroup];
+            selectedCheckoutGroup = null;
+
+            closeCheckoutModal();
+            updateHeaderTips();
+
+            if (t.items.length === 0) {
+                tables[currentTable] = createEmptyTableObj(2);
+                saveData();
+                document.getElementById('activeTableCard').classList.add('hidden');
+                document.getElementById('hallGridView').classList.remove('hidden');
+                switchTab('hall');
+            } else {
+                saveData();
+                renderTableCard();
+                renderTables();
+            }
+        }
+
+        function updateHeaderTips() {
+            const totalTips = (closedHistory || []).reduce((s, h) => s + (h.tip || 0), 0);
+            const el = document.getElementById('headerTipSum');
+            if (el) el.innerText = totalTips + ' ₽';
+        }
+
+        function renderStats() {
+            const totalTips = closedHistory.reduce((s, h) => s + h.tip, 0);
+            const cashTips = closedHistory.filter(h => h.tipType === 'Нал').reduce((s, h) => s + h.tip, 0);
+            const cardTips = totalTips - cashTips;
+
+            document.getElementById('statsTotalTips').innerText = totalTips + ' ₽';
+            document.getElementById('statsCashTips').innerText = cashTips + ' ₽';
+            document.getElementById('statsCardTips').innerText = cardTips + ' ₽';
+            document.getElementById('statsTotalTables').innerText = closedHistory.length;
+            document.getElementById('currentRateInfoBadge').innerText = `${hourlyRate} ₽/ч`;
+
+            const container = document.getElementById('closedTablesHistory');
+            container.innerHTML = '';
+            
+            if(closedHistory.length === 0) {
+                container.innerHTML = '<p class="text-slate-500 text-center py-6 italic">Нет закрытых счетов за текущую смену</p>';
+            } else {
+                closedHistory.forEach((h, index) => {
+                    const div = document.createElement('div');
+                    div.className = "glass-element p-3.5 rounded-2xl border border-slate-800 flex justify-between items-center text-xs tap-scale cursor-pointer";
+                    div.onclick = () => openHistoryDetail(index);
+                    div.innerHTML = `
+                        <div>
+                            <span class="font-extrabold text-slate-200">${h.tableName}</span> <span class="text-[10px] text-slate-400">(${h.time})</span>
+                            <div class="text-[10px] text-slate-400 mt-0.5">Оплата: <span class="text-slate-200 font-bold">${h.paymentMethod || 'Нал'}</span> • Чай: <span class="text-amber-300">${h.tipType}</span></div>
+                        </div>
+                        <span class="text-emerald-400 font-extrabold">+${h.tip} ₽</span>
+                    `;
+                    container.appendChild(div);
+                });
+            }
+        }
+
+        function openHistoryDetail(index) {
+            showBillHistoryModalObject(closedHistory[index]);
+        }
+
+        function showBillHistoryModalObject(h) {
+            if (!h) return;
+            document.getElementById('historyModalTableName').innerText = h.tableName;
+            document.getElementById('historyModalTime').innerText = `${h.date || ''} в ${h.time || ''} • Оплата: ${h.paymentMethod || 'Нал'}`;
+            document.getElementById('historyModalSubtotal').innerText = h.subtotal + ' ₽';
+            document.getElementById('historyModalTip').innerText = h.tip + ' ₽';
+            document.getElementById('historyModalTipType').innerText = h.tipType;
+
+            const listEl = document.getElementById('historyModalItemsList');
+            listEl.innerHTML = '';
+
+            if(!h.items || h.items.length === 0) {
+                listEl.innerHTML += '<p class="text-slate-500 italic text-center py-3">Без позиций</p>';
+            } else {
+                h.items.forEach(item => {
+                    const row = document.createElement('div');
+                    row.className = "flex justify-between items-center glass-element p-2.5 rounded-xl border border-slate-800 mb-1.5";
+                    row.innerHTML = `
+                        <div>
+                            <div class="text-slate-200 font-bold">${item.name}</div>
+                            <div class="text-[10px] text-slate-400"><span class="text-slate-300">${item.course}</span> • <span class="text-emerald-400">${item.guest}</span> ${item.modifier ? '('+item.modifier+')' : ''}</div>
+                        </div>
+                        <span class="font-bold text-slate-200">${item.price} ₽</span>
+                    `;
+                    listEl.appendChild(row);
+                });
+            }
+            document.getElementById('historyDetailModal').classList.remove('hidden');
+        }
+
+        function closeHistoryDetailModal() {
+            document.getElementById('historyDetailModal').classList.add('hidden');
+        }
+
+        function openManualTipModal() {
+            document.getElementById('manualTipSumInput').value = '300';
+            setManualTipTypeModal('Перевод');
+            document.getElementById('manualTipModal').classList.remove('hidden');
+        }
+
+        function closeManualTipModal() {
+            document.getElementById('manualTipModal').classList.add('hidden');
+        }
+
+        function setManualTipTypeModal(type) {
+            manualTipModalType = type;
+            ['Nal', 'Card'].forEach(t => {
+                const btn = document.getElementById('manualTipModal' + t);
+                if((t === 'Nal' && type === 'Нал') || (t === 'Card' && type === 'Перевод')) {
+                    btn.className = "bg-emerald-600 text-white py-2.5 rounded-xl text-xs font-extrabold tap-scale shadow";
+                } else {
+                    btn.className = "glass-element text-slate-300 py-2.5 rounded-xl text-xs font-extrabold tap-scale";
+                }
+            });
+        }
+
+        function confirmManualTipModal() {
+            const sum = Number(document.getElementById('manualTipSumInput').value);
+            if(!sum || sum <= 0) return;
+
+            closedHistory.unshift({
+                tableName: "Вручную",
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                date: new Date().toLocaleDateString(),
+                subtotal: 0,
+                tip: sum,
+                tipType: manualTipModalType,
+                paymentMethod: "Нал",
+                guests: 1,
+                items: [],
+                splitGroups: {}
+            });
+            saveData();
+            updateHeaderTips();
+            renderStats();
+            updateTipGoalUI();
+            closeManualTipModal();
+        }
+
         function filterAttention() { onlyAttentionFilter = !onlyAttentionFilter; renderTables(); }
         function resetAllTimers() { 
             for(let n in tables) { if (tables[n].lastVisited) tables[n].lastVisited = Date.now(); }
             saveData(); renderTables(); 
         }
 
-        setInterval(() => { renderTables(); if(currentTable) renderTableCard(); renderMyTables(); }, 60000);
+        setInterval(() => { renderTables(); if(currentTable) renderTableCard(); renderMyTables(); updateProStatusUI(); }, 60000);
         
         initCloudData();
     </script>
