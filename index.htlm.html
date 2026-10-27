@@ -66,13 +66,21 @@
 </head>
 <body class="flex flex-col justify-between selection:bg-emerald-500 selection:text-slate-950">
 
-    <!-- ЭКРАН ДОСТУПА (БЛОКИРОВКА ПРИ ИСТЕЧЕНИИ ПОДПИСКИ) -->
+    <!-- ЭКРАН ДОСТУПА (БЛОКИРОВКА ПРИ ОТСУТСТВИИ ИЛИ ИСТЕЧЕНИИ ПОДПИСКИ) -->
     <div id="proGateOverlay" class="fixed inset-0 bg-[#07090b] z-[100] hidden flex flex-col items-center justify-center p-6">
         <div class="glass-panel rounded-[36px] max-w-sm w-full p-7 space-y-4 border border-amber-500/40 shadow-2xl text-center">
             <div class="w-16 h-16 rounded-3xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-3xl mx-auto shadow-lg">🔒</div>
             <div class="space-y-1">
-                <h2 class="text-lg font-extrabold text-slate-100 uppercase tracking-wider">Период доступа истек</h2>
-                <p class="text-xs text-slate-400 leading-relaxed">Для продолжения работы продлите подписку или введите ваш промокод</p>
+                <h2 id="gateMainTitle" class="text-lg font-extrabold text-slate-100 uppercase tracking-wider">Доступ к Пульту PRO</h2>
+                <p id="gateSubTitle" class="text-xs text-slate-400 leading-relaxed">Введите промокод (или <b>TEST</b> для 7 дней бесплатного доступа), либо оформите подписку</p>
+            </div>
+
+            <div class="bg-slate-950/90 border border-slate-800/80 rounded-2xl py-2 px-3 flex justify-between items-center text-[11px]">
+                <span class="text-slate-400">Ваш личный ID:</span>
+                <button onclick="copyMyUserId()" class="font-mono font-extrabold text-sky-400 hover:underline flex items-center space-x-1">
+                    <span id="gateUserIdLabel">...</span>
+                    <span>📋</span>
+                </button>
             </div>
 
             <div class="space-y-2.5 pt-1">
@@ -517,7 +525,7 @@
     </nav>
 
     <!-- МОДАЛКА ПЕРЕВОДА НА КАРТУ И АКТИВАЦИИ -->
-    <div id="cardPaymentModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-[85] hidden flex items-center justify-center p-4">
+    <div id="cardPaymentModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-[110] hidden flex items-center justify-center p-4">
         <div class="glass-panel rounded-[32px] max-w-sm w-full p-6 space-y-4 shadow-2xl border border-emerald-500/30 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
                 <h3 class="font-extrabold text-sm text-emerald-400">💳 Продление PRO-доступа</h3>
@@ -525,21 +533,21 @@
             </div>
             
             <div class="space-y-2 text-xs text-slate-300">
-                <p class="font-bold text-slate-100">Выберите период подписки:</p>
+                <p class="font-bold text-slate-100">1. Выберите период подписки:</p>
                 <div class="grid grid-cols-2 gap-2">
-                    <div onclick="selectTariff('PRO1M', 290, '1 месяц')" id="tariffCard_PRO1M" class="tariff-box glass-element p-3 rounded-2xl border border-emerald-500/50 bg-emerald-500/10 cursor-pointer tap-scale text-center">
+                    <div onclick="selectTariff(30, 290, '1 месяц')" id="tariffCard_30" class="tariff-box glass-element p-3 rounded-2xl border border-emerald-500 bg-emerald-500/15 cursor-pointer tap-scale text-center shadow">
                         <div class="font-extrabold text-slate-100">1 месяц</div>
                         <div class="text-emerald-400 font-bold mt-0.5">290 ₽</div>
                     </div>
-                    <div onclick="selectTariff('PRO3M', 790, '3 месяца')" id="tariffCard_PRO3M" class="tariff-box glass-element p-3 rounded-2xl border border-slate-800 cursor-pointer tap-scale text-center">
+                    <div onclick="selectTariff(90, 790, '3 месяца')" id="tariffCard_90" class="tariff-box glass-element p-3 rounded-2xl border border-slate-800 cursor-pointer tap-scale text-center">
                         <div class="font-extrabold text-slate-100">3 месяца</div>
                         <div class="text-sky-400 font-bold mt-0.5">790 ₽</div>
                     </div>
-                    <div onclick="selectTariff('PRO6M', 1490, '6 месяцев')" id="tariffCard_PRO6M" class="tariff-box glass-element p-3.5 rounded-2xl border border-slate-800 cursor-pointer tap-scale text-center">
+                    <div onclick="selectTariff(180, 1490, '6 месяцев')" id="tariffCard_180" class="tariff-box glass-element p-3.5 rounded-2xl border border-slate-800 cursor-pointer tap-scale text-center">
                         <div class="font-extrabold text-slate-100">6 месяцев</div>
                         <div class="text-amber-400 font-bold mt-0.5">1 490 ₽</div>
                     </div>
-                    <div onclick="selectTariff('PRO12M', 2490, '1 год')" id="tariffCard_PRO12M" class="tariff-box glass-element p-3.5 rounded-2xl border border-slate-800 cursor-pointer tap-scale text-center">
+                    <div onclick="selectTariff(365, 2490, '1 год')" id="tariffCard_365" class="tariff-box glass-element p-3.5 rounded-2xl border border-slate-800 cursor-pointer tap-scale text-center">
                         <div class="font-extrabold text-slate-100">1 год (Хит 🔥)</div>
                         <div class="text-emerald-400 font-bold mt-0.5">2 490 ₽</div>
                     </div>
@@ -551,8 +559,12 @@
                     <span class="text-slate-400">К оплате:</span>
                     <span id="paymentModalPriceVal" class="font-extrabold text-emerald-400 text-sm">290 ₽</span>
                 </div>
+                <div class="flex justify-between items-center text-[11px]">
+                    <span class="text-slate-400">Ваш ID для активации:</span>
+                    <span id="paymentModalUserId" class="font-mono font-bold text-sky-400">...</span>
+                </div>
                 <div class="space-y-1 pt-1 border-t border-slate-800">
-                    <span class="text-[10px] text-slate-400 uppercase font-bold">Номер карты (Сбер / Т-Банк):</span>
+                    <span class="text-[10px] text-slate-400 uppercase font-bold">2. Переведите на карту (Сбер / Т-Банк):</span>
                     <div class="flex items-center space-x-2">
                         <input type="text" id="devCardNumberInput" value="2200 7021 9528 5189" readonly class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-200 outline-none">
                         <button onclick="copyDevCard()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-xl font-bold tap-scale">📋</button>
@@ -563,33 +575,54 @@
             <div class="space-y-2 pt-1">
                 <button onclick="openCreatorTelegramChat()" class="w-full bg-gradient-to-r from-sky-600 to-blue-600 text-white font-extrabold py-3.5 rounded-2xl text-xs shadow-lg tap-scale flex items-center justify-center space-x-1.5">
                     <span>📤</span>
-                    <span>Отправить чек в Telegram создателю</span>
+                    <span>3. Отправить чек и получить промокод</span>
                 </button>
                 <button onclick="openPromoModal(); closeCardPaymentModal();" class="w-full glass-element hover:bg-slate-800 text-amber-300 font-bold py-2.5 rounded-2xl text-xs tap-scale">
-                    🔑 У меня уже есть промокод (активировать)
+                    🔑 Ввести полученный промокод
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- МОДАЛКА АКТИВАЦИИ ПРОМОКОДА -->
-    <div id="promoModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-[90] hidden flex items-center justify-center p-4">
-        <div class="glass-panel rounded-[32px] max-w-xs w-full p-6 space-y-4 shadow-2xl border border-amber-500/30">
+    <!-- МОДАЛКА АКТИВАЦИИ ПРОМОКОДА + АДМИН-ГЕНЕРАТОР КЛЮЧЕЙ -->
+    <div id="promoModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-[120] hidden flex items-center justify-center p-4">
+        <div class="glass-panel rounded-[32px] max-w-sm w-full p-6 space-y-4 shadow-2xl border border-amber-500/30 max-h-[92vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
                 <h3 class="font-extrabold text-sm text-amber-400">🔑 Активация промокода</h3>
                 <button onclick="closePromoModal()" class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs">✕</button>
             </div>
-            <div id="modalProStatusInfo" class="text-[11px] text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 p-2.5 rounded-xl text-center">
-                Статус...
+            <div class="flex justify-between items-center bg-slate-950/80 border border-slate-800 px-3 py-2 rounded-xl text-[11px]">
+                <span class="text-slate-400">Ваш ID: <b id="promoModalUserId" class="text-sky-400 font-mono">...</b></span>
+                <span id="modalProStatusInfo" class="text-emerald-400 font-bold">Статус...</span>
             </div>
-            <p class="text-[11px] text-slate-400">Введите промокод (например: <b>TEST</b>, <b>1BEZLEMIT</b> или полученный после оплаты <b>PRO1M</b>):</p>
-            <input type="text" id="promoCodeInput" placeholder="Введите промокод..." onkeydown="if(event.key==='Enter') applyPromoCode()" class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs text-slate-100 outline-none font-bold uppercase tracking-wider">
+            <p class="text-[11px] text-slate-400">Введите ваш персональный промокод (или <b>TEST</b> для 7 дней):</p>
+            <input type="text" id="promoCodeInput" placeholder="Введите код..." onkeydown="if(event.key==='Enter') applyPromoCode()" class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs text-slate-100 outline-none font-bold uppercase tracking-wider">
             <button onclick="applyPromoCode()" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-extrabold py-3.5 rounded-2xl text-xs tap-scale shadow-lg">✨ Активировать код</button>
+
+            <!-- СКРЫТАЯ ПАНЕЛЬ РАЗРАБОТЧИКА (ОТКРЫВАЕТСЯ ПОСЛЕ ВВОДА 1BEZLEMIT) -->
+            <div id="adminKeygenBox" class="hidden pt-4 border-t border-slate-800 space-y-3 text-xs">
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400">🛠 Генератор одноразовых ключей (Админ)</span>
+                </div>
+                <p class="text-[10px] text-slate-400">Вставьте ID покупателя из сообщения в Telegram. Ключ сработает только 1 раз и только на его аккаунте:</p>
+                <input type="text" id="adminTargetUserId" placeholder="ID клиента (напр: 482910452)" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-100 font-mono outline-none">
+                <div class="grid grid-cols-5 gap-1">
+                    <button onclick="generatePersonalKey(30)" class="glass-element hover:bg-slate-800 py-2 rounded-xl font-bold text-[10px] text-slate-200 tap-scale">1 мес</button>
+                    <button onclick="generatePersonalKey(90)" class="glass-element hover:bg-slate-800 py-2 rounded-xl font-bold text-[10px] text-sky-300 tap-scale">3 мес</button>
+                    <button onclick="generatePersonalKey(180)" class="glass-element hover:bg-slate-800 py-2 rounded-xl font-bold text-[10px] text-amber-300 tap-scale">6 мес</button>
+                    <button onclick="generatePersonalKey(365)" class="glass-element hover:bg-slate-800 py-2 rounded-xl font-bold text-[10px] text-emerald-300 tap-scale">1 год</button>
+                    <button onclick="generatePersonalKey(9999)" class="glass-element hover:bg-slate-800 py-2 rounded-xl font-bold text-[10px] text-rose-300 tap-scale">Безлим</button>
+                </div>
+                <div id="adminGeneratedKeyResultBox" class="hidden space-y-1.5 pt-1">
+                    <div class="text-[10px] text-slate-400">Готовый одноразовый ключ (скопирован):</div>
+                    <div onclick="copyGeneratedAdminKey()" id="adminGeneratedKeyText" class="bg-emerald-950/50 border border-emerald-500/40 rounded-xl p-2.5 font-mono font-extrabold text-emerald-300 text-center text-xs cursor-pointer select-all"></div>
+                </div>
+            </div>
         </div>
     </div>
 
     <!-- МОДАЛКА ВИРУСНОЙ КАРТОЧКИ СТОРИС -->
-    <div id="viralShareModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-xl z-[80] hidden flex items-center justify-center p-3">
+    <div id="viralShareModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-2xl z-[80] hidden flex items-center justify-center p-3">
         <div class="max-w-sm w-full flex flex-col space-y-3 max-h-[95vh] overflow-y-auto">
             <div class="flex justify-between items-center px-2">
                 <div class="flex items-center space-x-2">
@@ -1008,6 +1041,8 @@
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         const CREATOR_TG_USERNAME = 'patricianw';
+        // Секретная соль для генерации неподделываемых ключей
+        const SECRET_KEY_SALT = 'PATRICIANW_PULT_2026_PRO';
 
         let userId = 'default_user';
         let lastCloudError = null;
@@ -1033,9 +1068,14 @@
         let aiScannedParsedItems = [];
         let isMenuSearchActive = false;
 
+        // Переменные подписки и защиты промокодов
         let proUnlimited = false;
         let proExpiresAt = null;
-        let selectedTariffCode = "PRO1M";
+        let trialUsed = false; // Флаг: использован ли промокод TEST
+        let usedPromoCodes = []; // Список погашенных одноразовых ключей
+        let isCreatorAdmin = false; // Открыта ли админ-панель генератора ключей
+
+        let selectedTariffDays = 30;
         let selectedTariffPrice = 290;
         let selectedTariffTitle = "1 месяц";
 
@@ -1146,9 +1186,14 @@
             if (lastCloudError) {
                 alert(`Ошибка облака (ID: ${userId}):\n${lastCloudError.message || ''}`);
             } else {
-                alert(`Облако активно!\nТвой ID: ${userId}\nСтатус: ${getProHumanStatusText()}`);
+                alert(`Облако активно!\nВаш ID: ${userId}\nСтатус: ${getProHumanStatusText()}`);
             }
             saveData();
+        }
+
+        function copyMyUserId() {
+            navigator.clipboard.writeText(userId);
+            alert(`Ваш ID (${userId}) скопирован!`);
         }
 
         function loadLocalFallback() {
@@ -1165,6 +1210,9 @@
                 shiftTipGoal = Number(localStorage.getItem('fish_pro_goal')) || 3000;
                 stopListSet = new Set(JSON.parse(localStorage.getItem('fish_pro_stoplist')) || []);
                 proUnlimited = localStorage.getItem('fish_pro_unlimited') === 'true';
+                trialUsed = localStorage.getItem('fish_pro_trial_used') === 'true';
+                isCreatorAdmin = localStorage.getItem('fish_pro_admin') === 'true';
+                usedPromoCodes = JSON.parse(localStorage.getItem('fish_pro_used_codes')) || [];
                 const expRaw = localStorage.getItem('fish_pro_expires_at');
                 proExpiresAt = expRaw ? Number(expRaw) : null;
             } catch(e) {}
@@ -1174,15 +1222,20 @@
             try {
                 if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
                     userId = String(window.Telegram.WebApp.initDataUnsafe.user.id);
+                    const tgUsername = (window.Telegram.WebApp.initDataUnsafe.user.username || '').toLowerCase();
+                    if (tgUsername === CREATOR_TG_USERNAME.toLowerCase()) {
+                        isCreatorAdmin = true;
+                    }
                 } else {
                     if (!localStorage.getItem('fish_pro_test_id')) {
-                        localStorage.setItem('fish_pro_test_id', 'web_user_' + Math.floor(1000 + Math.random() * 9000));
+                        localStorage.setItem('fish_pro_test_id', String(Math.floor(100000000 + Math.random() * 900000000)));
                     }
                     userId = localStorage.getItem('fish_pro_test_id');
                 }
             } catch(e) { userId = 'fallback_user'; }
 
             loadLocalFallback();
+            document.getElementById('gateUserIdLabel').innerText = userId;
             selectedCalendarDateKey = getTodayDateKey();
             updateHeaderTips();
             switchTab('hall');
@@ -1209,6 +1262,8 @@
                     stopListSet = new Set(s.stopListSet || []);
                     if (s.proUnlimited !== undefined) proUnlimited = s.proUnlimited;
                     if (s.proExpiresAt !== undefined) proExpiresAt = s.proExpiresAt;
+                    if (s.trialUsed !== undefined) trialUsed = s.trialUsed;
+                    if (s.usedPromoCodes !== undefined) usedPromoCodes = s.usedPromoCodes;
                     
                     const tableKeys = Object.keys(tables);
                     if (tableKeys.length > 0 && !tables[currentTable]) currentTable = tableKeys[0];
@@ -1235,6 +1290,9 @@
                 localStorage.setItem('fish_pro_goal', shiftTipGoal);
                 localStorage.setItem('fish_pro_hourly_rate', hourlyRate);
                 localStorage.setItem('fish_pro_unlimited', proUnlimited ? 'true' : 'false');
+                localStorage.setItem('fish_pro_trial_used', trialUsed ? 'true' : 'false');
+                localStorage.setItem('fish_pro_admin', isCreatorAdmin ? 'true' : 'false');
+                localStorage.setItem('fish_pro_used_codes', JSON.stringify(usedPromoCodes));
                 if (proExpiresAt) localStorage.setItem('fish_pro_expires_at', String(proExpiresAt));
                 else localStorage.removeItem('fish_pro_expires_at');
 
@@ -1243,7 +1301,7 @@
                     state: {
                         tables, menuItems, closedHistory, shiftArchive,
                         stopListSet: [...stopListSet], hourlyRate, shiftTipGoal,
-                        proUnlimited, proExpiresAt
+                        proUnlimited, proExpiresAt, trialUsed, usedPromoCodes
                     },
                     updated_at: new Date().toISOString()
                 };
@@ -1255,7 +1313,44 @@
             }
         }
 
-        // ================= СИСТЕМА ОПЛАТЫ НА КАРТУ И ПРОМОКОДОВ =================
+        // ================= КРИПТОГРАФИЧЕСКАЯ ЗАЩИТА ОДНОРАЗОВЫХ ПРОМОКОДОВ =================
+
+        function computeKeySignature(daysStr, targetUidStr, nonceStr) {
+            const raw = `${daysStr}:${targetUidStr}:${nonceStr}:${SECRET_KEY_SALT}`;
+            let hash = 5381;
+            for (let i = 0; i < raw.length; i++) {
+                hash = ((hash << 5) + hash) + raw.charCodeAt(i);
+                hash = hash & hash;
+            }
+            return Math.abs(hash).toString(36).toUpperCase().slice(0, 4).padStart(4, 'X');
+        }
+
+        function generatePersonalKey(days) {
+            const targetId = (document.getElementById('adminTargetUserId').value || '').trim();
+            if (!targetId) {
+                alert("Введите ID покупателя (он присылает его в сообщении вместе с чеком)!");
+                return;
+            }
+            // Случайный 3-значный номер чека, чтобы каждый выпущенный ключ был уникальным и сгорал после 1 ввода
+            const nonce = String(Math.floor(100 + Math.random() * 900));
+            const sig = computeKeySignature(String(days), targetId, nonce);
+            const fullKey = `PULT-${days}-${targetId}-${nonce}-${sig}`;
+
+            const resBox = document.getElementById('adminGeneratedKeyResultBox');
+            const resText = document.getElementById('adminGeneratedKeyText');
+            resText.innerText = fullKey;
+            resBox.classList.remove('hidden');
+
+            navigator.clipboard.writeText(fullKey);
+            alert(`Одноразовый ключ на ${days === 9999 ? 'БЕЗЛИМИТ' : days + ' дн.'} для ID ${targetId} скопирован!\n\n${fullKey}`);
+        }
+
+        function copyGeneratedAdminKey() {
+            const key = document.getElementById('adminGeneratedKeyText').innerText;
+            if (!key) return;
+            navigator.clipboard.writeText(key);
+            alert("Ключ скопирован в буфер обмена!");
+        }
 
         function isProCurrentlyActive() {
             if (proUnlimited) return true;
@@ -1272,10 +1367,10 @@
         }
 
         function getProHumanStatusText() {
-            if (proUnlimited) return "👑 Безлимитный PRO";
+            if (proUnlimited) return "👑 Безлимит PRO";
             const days = getProRemainingDays();
-            if (days > 0) return `🔥 PRO активен (осталось ${days} дн.)`;
-            return "🔒 Доступ не активирован";
+            if (days > 0) return `🔥 Активен (${days} дн.)`;
+            return "🔒 Истек";
         }
 
         function processPromoString(rawCode) {
@@ -1285,36 +1380,82 @@
                 return false;
             }
 
+            // 1. Мастер-код создателя (включает вечный доступ и открывает Админ-генератор ключей)
             if (code === "1BEZLEMIT") {
                 proUnlimited = true;
                 proExpiresAt = null;
+                isCreatorAdmin = true;
                 saveData();
                 updateProStatusUI();
-                alert("👑 Промокод 1BEZLEMIT активирован! Включен вечный безлимитный PRO-доступ.");
+                document.getElementById('adminKeygenBox').classList.remove('hidden');
+                alert("👑 Мастер-доступ 1BEZLEMIT активирован! Включен вечный PRO и открыта Админ-панель генерации ключей.");
                 return true;
             }
 
+            // 2. Рекламный промокод TEST (строго 1 раз на 1 Telegram аккаунт)
             if (code === "TEST") {
-                proUnlimited = false;
-                proExpiresAt = Date.now() + (7 * 24 * 60 * 60 * 1000);
-                saveData();
-                updateProStatusUI();
-                alert("🎉 Промокод TEST активирован! Полный PRO-доступ открыт на 7 дней.");
-                return true;
-            }
-
-            const monthCodes = { "PRO1M": 30, "PRO3M": 90, "PRO6M": 180, "PRO12M": 365 };
-            if (monthCodes[code]) {
-                const days = monthCodes[code];
+                if (trialUsed) {
+                    alert("❌ Вы уже использовали бесплатный промокод TEST на этом аккаунте! Для продолжения оформите подписку.");
+                    return false;
+                }
+                trialUsed = true;
                 const baseTime = (proExpiresAt && proExpiresAt > Date.now()) ? proExpiresAt : Date.now();
-                proExpiresAt = baseTime + (days * 24 * 60 * 60 * 1000);
+                proExpiresAt = baseTime + (7 * 24 * 60 * 60 * 1000);
                 saveData();
                 updateProStatusUI();
-                alert(`🎉 Подписка успешно активирована на ${days} дней!`);
+                alert("🎉 Промокод TEST активирован! Вам открыт полный PRO-доступ на 7 дней.");
                 return true;
             }
 
-            alert("❌ Неверный промокод.");
+            // 3. Проверка персонального одноразового ключа формата PULT-{DAYS}-{USERID}-{NONCE}-{SIG}
+            if (code.startsWith("PULT-")) {
+                if (usedPromoCodes.includes(code)) {
+                    alert("❌ Этот промокод уже был использован и сгорел! Каждый ключ одноразовый.");
+                    return false;
+                }
+
+                const parts = code.split("-");
+                if (parts.length !== 5) {
+                    alert("❌ Неверный формат ключа.");
+                    return false;
+                }
+
+                const [, daysStr, targetUid, nonceStr, sigProvided] = parts;
+                const daysNum = parseInt(daysStr, 10);
+
+                // Проверка привязки к Telegram ID пользователя
+                if (targetUid !== String(userId)) {
+                    alert(`❌ Этот промокод выпущен для другого пользователя (ID: ${targetUid})! Передача кода коллегам запрещена.`);
+                    return false;
+                }
+
+                // Проверка криптографической подписи
+                const expectedSig = computeKeySignature(daysStr, targetUid, nonceStr);
+                if (sigProvided !== expectedSig || isNaN(daysNum) || daysNum <= 0) {
+                    alert("❌ Недействительный или поврежденный промокод!");
+                    return false;
+                }
+
+                // Погашаем код навсегда
+                usedPromoCodes.push(code);
+
+                if (daysNum === 9999) {
+                    proUnlimited = true;
+                    proExpiresAt = null;
+                    saveData();
+                    updateProStatusUI();
+                    alert("👑 Персональный безлимитный PRO-доступ успешно активирован!");
+                } else {
+                    const baseTime = (proExpiresAt && proExpiresAt > Date.now()) ? proExpiresAt : Date.now();
+                    proExpiresAt = baseTime + (daysNum * 24 * 60 * 60 * 1000);
+                    saveData();
+                    updateProStatusUI();
+                    alert(`🎉 Оплата подтверждена! Подписка PRO активирована на ${daysNum} дн.`);
+                }
+                return true;
+            }
+
+            alert("❌ Неверный промокод. Проверьте правильность ввода.");
             return false;
         }
 
@@ -1327,7 +1468,13 @@
 
         function openPromoModal() {
             document.getElementById('promoCodeInput').value = '';
+            document.getElementById('promoModalUserId').innerText = userId;
             document.getElementById('modalProStatusInfo').innerText = getProHumanStatusText();
+            if (isCreatorAdmin || proUnlimited) {
+                document.getElementById('adminKeygenBox').classList.remove('hidden');
+            } else {
+                document.getElementById('adminKeygenBox').classList.add('hidden');
+            }
             document.getElementById('promoModal').classList.remove('hidden');
         }
 
@@ -1338,12 +1485,15 @@
         function applyPromoCode() {
             const val = document.getElementById('promoCodeInput').value;
             if (processPromoString(val)) {
-                closePromoModal();
+                if (val.trim().toUpperCase() !== "1BEZLEMIT") {
+                    closePromoModal();
+                }
             }
         }
 
         function openCardPaymentModal() {
-            selectTariff('PRO1M', 290, '1 месяц');
+            document.getElementById('paymentModalUserId').innerText = userId;
+            selectTariff(30, 290, '1 месяц');
             document.getElementById('cardPaymentModal').classList.remove('hidden');
         }
 
@@ -1351,16 +1501,16 @@
             document.getElementById('cardPaymentModal').classList.add('hidden');
         }
 
-        function selectTariff(code, price, title) {
-            selectedTariffCode = code;
+        function selectTariff(days, price, title) {
+            selectedTariffDays = days;
             selectedTariffPrice = price;
             selectedTariffTitle = title;
             document.getElementById('paymentModalPriceVal').innerText = price + ' ₽';
 
-            ['PRO1M', 'PRO3M', 'PRO6M', 'PRO12M'].forEach(c => {
-                const el = document.getElementById('tariffCard_' + c);
+            [30, 90, 180, 365].forEach(d => {
+                const el = document.getElementById('tariffCard_' + d);
                 if (el) {
-                    if (c === code) {
+                    if (d === days) {
                         el.className = "tariff-box glass-element p-3.5 rounded-2xl border border-emerald-500 bg-emerald-500/15 cursor-pointer tap-scale text-center shadow";
                     } else {
                         el.className = "tariff-box glass-element p-3.5 rounded-2xl border border-slate-800 cursor-pointer tap-scale text-center";
@@ -1371,14 +1521,12 @@
 
         function copyDevCard() {
             const input = document.getElementById('devCardNumberInput');
-            input.select();
-            input.setSelectionRange(0, 99999);
             navigator.clipboard.writeText(input.value.replace(/\s+/g, ''));
             alert("Номер карты скопирован в буфер обмена!");
         }
 
         function openCreatorTelegramChat() {
-            const msg = encodeURIComponent(`Привет! Оплатил подписку "${selectedTariffTitle}" (${selectedTariffPrice} ₽) для Пульта Официанта PRO. Вот мой чек/скриншот:`);
+            const msg = encodeURIComponent(`Привет! Оплатил подписку "${selectedTariffTitle}" (${selectedTariffPrice} ₽) на ${selectedTariffDays} дн. для Пульта Официанта PRO.\nМой ID: ${userId}\nВот чек/скриншот оплаты:`);
             const url = `https://t.me/${CREATOR_TG_USERNAME}?text=${msg}`;
             if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openTelegramLink) {
                 window.Telegram.WebApp.openTelegramLink(url);
@@ -1391,8 +1539,13 @@
             const gateEl = document.getElementById('proGateOverlay');
             const bannerEl = document.getElementById('expiringProBanner');
             const bannerSub = document.getElementById('expiringProSubtitle');
+            document.getElementById('gateUserIdLabel').innerText = userId;
 
             if (!isProCurrentlyActive()) {
+                if (trialUsed) {
+                    document.getElementById('gateMainTitle').innerText = "Период доступа истек";
+                    document.getElementById('gateSubTitle').innerText = "Ваш пробный период завершен. Оформите подписку переводом на карту и введите полученный одноразовый ключ:";
+                }
                 gateEl.classList.remove('hidden');
                 bannerEl.classList.add('hidden');
                 bannerEl.classList.remove('flex');
