@@ -7,6 +7,7 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         
@@ -24,6 +25,7 @@
             overflow: hidden;
             position: fixed;
             width: 100%;
+            transition: background-color 0.25s ease, color 0.25s ease;
         }
 
         body.fullscreen-safe-pad {
@@ -62,6 +64,75 @@
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.12); border-radius: 4px; }
+
+        /* ================= СВЕТЛАЯ ТЕМА (LIGHT THEME OVERRIDES) ================= */
+        body.light-theme {
+            background-color: #f1f5f9 !important;
+            color: #0f172a !important;
+        }
+        body.light-theme #mainAppHeader,
+        body.light-theme #bottomNav,
+        body.light-theme #proGateOverlay {
+            background-color: rgba(241, 245, 249, 0.95) !important;
+            border-color: #cbd5e1 !important;
+        }
+        body.light-theme .glass-panel {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.96) 0%, rgba(248, 250, 252, 0.98) 100%) !important;
+            border: 1px solid #cbd5e1 !important;
+            box-shadow: 0 12px 32px -8px rgba(15, 23, 42, 0.08) !important;
+        }
+        body.light-theme .glass-element {
+            background: rgba(226, 232, 240, 0.65) !important;
+            border: 1px solid #cbd5e1 !important;
+        }
+        body.light-theme .text-slate-100,
+        body.light-theme .text-slate-200 {
+            color: #0f172a !important;
+        }
+        body.light-theme .text-slate-300 {
+            color: #334155 !important;
+        }
+        body.light-theme .text-slate-400 {
+            color: #64748b !important;
+        }
+        body.light-theme .bg-slate-950,
+        body.light-theme .bg-slate-950\/60,
+        body.light-theme .bg-slate-950\/70,
+        body.light-theme .bg-slate-950\/80,
+        body.light-theme .bg-slate-950\/90 {
+            background-color: #ffffff !important;
+            border-color: #cbd5e1 !important;
+            color: #0f172a !important;
+        }
+        body.light-theme .border-slate-800,
+        body.light-theme .border-slate-800\/80,
+        body.light-theme .border-slate-800\/60,
+        body.light-theme .border-slate-700,
+        body.light-theme .border-slate-700\/50 {
+            border-color: #e2e8f0 !important;
+        }
+        body.light-theme .bg-slate-100 {
+            background-color: #0f172a !important;
+            color: #ffffff !important;
+        }
+        body.light-theme .text-emerald-400 {
+            color: #059669 !important;
+        }
+        body.light-theme .text-sky-400 {
+            color: #0284c7 !important;
+        }
+        body.light-theme .text-amber-400,
+        body.light-theme .text-amber-300 {
+            color: #d97706 !important;
+        }
+        body.light-theme .text-rose-400,
+        body.light-theme .text-rose-300 {
+            color: #e11d48 !important;
+        }
+        body.light-theme #viralCardCaptureArea .text-slate-100,
+        body.light-theme #viralCardCaptureArea .text-white {
+            color: #ffffff !important;
+        }
     </style>
 </head>
 <body class="flex flex-col justify-between selection:bg-emerald-500 selection:text-slate-950">
@@ -117,7 +188,7 @@
                     <span class="text-[10px] text-slate-400 font-medium">Чай:</span>
                     <span id="headerTipSum">0 ₽</span>
                 </div>
-                <button onclick="resetAllTimers()" class="glass-element hover:bg-slate-800 text-slate-300 p-2 rounded-2xl text-xs tap-scale shadow" title="Сбросить таймеры">🔄</button>
+                <button onclick="resetAllTimers()" class="glass-element hover:bg-slate-800 text-slate-300 p-2 rounded-2xl text-xs tap-scale shadow" title="Сбросить все таймеры">🔄</button>
             </div>
         </div>
     </header>
@@ -162,13 +233,13 @@
                     <div>
                         <div class="flex items-center space-x-2">
                             <h3 id="currentTableName" class="text-base font-extrabold text-slate-100 tracking-wide">Стол 1</h3>
-                            <span id="tableTimerBadge" class="text-[10px] px-2.5 py-0.5 rounded-full font-mono font-extrabold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow hidden">0 мин</span>
+                            <span id="tableTimerBadge" class="text-[10px] px-2.5 py-0.5 rounded-full font-mono font-extrabold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow hidden">00:00</span>
                         </div>
                         <p class="text-[10px] text-slate-400 mt-0.5 font-semibold" id="tableGuestsCountInfo">Гостей: 2</p>
                     </div>
                     <div class="flex space-x-1.5">
                         <button onclick="backToHallGrid()" class="glass-element text-slate-300 font-bold px-3 py-2 rounded-2xl text-xs tap-scale shadow">← Назад</button>
-                        <button onclick="markTableVisited()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-2xl text-xs font-extrabold tap-scale shadow-lg">👁️ Был</button>
+                        <button onclick="markTableVisited()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-2xl text-xs font-extrabold tap-scale shadow-lg">👁️ У стола</button>
                     </div>
                 </div>
 
@@ -237,7 +308,7 @@
                     <div class="grid grid-cols-2 gap-2 pt-1">
                         <button onclick="saveTableToWork()" class="bg-slate-100 hover:bg-white text-slate-950 font-extrabold py-3.5 rounded-2xl text-xs shadow-xl tap-scale flex items-center justify-center space-x-1.5">
                             <span>💾</span>
-                            <span>Сохранить в работу</span>
+                            <span>В работу (Столы)</span>
                         </button>
                         <button onclick="openCheckoutModal()" class="bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-extrabold py-3.5 rounded-2xl text-xs shadow-xl tap-scale flex items-center justify-center space-x-1.5">
                             <span>✅</span>
@@ -259,7 +330,7 @@
 
         <!-- ВКЛАДКА 3: Текущая смена -->
         <div id="tabHistory" class="tab-content space-y-4 hidden">
-            <div class="glass-panel rounded-3xl p-4 space-y-3 shadow-lg border border-slate-700/50 bg-gradient-to-r from-slate-900 to-slate-950">
+            <div class="glass-panel rounded-3xl p-4 space-y-3 shadow-lg border border-slate-700/50">
                 <div class="flex justify-between items-center">
                     <div>
                         <h3 class="text-xs font-extrabold uppercase tracking-widest text-slate-200">⏱ Управление сменой</h3>
@@ -335,6 +406,7 @@
 
         <!-- ВКЛАДКА 5: ПРОФИЛЬ -->
         <div id="tabProfile" class="tab-content space-y-4 hidden">
+            <!-- ВЕРХНЯЯ ПАНЕЛЬ НАСТРОЕК ПРОФИЛЯ И ТЕМЫ -->
             <div class="glass-panel rounded-2xl p-3 flex justify-between items-center shadow border border-slate-700/50">
                 <div class="flex items-center space-x-2.5">
                     <div class="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-sm">💼</div>
@@ -347,9 +419,13 @@
                     </div>
                 </div>
                 <div class="flex items-center space-x-1.5">
+                    <button onclick="toggleAppTheme()" id="themeToggleBtn" class="glass-element hover:bg-slate-800 text-slate-200 px-2.5 py-2 rounded-xl text-xs font-extrabold tap-scale flex items-center space-x-1 shadow" title="Переключить тему">
+                        <span id="themeToggleIcon">☀️</span>
+                        <span id="themeToggleText" class="text-[10px]">Светлая</span>
+                    </button>
                     <button onclick="openPromoModal()" class="glass-element hover:bg-slate-800 text-slate-300 px-2.5 py-2 rounded-xl text-xs font-bold tap-scale" title="Промокод">🔑</button>
-                    <button onclick="openCardPaymentModal()" class="bg-amber-500/20 text-amber-300 border border-amber-500/40 px-3 py-2 rounded-xl text-xs font-extrabold tap-scale shadow" title="Купить PRO">💳 Купить PRO</button>
-                    <button onclick="openAddPastShiftModal()" class="bg-slate-100 hover:bg-white text-slate-950 px-3 py-2 rounded-xl text-xs font-extrabold tap-scale shadow">
+                    <button onclick="openCardPaymentModal()" class="bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2.5 py-2 rounded-xl text-[11px] font-extrabold tap-scale shadow" title="Купить PRO">💳 PRO</button>
+                    <button onclick="openAddPastShiftModal()" class="bg-slate-100 hover:bg-white text-slate-950 px-2.5 py-2 rounded-xl text-[11px] font-extrabold tap-scale shadow">
                         ＋ Смена
                     </button>
                 </div>
@@ -437,7 +513,7 @@
 
             <!-- ПОД-ВКЛАДКА 2: ОТЧЕТ ЗА МЕСЯЦ -->
             <div id="profileReportView" class="space-y-4 hidden">
-                <div class="glass-panel rounded-[32px] p-5 space-y-4 border border-emerald-500/30 bg-gradient-to-br from-emerald-950/30 via-slate-900 to-slate-950 shadow-2xl">
+                <div class="glass-panel rounded-[32px] p-5 space-y-4 border border-emerald-500/30 shadow-2xl">
                     <div class="flex justify-between items-start">
                         <div>
                             <span class="text-[10px] uppercase font-extrabold tracking-widest text-emerald-400">💰 Общий доход за месяц</span>
@@ -525,7 +601,7 @@
     </nav>
 
     <!-- МОДАЛКА ПЕРЕВОДА НА КАРТУ И АКТИВАЦИИ -->
-    <div id="cardPaymentModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-[85] hidden flex items-center justify-center p-4">
+    <div id="cardPaymentModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-[110] hidden flex items-center justify-center p-4">
         <div class="glass-panel rounded-[32px] max-w-sm w-full p-6 space-y-4 shadow-2xl border border-emerald-500/30 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
                 <h3 class="font-extrabold text-sm text-emerald-400">💳 Продление PRO-доступа</h3>
@@ -622,7 +698,7 @@
     </div>
 
     <!-- МОДАЛКА ВИРУСНОЙ КАРТОЧКИ СТОРИС -->
-    <div id="viralShareModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-xl z-[80] hidden flex items-center justify-center p-3">
+    <div id="viralShareModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-2xl z-[80] hidden flex items-center justify-center p-3">
         <div class="max-w-sm w-full flex flex-col space-y-3 max-h-[95vh] overflow-y-auto">
             <div class="flex justify-between items-center px-2">
                 <div class="flex items-center space-x-2">
@@ -691,7 +767,7 @@
                         <div class="w-9 h-9 rounded-xl bg-slate-900 border border-slate-700 flex items-center justify-center text-base shadow">⚡</div>
                         <div>
                             <div class="text-[11px] font-extrabold text-slate-100 uppercase tracking-wider">Пульт Официанта PRO</div>
-                            <div class="text-[9px] text-emerald-400 font-bold">Считай чай, столы и ЗП 👉 @waiter_pro_bot</div>
+                            <div class="text-[9px] text-emerald-400 font-bold">Считай чай, столы и ЗП 👉 @pult_waiter_bot</div>
                         </div>
                     </div>
                     <span class="text-[9px] font-mono font-bold text-slate-500 bg-slate-900 px-2 py-1 rounded-lg border border-slate-800">PRO</span>
@@ -700,51 +776,58 @@
         </div>
     </div>
 
-    <!-- МОДАЛКА ИИ-СКАНЕРА МЕНЮ -->
+    <!-- МОДАЛКА РЕАЛЬНОГО ИИ-СКАНЕРА МЕНЮ (TESSERACT OCR) -->
     <div id="aiScannerModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-[80] hidden flex items-center justify-center p-4">
         <div class="glass-panel rounded-[32px] max-w-sm w-full p-6 space-y-4 shadow-2xl border border-emerald-500/30 max-h-[90vh] flex flex-col">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
                 <div>
-                    <h3 class="font-extrabold text-sm text-emerald-400">🤖 ИИ-сканер меню</h3>
-                    <p class="text-[10px] text-slate-400">Загрузите фото или вставьте текст меню</p>
+                    <h3 class="font-extrabold text-sm text-emerald-400">🤖 ИИ-сканер меню (OCR)</h3>
+                    <p class="text-[10px] text-slate-400">Реальное распознавание фото или текста меню</p>
                 </div>
                 <button onclick="closeAiScannerModal()" class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs">✕</button>
             </div>
 
-            <div class="space-y-4 overflow-y-auto flex-1 pr-1 text-xs">
+            <div class="space-y-3.5 overflow-y-auto flex-1 pr-1 text-xs">
                 <div class="space-y-2">
-                    <label class="text-slate-300 font-bold">1. Загрузите фото меню или вставьте текст:</label>
+                    <label class="text-slate-300 font-bold">1. Сфотографируйте меню или выберите из галереи:</label>
                     <div class="flex space-x-2">
-                        <label class="flex-1 glass-element hover:bg-slate-800 border border-slate-700 py-3 rounded-2xl text-center font-bold text-slate-200 cursor-pointer tap-scale flex items-center justify-center space-x-1.5">
+                        <label class="flex-1 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 py-3 rounded-2xl text-center font-extrabold text-emerald-400 cursor-pointer tap-scale flex items-center justify-center space-x-1.5 shadow">
                             <span>📷</span>
-                            <span>Выбрать фото</span>
+                            <span>Сканировать фото меню</span>
                             <input type="file" id="menuPhotoInput" accept="image/*" onchange="handleMenuPhotoUpload(event)" class="hidden">
                         </label>
-                        <button onclick="loadDemoMenuPreset()" class="glass-element hover:bg-slate-800 border border-slate-700 px-3 py-3 rounded-2xl font-bold text-emerald-400 tap-scale">💡 Пример</button>
-                        <button onclick="clearCurrentMenuCompletely()" class="glass-element hover:bg-rose-950/40 border border-rose-500/30 px-3 py-3 rounded-2xl font-bold text-rose-400 tap-scale" title="Очистить старое меню">🗑</button>
+                        <button onclick="clearCurrentMenuCompletely()" class="glass-element hover:bg-rose-950/40 border border-rose-500/30 px-3.5 py-3 rounded-2xl font-bold text-rose-400 tap-scale" title="Очистить старое меню">🗑</button>
+                    </div>
+                </div>
+
+                <!-- Блок прогресса реального чтения фото -->
+                <div id="aiOcrProgressBox" class="hidden glass-element p-3 rounded-2xl border border-emerald-500/30 space-y-2">
+                    <div class="flex justify-between items-center text-[11px]">
+                        <span id="aiOcrStatusText" class="font-extrabold text-emerald-400">🤖 Читаю текст с фото...</span>
+                        <span id="aiOcrPercentText" class="font-mono font-bold text-slate-200">0%</span>
+                    </div>
+                    <div class="w-full bg-slate-950 h-2 rounded-full overflow-hidden">
+                        <div id="aiOcrProgressBar" class="bg-emerald-500 h-full transition-all duration-300" style="width: 0%"></div>
                     </div>
                 </div>
 
                 <div class="space-y-1">
-                    <span class="text-[10px] text-slate-400 font-medium">Или вставьте скопированный текст (название и цена через пробел или тире):</span>
-                    <textarea id="aiMenuTextInput" rows="4" placeholder="Например:
-Цезарь с курицей - 690
-Апероль спритц 690
-Борщ с салом 590" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3 text-xs text-slate-100 outline-none font-mono"></textarea>
+                    <span class="text-[10px] text-slate-400 font-medium">Распознанный текст (можно подправить или вставить вручную):</span>
+                    <textarea id="aiMenuTextInput" rows="5" placeholder="Сюда появится текст с вашей фотографии (или вставьте готовый список блюд с ценами)..." class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3 text-xs text-slate-100 outline-none font-mono"></textarea>
                 </div>
 
                 <button onclick="processAiMenuScan()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold py-3.5 rounded-2xl text-xs shadow-lg tap-scale flex items-center justify-center space-x-2">
                     <span>⚡</span>
-                    <span>Распознать и проверить меню</span>
+                    <span>Разобрать блюда и цены</span>
                 </button>
 
                 <div id="aiScanResultsBox" class="space-y-2 pt-2 border-t border-slate-800 hidden">
                     <div class="flex justify-between items-center">
-                        <span class="font-bold text-slate-200">Распознанные позиции (<span id="aiScannedCount">0</span>):</span>
+                        <span class="font-bold text-slate-200">Найдено позиций (<span id="aiScannedCount">0</span>):</span>
                         <span class="text-[10px] text-emerald-400">Готово к сохранению</span>
                     </div>
                     <div id="aiScannedItemsList" class="space-y-1.5 max-h-40 overflow-y-auto pr-1"></div>
-                    <button onclick="saveAiScannedMenuToApp()" class="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-extrabold py-3.5 rounded-2xl text-xs shadow-xl tap-scale">💾 Добавить в мое меню</button>
+                    <button onclick="saveAiScannedMenuToApp()" class="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-extrabold py-3.5 rounded-2xl text-xs shadow-xl tap-scale">💾 Сохранить в мое меню</button>
                 </div>
             </div>
         </div>
@@ -1045,6 +1128,7 @@
 
         let userId = 'default_user';
         let lastCloudError = null;
+        let appTheme = 'dark'; // 'dark' или 'light'
 
         let menuItems = [
             { name: "Фирменный бургер", price: 790, cat: "Горячее" },
@@ -1103,6 +1187,89 @@
             hideMoney: false,
             allowHoursEdit: true
         };
+
+        // ================= ТАКТИЛЬНАЯ ОТДАЧА (ВИБРАЦИЯ HAPTIC FEEDBACK) =================
+
+        function triggerHaptic(actionType) {
+            try {
+                const hf = window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback;
+                if (actionType === 'dish') {
+                    // Четкий тактильный удар при пробитии блюда
+                    if (hf) hf.impactOccurred('medium');
+                    else if (navigator.vibrate) navigator.vibrate(25);
+                } else if (actionType === 'open') {
+                    // Легкий отклик при открытии заказа
+                    if (hf) hf.impactOccurred('light');
+                    else if (navigator.vibrate) navigator.vibrate(15);
+                } else if (actionType === 'success') {
+                    // Двойная вибрация при закрытии счета или нажатии "У стола"
+                    if (hf) hf.notificationOccurred('success');
+                    else if (navigator.vibrate) navigator.vibrate([30, 50, 40]);
+                }
+            } catch (e) {}
+        }
+
+        // ================= СВЕТЛАЯ И ТЕМНАЯ ТЕМА =================
+
+        function applyAppThemeUI() {
+            const iconEl = document.getElementById('themeToggleIcon');
+            const textEl = document.getElementById('themeToggleText');
+            if (appTheme === 'light') {
+                document.body.classList.add('light-theme');
+                if (iconEl) iconEl.innerText = '🌙';
+                if (textEl) textEl.innerText = 'Темная';
+            } else {
+                document.body.classList.remove('light-theme');
+                if (iconEl) iconEl.innerText = '☀️';
+                if (textEl) textEl.innerText = 'Светлая';
+            }
+        }
+
+        function toggleAppTheme() {
+            triggerHaptic('open');
+            appTheme = appTheme === 'dark' ? 'light' : 'dark';
+            applyAppThemeUI();
+            saveData();
+        }
+
+        // ================= ФОРМАТИРОВАНИЕ И ЖИВОЙ ТИКАЮЩИЙ ТАЙМЕР =================
+
+        function formatElapsedMMSS(lastVisitedMs) {
+            if (!lastVisitedMs) return "00:00";
+            const diffSec = Math.max(0, Math.floor((Date.now() - lastVisitedMs) / 1000));
+            const mins = Math.floor(diffSec / 60);
+            const secs = diffSec % 60;
+            return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+
+        function getTimerColorClasses(lastVisitedMs) {
+            if (!lastVisitedMs) return "bg-emerald-500/15 text-emerald-400 border-emerald-500/30";
+            const mins = Math.floor((Date.now() - lastVisitedMs) / 60000);
+            if (mins >= 10) return "bg-rose-500/20 text-rose-400 border-rose-500/40 animate-pulse";
+            if (mins >= 5) return "bg-amber-500/15 text-amber-400 border-amber-500/30";
+            return "bg-emerald-500/15 text-emerald-400 border-emerald-500/30";
+        }
+
+        function tickAllLiveTimers() {
+            // Обновляем тикающие таймеры в разделе "Столы" каждую секунду без перерисовки кнопок
+            document.querySelectorAll('[data-live-timer-table]').forEach(el => {
+                const tName = el.getAttribute('data-live-timer-table');
+                const t = tables[tName];
+                if (t && t.lastVisited) {
+                    el.innerText = `⏱ ${formatElapsedMMSS(t.lastVisited)}`;
+                    el.className = `text-xs px-3 py-1 rounded-full font-mono font-extrabold border shadow ${getTimerColorClasses(t.lastVisited)}`;
+                }
+            });
+
+            // Обновляем таймер внутри открытой карточки стола
+            if (currentTable && tables[currentTable] && tables[currentTable].lastVisited) {
+                const badge = document.getElementById('tableTimerBadge');
+                if (badge && !badge.classList.contains('hidden')) {
+                    badge.innerText = formatElapsedMMSS(tables[currentTable].lastVisited);
+                    badge.className = `text-[10px] px-2.5 py-0.5 rounded-full font-mono font-extrabold border shadow ${getTimerColorClasses(tables[currentTable].lastVisited)}`;
+                }
+            }
+        }
 
         // ================= УМНЫЙ РЕЖИМ ФОКУСА ПРИ ПОИСКЕ МЕНЮ =================
 
@@ -1211,6 +1378,7 @@
                 trialUsed = localStorage.getItem('fish_pro_trial_used') === 'true';
                 isCreatorAdmin = localStorage.getItem('fish_pro_admin') === 'true';
                 usedPromoCodes = JSON.parse(localStorage.getItem('fish_pro_used_codes')) || [];
+                appTheme = localStorage.getItem('fish_pro_theme') || 'dark';
                 const expRaw = localStorage.getItem('fish_pro_expires_at');
                 proExpiresAt = expRaw ? Number(expRaw) : null;
             } catch(e) {}
@@ -1233,6 +1401,7 @@
             } catch(e) { userId = 'fallback_user'; }
 
             loadLocalFallback();
+            applyAppThemeUI();
             document.getElementById('gateUserIdLabel').innerText = userId;
             selectedCalendarDateKey = getTodayDateKey();
             updateHeaderTips();
@@ -1262,6 +1431,10 @@
                     if (s.proExpiresAt !== undefined) proExpiresAt = s.proExpiresAt;
                     if (s.trialUsed !== undefined) trialUsed = s.trialUsed;
                     if (s.usedPromoCodes !== undefined) usedPromoCodes = s.usedPromoCodes;
+                    if (s.appTheme !== undefined) {
+                        appTheme = s.appTheme;
+                        applyAppThemeUI();
+                    }
                     
                     const tableKeys = Object.keys(tables);
                     if (tableKeys.length > 0 && !tables[currentTable]) currentTable = tableKeys[0];
@@ -1291,6 +1464,7 @@
                 localStorage.setItem('fish_pro_trial_used', trialUsed ? 'true' : 'false');
                 localStorage.setItem('fish_pro_admin', isCreatorAdmin ? 'true' : 'false');
                 localStorage.setItem('fish_pro_used_codes', JSON.stringify(usedPromoCodes));
+                localStorage.setItem('fish_pro_theme', appTheme);
                 if (proExpiresAt) localStorage.setItem('fish_pro_expires_at', String(proExpiresAt));
                 else localStorage.removeItem('fish_pro_expires_at');
 
@@ -1299,7 +1473,7 @@
                     state: {
                         tables, menuItems, closedHistory, shiftArchive,
                         stopListSet: [...stopListSet], hourlyRate, shiftTipGoal,
-                        proUnlimited, proExpiresAt, trialUsed, usedPromoCodes
+                        proUnlimited, proExpiresAt, trialUsed, usedPromoCodes, appTheme
                     },
                     updated_at: new Date().toISOString()
                 };
@@ -1339,6 +1513,7 @@
             resBox.classList.remove('hidden');
 
             navigator.clipboard.writeText(fullKey);
+            triggerHaptic('success');
             alert(`Одноразовый ключ на ${days === 9999 ? 'БЕЗЛИМИТ' : days + ' дн.'} для ID ${targetId} скопирован!\n\n${fullKey}`);
         }
 
@@ -1384,6 +1559,7 @@
                 saveData();
                 updateProStatusUI();
                 document.getElementById('adminKeygenBox').classList.remove('hidden');
+                triggerHaptic('success');
                 alert("👑 Мастер-доступ 1BEZLEMIT активирован! Включен вечный PRO и открыта Админ-панель генерации ключей.");
                 return true;
             }
@@ -1398,6 +1574,7 @@
                 proExpiresAt = baseTime + (7 * 24 * 60 * 60 * 1000);
                 saveData();
                 updateProStatusUI();
+                triggerHaptic('success');
                 alert("🎉 Промокод TEST активирован! Вам открыт полный PRO-доступ на 7 дней.");
                 return true;
             }
@@ -1429,6 +1606,7 @@
                 }
 
                 usedPromoCodes.push(code);
+                triggerHaptic('success');
 
                 if (daysNum === 9999) {
                     proUnlimited = true;
@@ -1513,6 +1691,7 @@
         function copyDevCard() {
             const input = document.getElementById('devCardNumberInput');
             navigator.clipboard.writeText(input.value.replace(/\s+/g, ''));
+            triggerHaptic('open');
             alert("Номер карты скопирован в буфер обмена!");
         }
 
@@ -1669,11 +1848,12 @@
             }
         }
 
-        // ================= ИИ-СКАНЕР МЕНЮ =================
+        // ================= НАСТОЯЩИЙ ИИ-СКАНЕР МЕНЮ (TESSERACT OCR) =================
 
         function openAiScannerModal() {
             document.getElementById('aiMenuTextInput').value = '';
             document.getElementById('aiScanResultsBox').classList.add('hidden');
+            document.getElementById('aiOcrProgressBox').classList.add('hidden');
             aiScannedParsedItems = [];
             document.getElementById('aiScannerModal').classList.remove('hidden');
         }
@@ -1682,49 +1862,114 @@
             document.getElementById('aiScannerModal').classList.add('hidden');
         }
 
-        function loadDemoMenuPreset() {
-            const demoText = `Фирменный бургер с говядиной 790
-Крафтовый IPA 0.5 450
-Брускетта с лососем 650
-Том Ям с креветками 890
-Лимонад Маракуйя-Базилик 390
-Медовик домашний 350`;
-            document.getElementById('aiMenuTextInput').value = demoText;
-        }
-
         function clearCurrentMenuCompletely() {
             if (confirm("Очистить все текущие позиции меню, чтобы загрузить новое с нуля?")) {
                 menuItems = [];
                 stopListSet.clear();
                 saveData();
                 renderMenuDirect();
-                alert("Меню очищено! Теперь вы можете отсканировать или вставить свое меню.");
+                alert("Меню очищено! Теперь вы можете отсканировать свое меню.");
             }
         }
 
-        function handleMenuPhotoUpload(event) {
+        // Повышение контрастности фото перед отправкой в нейросеть Tesseract
+        function preprocessImageForOCR(file) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                const url = URL.createObjectURL(file);
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const maxDim = 1800;
+                    let w = img.width;
+                    let h = img.height;
+                    if (w > maxDim || h > maxDim) {
+                        if (w > h) { h = Math.round(h * (maxDim / w)); w = maxDim; }
+                        else { w = Math.round(w * (maxDim / h)); h = maxDim; }
+                    }
+                    canvas.width = w;
+                    canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, w, h);
+
+                    const imgData = ctx.getImageData(0, 0, w, h);
+                    const d = imgData.data;
+                    const contrast = 45;
+                    const factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
+                    for (let i = 0; i < d.length; i += 4) {
+                        const gray = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+                        let c = factor * (gray - 128) + 128;
+                        c = Math.max(0, Math.min(255, c));
+                        d[i] = d[i + 1] = d[i + 2] = c;
+                    }
+                    ctx.putImageData(imgData, 0, 0);
+                    URL.revokeObjectURL(url);
+                    resolve(canvas);
+                };
+                img.onerror = reject;
+                img.src = url;
+            });
+        }
+
+        async function handleMenuPhotoUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
-            
+
+            const progBox = document.getElementById('aiOcrProgressBox');
+            const statusTxt = document.getElementById('aiOcrStatusText');
+            const pctTxt = document.getElementById('aiOcrPercentText');
+            const progBar = document.getElementById('aiOcrProgressBar');
+
+            progBox.classList.remove('hidden');
+            statusTxt.innerText = "🤖 Подготовка изображения...";
+            pctTxt.innerText = "5%";
+            progBar.style.width = "5%";
             setCloudIndicator('sync', 'ИИ читает...');
-            setTimeout(() => {
-                const simulatedParsedText = `Стейк Рибай 1990
-Тартар из говядины 890
-Салат с креветками и авокадо 790
-Паста Карбонара 690
-Кока-Кола 250
-Капучино 290`;
-                document.getElementById('aiMenuTextInput').value = simulatedParsedText;
+
+            try {
+                const processedCanvas = await preprocessImageForOCR(file);
+                statusTxt.innerText = "🤖 Загрузка языковой модели...";
+
+                const result = await window.Tesseract.recognize(
+                    processedCanvas,
+                    'rus+eng',
+                    {
+                        logger: m => {
+                            if (m.status === 'recognizing text') {
+                                const pct = Math.round((m.progress || 0) * 100);
+                                statusTxt.innerText = "🤖 Распознаю блюда и цены...";
+                                pctTxt.innerText = `${pct}%`;
+                                progBar.style.width = `${pct}%`;
+                            }
+                        }
+                    }
+                );
+
+                const rawRecognizedText = (result && result.data && result.data.text) ? result.data.text.trim() : '';
+                document.getElementById('aiMenuTextInput').value = rawRecognizedText;
                 setCloudIndicator('ok', 'Облако ОК');
-                alert("🤖 ИИ распознал позиции с фотографии! Проверьте список ниже.");
-                processAiMenuScan();
-            }, 1200);
+                statusTxt.innerText = "✅ Фото успешно прочитано!";
+                pctTxt.innerText = "100%";
+                progBar.style.width = "100%";
+                triggerHaptic('success');
+
+                if (rawRecognizedText.length > 0) {
+                    processAiMenuScan();
+                } else {
+                    alert("Не удалось разглядеть текст на фото. Попробуйте сфотографировать страницу ближе и ровнее.");
+                }
+            } catch (err) {
+                setCloudIndicator('ok', 'Облако ОК');
+                statusTxt.innerText = "❌ Ошибка чтения фото";
+                alert("Ошибка при распознавании фото: " + (err.message || err));
+            } finally {
+                event.target.value = '';
+            }
         }
 
         function processAiMenuScan() {
             const rawText = document.getElementById('aiMenuTextInput').value.trim();
             if (!rawText) {
-                alert("Введите текст меню или выберите фото.");
+                alert("Сначала выберите фото меню или вставьте текст!");
                 return;
             }
 
@@ -1732,30 +1977,43 @@
             const lines = rawText.split('\n');
 
             lines.forEach(line => {
-                const cleanLine = line.trim();
-                if (!cleanLine) return;
+                // Убираем мусорные точки/линии и граммовки вида "250 г", "300 мл", чтобы не путать их с ценой
+                let cleanLine = line
+                    .replace(/\.{2,}/g, ' ')
+                    .replace(/\b\d+\s*(г|гр|мл|л|шт|ккал)\b/gi, ' ')
+                    .replace(/\s+/g, ' ')
+                    .trim();
 
-                const match = cleanLine.match(/(.*?)(?:[-–—:]\s*|\s+)(\d{2,5})\s*₽?/);
+                if (cleanLine.length < 3) return;
+
+                // Берем ПОСЛЕДНЕЕ число в строке как цену блюда
+                const match = cleanLine.match(/^(.+?)\s*[-–—:=/|]*\s*(\d{2,5})\s*(?:₽|р|руб\.?)?\s*$/i);
                 if (match) {
-                    let name = match[1].trim();
+                    let name = match[1].replace(/[-–—:.,|/]+$/, '').trim();
                     let price = parseInt(match[2], 10);
+
+                    // Отсекаем строки без букв или со слишком странной ценой
+                    if (!/[а-яёa-z]/i.test(name) || name.length < 2 || price < 30 || price > 50000) return;
+
                     let cat = "Горячее";
                     const lowerName = name.toLowerCase();
-                    if (lowerName.includes('салат') || lowerName.includes('цезарь') || lowerName.includes('тартар') || lowerName.includes('брускетт')) cat = "Салаты";
-                    else if (lowerName.includes('суп') || lowerName.includes('том ям') || lowerName.includes('борщ') || lowerName.includes('уха')) cat = "Супы";
-                    else if (lowerName.includes('пицц') || lowerName.includes('бургер')) cat = "Пицца";
-                    else if (lowerName.includes('чай') || lowerName.includes('кофе') || lowerName.includes('лимонад') || lowerName.includes('кола') || lowerName.includes('пиво') || lowerName.includes('ipa') || lowerName.includes('вино') || lowerName.includes('коктейл') || lowerName.includes('спритц') || lowerName.includes('капучино')) cat = "Бар";
-                    else if (lowerName.includes('десерт') || lowerName.includes('медовик') || lowerName.includes('чизкейк') || lowerName.includes('морожен')) cat = "Десерты";
-                    else if (lowerName.includes('хлеб') || lowerName.includes('гренк') || lowerName.includes('сырн') || lowerName.includes('фри')) cat = "Закуски";
+                    if (lowerName.includes('салат') || lowerName.includes('цезарь') || lowerName.includes('греческ') || lowerName.includes('оливье')) cat = "Салаты";
+                    else if (lowerName.includes('суп') || lowerName.includes('том ям') || lowerName.includes('борщ') || lowerName.includes('уха') || lowerName.includes('бульон') || lowerName.includes('солянк') || lowerName.includes('рамен')) cat = "Супы";
+                    else if (lowerName.includes('пицц') || lowerName.includes('бургер') || lowerName.includes('хачапур') || lowerName.includes('фокачч')) cat = "Пицца";
+                    else if (lowerName.includes('чай') || lowerName.includes('кофе') || lowerName.includes('эспрессо') || lowerName.includes('американо') || lowerName.includes('капучино') || lowerName.includes('латте') || lowerName.includes('раф') || lowerName.includes('лимонад') || lowerName.includes('морс') || lowerName.includes('сок') || lowerName.includes('кола') || lowerName.includes('вода') || lowerName.includes('пиво') || lowerName.includes('ipa') || lowerName.includes('вино') || lowerName.includes('коктейл') || lowerName.includes('спритц') || lowerName.includes('виски') || lowerName.includes('водка') || lowerName.includes('джин') || lowerName.includes('ром')) cat = "Бар";
+                    else if (lowerName.includes('десерт') || lowerName.includes('медовик') || lowerName.includes('чизкейк') || lowerName.includes('морожен') || lowerName.includes('тирамису') || lowerName.includes('наполеон') || lowerName.includes('фондан') || lowerName.includes('торт') || lowerName.includes('сырник')) cat = "Десерты";
+                    else if (lowerName.includes('хлеб') || lowerName.includes('гренк') || lowerName.includes('сырн') || lowerName.includes('фри') || lowerName.includes('брускетт') || lowerName.includes('тартар') || lowerName.includes('карпаччо') || lowerName.includes('закуск') || lowerName.includes('нарезк') || lowerName.includes('оливк')) cat = "Закуски";
+
                     aiScannedParsedItems.push({ name, price, cat });
                 }
             });
 
             if (aiScannedParsedItems.length === 0) {
-                alert("Не удалось распознать цены. Убедитесь, что строки имеют формат: 'Название 590'");
+                alert("Не удалось автоматически выделить пары «Блюдо + Цена». Проверьте текст в поле выше: в конце каждой строки должна стоять цена числом (например: Цезарь с курицей 690).");
                 return;
             }
 
+            triggerHaptic('open');
             renderAiScannedList();
             document.getElementById('aiScanResultsBox').classList.remove('hidden');
         }
@@ -1765,26 +2023,35 @@
             list.innerHTML = '';
             document.getElementById('aiScannedCount').innerText = aiScannedParsedItems.length;
 
-            aiScannedParsedItems.forEach((item) => {
+            aiScannedParsedItems.forEach((item, idx) => {
                 const div = document.createElement('div');
                 div.className = "flex justify-between items-center glass-element px-3 py-2 rounded-xl border border-slate-800 text-xs";
                 div.innerHTML = `
-                    <div>
+                    <div class="pr-2">
                         <span class="font-bold text-slate-200">${item.name}</span>
                         <div class="text-[9px] text-emerald-400">Категория: ${item.cat}</div>
                     </div>
-                    <span class="font-extrabold text-emerald-400">${item.price} ₽</span>
+                    <div class="flex items-center space-x-2 shrink-0">
+                        <span class="font-extrabold text-emerald-400">${item.price} ₽</span>
+                        <button onclick="removeScannedItem(${idx})" class="text-rose-400 font-bold px-1">✕</button>
+                    </div>
                 `;
                 list.appendChild(div);
             });
+        }
+
+        function removeScannedItem(idx) {
+            aiScannedParsedItems.splice(idx, 1);
+            renderAiScannedList();
         }
 
         function saveAiScannedMenuToApp() {
             if (aiScannedParsedItems.length === 0) return;
             menuItems = [...aiScannedParsedItems, ...menuItems];
             saveData();
+            triggerHaptic('success');
             closeAiScannerModal();
-            alert(`Добавлено ${aiScannedParsedItems.length} позиций в ваше меню!`);
+            alert(`✅ Добавлено ${aiScannedParsedItems.length} позиций в ваше меню!`);
             renderMenuDirect();
         }
 
@@ -2143,6 +2410,7 @@
             profileDate = new Date(Number(y), Number(m) - 1, 1);
 
             saveData();
+            triggerHaptic('success');
             closeFinishShiftModal();
             updateHeaderTips();
             switchTab('profile');
@@ -2239,7 +2507,7 @@
                 if (shift) {
                     baseClass += isSelected 
                         ? "bg-emerald-500 text-slate-950 font-extrabold border-emerald-300 shadow-lg" 
-                        : "bg-emerald-500/15 border-emerald-500/40 text-emerald-300 font-bold";
+                        : "bg-emerald-500/15 border-emerald-500/40 text-emerald-400 font-bold";
                 } else {
                     baseClass += isSelected
                         ? "bg-slate-200 text-slate-950 font-extrabold border-white"
@@ -2392,7 +2660,7 @@
             const totalTips = totalCashTips + totalCardTips;
             const totalIncome = totalWage + totalTips;
 
-            const reportText = `📊 ОТЧЕТ: ${monthNames[month]} ${year}\nСмен: ${shiftsCount} | Часов: ${totalHours}ч\nДоход: ${totalIncome.toLocaleString('ru-RU')} ₽ (Чай: ${totalTips} ₽)\n👉 @waiter_pro_bot`;
+            const reportText = `📊 ОТЧЕТ: ${monthNames[month]} ${year}\nСмен: ${shiftsCount} | Часов: ${totalHours}ч\nДоход: ${totalIncome.toLocaleString('ru-RU')} ₽ (Чай: ${totalTips} ₽)\n👉 @pult_waiter_bot`;
 
             navigator.clipboard.writeText(reportText).then(() => alert("Отчет за месяц скопирован в буфер обмена!"));
         }
@@ -2457,6 +2725,7 @@
         function toggleStopItemByIdx(idx) {
             const item = menuItems[idx];
             if (!item) return;
+            triggerHaptic('open');
             if(stopListSet.has(item.name)) stopListSet.delete(item.name);
             else stopListSet.add(item.name);
             saveData();
@@ -2512,6 +2781,7 @@
         }
 
         function handleTableClick(name) {
+            triggerHaptic('open');
             tableToOpenGuests = name;
             document.getElementById('guestsModalTitle').innerText = `${name}: гости`;
             document.getElementById('customGuestsInput').value = '';
@@ -2528,6 +2798,7 @@
                 closeGuestsModal();
                 return;
             }
+            triggerHaptic('open');
             const targetTable = tableToOpenGuests;
             const t = tables[targetTable];
             t.guests = count;
@@ -2596,8 +2867,8 @@
             
             const badge = document.getElementById('tableTimerBadge');
             if (t.lastVisited) {
-                const diffMin = Math.floor((Date.now() - t.lastVisited) / 60000);
-                badge.innerText = diffMin + ' мин';
+                badge.innerText = formatElapsedMMSS(t.lastVisited);
+                badge.className = `text-[10px] px-2.5 py-0.5 rounded-full font-mono font-extrabold border shadow ${getTimerColorClasses(t.lastVisited)}`;
                 badge.classList.remove('hidden');
             } else {
                 badge.classList.add('hidden');
@@ -2884,6 +3155,8 @@
                 return;
             }
 
+            // Тактильная отдача (вибрация) при пробитии каждого блюда!
+            triggerHaptic('dish');
             addItemToTableDirect(item.name, item.price, null);
 
             if (btnEl) {
@@ -2899,6 +3172,7 @@
 
         function selectHosperWeight(weight) {
             if(!pendingHosperItem || !currentTable) return;
+            triggerHaptic('dish');
             const finalPrice = Math.round((pendingHosperItem.price * weight) / 100);
             addItemToTableDirect(`${pendingHosperItem.name} (${weight}г)`, finalPrice, null);
             closeHosperModal();
@@ -2917,6 +3191,10 @@
 
         function addItemToTableDirect(name, price, modifier) {
             const t = tables[currentTable];
+            // Если это первое блюдо на столе — сразу запускаем таймер стола!
+            if (!t.lastVisited) {
+                t.lastVisited = Date.now();
+            }
             t.items.push({ name, price, modifier, guest: t.activeGuest || "Гость 1", course: selectedActiveCourse });
             saveData();
             renderTableCard();
@@ -2925,29 +3203,38 @@
 
         function removeItem(idx) {
             if(!currentTable || !tables[currentTable]) return;
+            triggerHaptic('open');
             tables[currentTable].items.splice(idx, 1);
+            if (tables[currentTable].items.length === 0) {
+                tables[currentTable].lastVisited = null;
+            }
             saveData();
             renderTableCard();
             renderTables();
         }
 
+        // Когда забиваем заказ и жмем "В работу (Столы)" — запускается таймер и заказ сразу улетает в "Столы"
         function saveTableToWork() {
             if (isMenuSearchActive) exitMenuSearchMode();
             if(!currentTable || !tables[currentTable]) return;
             const t = tables[currentTable];
-            if (t.items.length > 0 && !t.lastVisited) {
-                t.lastVisited = Date.now(); 
+            if (t.items.length > 0) {
+                if (!t.lastVisited) t.lastVisited = Date.now();
+                triggerHaptic('success');
+                saveData();
+                switchTab('myTables');
+            } else {
+                saveData();
+                switchTab('hall');
             }
-            saveData();
-            document.getElementById('activeTableCard').classList.add('hidden');
-            document.getElementById('hallGridView').classList.remove('hidden');
-            switchTab('hall');
         }
 
         function openTableFromMyTablesByIdx(idx) {
             const keys = Object.keys(tables);
             const name = keys[idx];
             if (!name) return;
+            // Тактильная отдача при нажатии "Открыть заказ"
+            triggerHaptic('open');
             switchTab('hall');
             document.getElementById('hallGridView').classList.add('hidden');
             document.getElementById('activeTableCard').classList.remove('hidden');
@@ -2956,6 +3243,18 @@
             toggleOrderReviewMode(true);
             renderTableCard();
             renderMenuDirect();
+        }
+
+        // Сброс таймера по кнопке "👁️ У стола" прямо из списка активных столов
+        function resetTableTimerFromMyTablesByIdx(idx) {
+            const keys = Object.keys(tables);
+            const name = keys[idx];
+            if (!name || !tables[name]) return;
+            tables[name].lastVisited = Date.now();
+            triggerHaptic('success');
+            saveData();
+            renderMyTables();
+            renderTables();
         }
 
         function renderMyTables() {
@@ -2968,17 +3267,33 @@
                 const t = tables[name];
                 if(!t.items || t.items.length === 0) return;
                 activeCount++;
+                if (!t.lastVisited) t.lastVisited = Date.now();
+
                 const total = t.items.reduce((s, i) => s + i.price, 0);
+                const timerText = formatElapsedMMSS(t.lastVisited);
+                const timerColors = getTimerColorClasses(t.lastVisited);
 
                 const card = document.createElement('div');
-                card.className = "glass-panel rounded-[32px] p-4 space-y-2.5 shadow-lg border border-slate-800";
+                card.className = "glass-panel rounded-[32px] p-4 space-y-3 shadow-lg border border-slate-800";
                 card.innerHTML = `
                     <div class="flex justify-between items-center">
-                        <span class="font-extrabold text-sm text-slate-100">${name}</span>
+                        <div class="flex items-center space-x-2.5">
+                            <span class="font-extrabold text-sm text-slate-100">${name}</span>
+                            <span data-live-timer-table="${name}" class="text-xs px-3 py-1 rounded-full font-mono font-extrabold border shadow ${timerColors}">⏱ ${timerText}</span>
+                        </div>
                         <span class="font-extrabold text-sm text-emerald-400">${total} ₽</span>
                     </div>
                     <div class="text-xs text-slate-400">Позиций: ${t.items.length} • Гостей: ${t.guests}</div>
-                    <button onclick="openTableFromMyTablesByIdx(${idx})" class="w-full bg-slate-100 hover:bg-white text-slate-950 py-3 rounded-2xl text-xs font-extrabold tap-scale shadow">✏️ Открыть заказ</button>
+                    <div class="grid grid-cols-2 gap-2 pt-0.5">
+                        <button onclick="openTableFromMyTablesByIdx(${idx})" class="bg-slate-100 hover:bg-white text-slate-950 py-3 rounded-2xl text-xs font-extrabold tap-scale shadow flex items-center justify-center space-x-1">
+                            <span>✏️</span>
+                            <span>Открыть заказ</span>
+                        </button>
+                        <button onclick="resetTableTimerFromMyTablesByIdx(${idx})" class="bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-2xl text-xs font-extrabold tap-scale shadow-lg flex items-center justify-center space-x-1">
+                            <span>👁️</span>
+                            <span>У стола</span>
+                        </button>
+                    </div>
                 `;
                 container.appendChild(card);
             });
@@ -2989,7 +3304,8 @@
         function markTableVisited() {
             if(!currentTable || !tables[currentTable]) return;
             const t = tables[currentTable];
-            t.lastVisited = Date.now(); 
+            t.lastVisited = Date.now();
+            triggerHaptic('success');
             saveData();
             renderTableCard();
             renderTables();
@@ -3003,6 +3319,7 @@
                 alert("Стол пустой!");
                 return;
             }
+            triggerHaptic('open');
             currentTipAmount = 0;
             selectedCheckoutGroup = null;
             document.getElementById('customTipInput').value = '';
@@ -3131,6 +3448,9 @@
                 return;
             }
 
+            // Тактильная отдача (вибрация успеха) при закрытии счета!
+            triggerHaptic('success');
+
             const groupSubtotal = groupItems.reduce((sum, item) => sum + item.price, 0);
 
             closedHistory.unshift({
@@ -3206,6 +3526,7 @@
         }
 
         function openHistoryDetail(index) {
+            triggerHaptic('open');
             showBillHistoryModalObject(closedHistory[index]);
         }
 
@@ -3269,6 +3590,7 @@
             const sum = Number(document.getElementById('manualTipSumInput').value);
             if(!sum || sum <= 0) return;
 
+            triggerHaptic('success');
             closedHistory.unshift({
                 tableName: "Вручную",
                 time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -3290,11 +3612,15 @@
 
         function filterAttention() { onlyAttentionFilter = !onlyAttentionFilter; renderTables(); }
         function resetAllTimers() { 
+            triggerHaptic('success');
             for(let n in tables) { if (tables[n].lastVisited) tables[n].lastVisited = Date.now(); }
-            saveData(); renderTables(); 
+            saveData(); renderTables(); renderMyTables();
         }
 
-        setInterval(() => { renderTables(); if(currentTable) renderTableCard(); renderMyTables(); updateProStatusUI(); }, 60000);
+        // Живое посекундное тиканье таймера в "Столах" и карточке стола
+        setInterval(tickAllLiveTimers, 1000);
+        // Обновление сетки зала и проверка подписки раз в 30 секунд
+        setInterval(() => { renderTables(); updateProStatusUI(); }, 30000);
         
         initCloudData();
     </script>
