@@ -7,7 +7,6 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         
@@ -498,7 +497,7 @@
                         <span class="text-lg">🤖</span>
                         <div class="text-left">
                             <div class="text-xs font-extrabold text-slate-100">ИИ-сканер</div>
-                            <div class="text-[9px] text-emerald-400">Загрузить меню</div>
+                            <div class="text-[9px] text-emerald-400">Gemini Vision</div>
                         </div>
                     </button>
                     <button onclick="openHallConstructorModal()" class="glass-panel hover:bg-slate-800 p-3 rounded-2xl flex items-center space-x-2.5 border border-sky-500/20 tap-scale shadow">
@@ -553,7 +552,7 @@
                     <div class="glass-panel p-4 rounded-3xl space-y-1">
                         <p class="text-[10px] text-slate-400 uppercase font-bold">Средний доход</p>
                         <p id="reportAvgShiftIncome" class="text-xl font-extrabold text-amber-400">0 ₽</p>
-                        <p class="text-[10px] text-slate-400">За 1 рабочую смену</p>
+                        <p id="reportApgShiftNote" class="text-[10px] text-slate-400">За 1 рабочую смену</p>
                     </div>
                 </div>
 
@@ -776,13 +775,13 @@
         </div>
     </div>
 
-    <!-- МОДАЛКА РЕАЛЬНОГО ИИ-СКАНЕРА МЕНЮ (TESSERACT OCR) -->
+    <!-- МОДАЛКА ИИ-СКАНЕРА МЕНЮ (GEMINI VISION API) -->
     <div id="aiScannerModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-[80] hidden flex items-center justify-center p-4">
         <div class="glass-panel rounded-[32px] max-w-sm w-full p-6 space-y-4 shadow-2xl border border-emerald-500/30 max-h-[90vh] flex flex-col">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
                 <div>
-                    <h3 class="font-extrabold text-sm text-emerald-400">🤖 ИИ-сканер меню (OCR)</h3>
-                    <p class="text-[10px] text-slate-400">Реальное распознавание фото или текста меню</p>
+                    <h3 class="font-extrabold text-sm text-emerald-400">🤖 ИИ-сканер меню (Gemini Vision)</h3>
+                    <p class="text-[10px] text-slate-400">Умное распознавание фото или текста меню</p>
                 </div>
                 <button onclick="closeAiScannerModal()" class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs">✕</button>
             </div>
@@ -800,10 +799,10 @@
                     </div>
                 </div>
 
-                <!-- Блок прогресса реального чтения фото -->
+                <!-- Блок прогресса чтения фото через Gemini Vision -->
                 <div id="aiOcrProgressBox" class="hidden glass-element p-3 rounded-2xl border border-emerald-500/30 space-y-2">
                     <div class="flex justify-between items-center text-[11px]">
-                        <span id="aiOcrStatusText" class="font-extrabold text-emerald-400">🤖 Читаю текст с фото...</span>
+                        <span id="aiOcrStatusText" class="font-extrabold text-emerald-400">🤖 Gemini Vision анализирует меню...</span>
                         <span id="aiOcrPercentText" class="font-mono font-bold text-slate-200">0%</span>
                     </div>
                     <div class="w-full bg-slate-950 h-2 rounded-full overflow-hidden">
@@ -812,8 +811,8 @@
                 </div>
 
                 <div class="space-y-1">
-                    <span class="text-[10px] text-slate-400 font-medium">Распознанный текст (можно подправить или вставить вручную):</span>
-                    <textarea id="aiMenuTextInput" rows="5" placeholder="Сюда появится текст с вашей фотографии (или вставьте готовый список блюд с ценами)..." class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3 text-xs text-slate-100 outline-none font-mono"></textarea>
+                    <span class="text-[10px] text-slate-400 font-medium">Распознанный список (можно подправить или вставить вручную):</span>
+                    <textarea id="aiMenuTextInput" rows="5" placeholder="Сюда появятся блюда с вашей фотографии (или вставьте готовый список блюд с ценами)..." class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3 text-xs text-slate-100 outline-none font-mono"></textarea>
                 </div>
 
                 <button onclick="processAiMenuScan()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold py-3.5 rounded-2xl text-xs shadow-lg tap-scale flex items-center justify-center space-x-2">
@@ -1123,6 +1122,9 @@
         const SUPABASE_KEY = 'sb_publishable_uobDghP-DOkp-xtBc5Q5JA_V1eZwstM';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+        // ================= КЛЮЧ GEMINI VISION API =================
+        const GEMINI_API_KEY = 'ВСТАВЬ_СВОЙ_API_КЛЮЧ_СЮДА';
+
         const CREATOR_TG_USERNAME = 'patricianw';
         const SECRET_KEY_SALT = 'PATRICIANW_PULT_2026_PRO';
 
@@ -1194,15 +1196,12 @@
             try {
                 const hf = window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback;
                 if (actionType === 'dish') {
-                    // Четкий тактильный удар при пробитии блюда
                     if (hf) hf.impactOccurred('medium');
                     else if (navigator.vibrate) navigator.vibrate(25);
                 } else if (actionType === 'open') {
-                    // Легкий отклик при открытии заказа
                     if (hf) hf.impactOccurred('light');
                     else if (navigator.vibrate) navigator.vibrate(15);
                 } else if (actionType === 'success') {
-                    // Двойная вибрация при закрытии счета или нажатии "У стола"
                     if (hf) hf.notificationOccurred('success');
                     else if (navigator.vibrate) navigator.vibrate([30, 50, 40]);
                 }
@@ -1251,7 +1250,6 @@
         }
 
         function tickAllLiveTimers() {
-            // Обновляем тикающие таймеры в разделе "Столы" каждую секунду без перерисовки кнопок
             document.querySelectorAll('[data-live-timer-table]').forEach(el => {
                 const tName = el.getAttribute('data-live-timer-table');
                 const t = tables[tName];
@@ -1261,7 +1259,6 @@
                 }
             });
 
-            // Обновляем таймер внутри открытой карточки стола
             if (currentTable && tables[currentTable] && tables[currentTable].lastVisited) {
                 const badge = document.getElementById('tableTimerBadge');
                 if (badge && !badge.classList.contains('hidden')) {
@@ -1848,7 +1845,7 @@
             }
         }
 
-        // ================= НАСТОЯЩИЙ ИИ-СКАНЕР МЕНЮ (TESSERACT OCR) =================
+        // ================= ИИ-СКАНЕР МЕНЮ НА БАЗЕ GEMINI VISION API =================
 
         function openAiScannerModal() {
             document.getElementById('aiMenuTextInput').value = '';
@@ -1872,14 +1869,28 @@
             }
         }
 
-        // Повышение контрастности фото перед отправкой в нейросеть Tesseract
-        function preprocessImageForOCR(file) {
+        function detectCategoryByName(name, rawCat = "") {
+            const validCats = ["Закуски", "Салаты", "Супы", "Горячее", "Пицца", "Десерты", "Бар"];
+            if (validCats.includes(rawCat)) return rawCat;
+
+            const lower = (name + " " + rawCat).toLowerCase();
+            if (lower.includes('салат') || lower.includes('цезарь') || lower.includes('греческ') || lower.includes('оливье')) return "Салаты";
+            if (lower.includes('суп') || lower.includes('том ям') || lower.includes('борщ') || lower.includes('уха') || lower.includes('бульон') || lower.includes('солянк') || lower.includes('рамен') || lower.includes('фо бо')) return "Супы";
+            if (lower.includes('пицц') || lower.includes('бургер') || lower.includes('хачапур') || lower.includes('фокачч')) return "Пицца";
+            if (lower.includes('чай') || lower.includes('кофе') || lower.includes('эспрессо') || lower.includes('американо') || lower.includes('капучино') || lower.includes('латте') || lower.includes('раф') || lower.includes('лимонад') || lower.includes('морс') || lower.includes('сок') || lower.includes('кола') || lower.includes('вода') || lower.includes('пиво') || lower.includes('ipa') || lower.includes('вино') || lower.includes('коктейл') || lower.includes('спритц') || lower.includes('виски') || lower.includes('водка') || lower.includes('джин') || lower.includes('ром') || lower.includes('бар') || lower.includes('напит')) return "Бар";
+            if (lower.includes('десерт') || lower.includes('медовик') || lower.includes('чизкейк') || lower.includes('морожен') || lower.includes('тирамису') || lower.includes('наполеон') || lower.includes('фондан') || lower.includes('торт') || lower.includes('сырник') || lower.includes('штрудел')) return "Десерты";
+            if (lower.includes('хлеб') || lower.includes('гренк') || lower.includes('сырн') || lower.includes('фри') || lower.includes('брускетт') || lower.includes('тартар') || lower.includes('карпаччо') || lower.includes('закуск') || lower.includes('нарезк') || lower.includes('оливк') || lower.includes('паштет')) return "Закуски";
+            return "Горячее";
+        }
+
+        // Сжатие фото в цветной JPEG (без разрушающего ч/б фильтра) для быстрой отправки в Gemini Vision
+        function prepareImageForGemini(file) {
             return new Promise((resolve, reject) => {
                 const img = new Image();
                 const url = URL.createObjectURL(file);
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    const maxDim = 1800;
+                    const maxDim = 1600;
                     let w = img.width;
                     let h = img.height;
                     if (w > maxDim || h > maxDim) {
@@ -1890,24 +1901,75 @@
                     canvas.height = h;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, w, h);
-
-                    const imgData = ctx.getImageData(0, 0, w, h);
-                    const d = imgData.data;
-                    const contrast = 45;
-                    const factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
-                    for (let i = 0; i < d.length; i += 4) {
-                        const gray = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
-                        let c = factor * (gray - 128) + 128;
-                        c = Math.max(0, Math.min(255, c));
-                        d[i] = d[i + 1] = d[i + 2] = c;
-                    }
-                    ctx.putImageData(imgData, 0, 0);
                     URL.revokeObjectURL(url);
-                    resolve(canvas);
+
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                    const base64Data = dataUrl.split(',')[1];
+                    resolve({ base64Data, mimeType: 'image/jpeg' });
                 };
                 img.onerror = reject;
                 img.src = url;
             });
+        }
+
+        async function callGeminiVisionMenuAPI(base64Data, mimeType) {
+            const cleanKey = (GEMINI_API_KEY || '').trim();
+            if (!cleanKey || cleanKey === 'ВСТАВЬ_СВОЙ_API_КЛЮЧ_СЮДА') {
+                throw new Error('Вставьте ваш Gemini API ключ в переменную GEMINI_API_KEY в коде приложения!');
+            }
+
+            const promptText = `Ты профессиональный ИИ-сканер ресторанного меню.
+Внимательно прочитай фотографию меню и извлеки ВСЕ блюда и напитки с их ценами.
+Важные правила:
+1. Если название блюда написано в 2 или 3 строки — объедини его в одну полную строку. Мелкие подписи (например, состав или выбор соуса) не включай в название, если это не часть названия.
+2. В меню рядом с ценой часто указан вес/выход в граммах или миллилитрах (например: "210  590" или "250  640", где первое число 210/250 — это граммы, а второе число 590/640 — это цена в рублях). Всегда бери именно ЦЕНУ блюда, а вес игнорируй!
+3. Для каждой позиции определи категорию строго из этого списка: "Закуски", "Салаты", "Супы", "Горячее", "Пицца", "Десерты", "Бар". Ориентируйся на заголовки разделов на фото (например, САЛАТЫ -> Салаты, РЁБРА / КРЫЛЬЯ -> Горячее) и само блюдо.
+4. Верни ТОЛЬКО валидный JSON-массив объектов формата:
+[
+  {"name": "Тёплый салат с тыквой и куриной грудкой", "price": 590, "cat": "Салаты"}
+]
+Никакого лишнего текста или markdown-оберток.`;
+
+            const modelsToTry = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+            let lastError = null;
+
+            for (const modelName of modelsToTry) {
+                try {
+                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${cleanKey}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{
+                                parts: [
+                                    { text: promptText },
+                                    { inline_data: { mime_type: mimeType, data: base64Data } }
+                                ]
+                            }],
+                            generationConfig: {
+                                temperature: 0.1,
+                                responseMimeType: "application/json"
+                            }
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (!response.ok) {
+                        throw new Error((data && data.error && data.error.message) || `HTTP ${response.status}`);
+                    }
+
+                    const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+                    if (!rawText) throw new Error('Пустой ответ от Gemini Vision API');
+
+                    const cleanedJson = rawText.replace(/```json|```/gi, '').trim();
+                    const parsed = JSON.parse(cleanedJson);
+                    if (Array.isArray(parsed)) return parsed;
+                    if (parsed && Array.isArray(parsed.items)) return parsed.items;
+                } catch (err) {
+                    lastError = err;
+                }
+            }
+
+            throw lastError || new Error('Не удалось получить ответ от Gemini API');
         }
 
         async function handleMenuPhotoUpload(event) {
@@ -1920,47 +1982,56 @@
             const progBar = document.getElementById('aiOcrProgressBar');
 
             progBox.classList.remove('hidden');
-            statusTxt.innerText = "🤖 Подготовка изображения...";
-            pctTxt.innerText = "5%";
-            progBar.style.width = "5%";
-            setCloudIndicator('sync', 'ИИ читает...');
+            statusTxt.innerText = "🤖 Подготовка фотографии...";
+            pctTxt.innerText = "15%";
+            progBar.style.width = "15%";
+            setCloudIndicator('sync', 'Gemini читает...');
 
             try {
-                const processedCanvas = await preprocessImageForOCR(file);
-                statusTxt.innerText = "🤖 Загрузка языковой модели...";
+                const { base64Data, mimeType } = await prepareImageForGemini(file);
 
-                const result = await window.Tesseract.recognize(
-                    processedCanvas,
-                    'rus+eng',
-                    {
-                        logger: m => {
-                            if (m.status === 'recognizing text') {
-                                const pct = Math.round((m.progress || 0) * 100);
-                                statusTxt.innerText = "🤖 Распознаю блюда и цены...";
-                                pctTxt.innerText = `${pct}%`;
-                                progBar.style.width = `${pct}%`;
-                            }
-                        }
-                    }
-                );
+                statusTxt.innerText = "🤖 Gemini Vision распознаёт блюда и цены...";
+                pctTxt.innerText = "60%";
+                progBar.style.width = "60%";
 
-                const rawRecognizedText = (result && result.data && result.data.text) ? result.data.text.trim() : '';
-                document.getElementById('aiMenuTextInput').value = rawRecognizedText;
+                const itemsFromAi = await callGeminiVisionMenuAPI(base64Data, mimeType);
+
+                aiScannedParsedItems = [];
+                const textLines = [];
+
+                itemsFromAi.forEach(it => {
+                    if (!it || !it.name) return;
+                    const cleanName = String(it.name).replace(/\s+/g, ' ').trim();
+                    const cleanPrice = parseInt(it.price, 10);
+                    if (!cleanName || isNaN(cleanPrice) || cleanPrice <= 0) return;
+
+                    const cleanCat = detectCategoryByName(cleanName, it.cat);
+                    aiScannedParsedItems.push({
+                        name: cleanName,
+                        price: cleanPrice,
+                        cat: cleanCat
+                    });
+                    textLines.push(`${cleanName} — ${cleanPrice} [${cleanCat}]`);
+                });
+
+                document.getElementById('aiMenuTextInput').value = textLines.join('\n');
                 setCloudIndicator('ok', 'Облако ОК');
-                statusTxt.innerText = "✅ Фото успешно прочитано!";
+                statusTxt.innerText = `✅ Распознано позиций: ${aiScannedParsedItems.length}`;
                 pctTxt.innerText = "100%";
                 progBar.style.width = "100%";
                 triggerHaptic('success');
 
-                if (rawRecognizedText.length > 0) {
-                    processAiMenuScan();
+                if (aiScannedParsedItems.length > 0) {
+                    renderAiScannedList();
+                    document.getElementById('aiScanResultsBox').classList.remove('hidden');
                 } else {
-                    alert("Не удалось разглядеть текст на фото. Попробуйте сфотографировать страницу ближе и ровнее.");
+                    alert("На фото не найдено блюд с ценами. Попробуйте сфотографировать страницу меню четче.");
                 }
             } catch (err) {
                 setCloudIndicator('ok', 'Облако ОК');
-                statusTxt.innerText = "❌ Ошибка чтения фото";
-                alert("Ошибка при распознавании фото: " + (err.message || err));
+                statusTxt.innerText = "❌ Ошибка распознавания";
+                progBar.style.width = "0%";
+                alert("Ошибка Gemini Vision: " + (err.message || err));
             } finally {
                 event.target.value = '';
             }
@@ -1969,7 +2040,7 @@
         function processAiMenuScan() {
             const rawText = document.getElementById('aiMenuTextInput').value.trim();
             if (!rawText) {
-                alert("Сначала выберите фото меню или вставьте текст!");
+                alert("Сначала отсканируйте фото меню или вставьте текст!");
                 return;
             }
 
@@ -1977,7 +2048,13 @@
             const lines = rawText.split('\n');
 
             lines.forEach(line => {
-                // Убираем мусорные точки/линии и граммовки вида "250 г", "300 мл", чтобы не путать их с ценой
+                let explicitCat = "";
+                const catBracketMatch = line.match(/\[([^\]]+)\]\s*$/);
+                if (catBracketMatch) {
+                    explicitCat = catBracketMatch[1].trim();
+                    line = line.replace(/\[([^\]]+)\]\s*$/, '').trim();
+                }
+
                 let cleanLine = line
                     .replace(/\.{2,}/g, ' ')
                     .replace(/\b\d+\s*(г|гр|мл|л|шт|ккал)\b/gi, ' ')
@@ -1986,30 +2063,20 @@
 
                 if (cleanLine.length < 3) return;
 
-                // Берем ПОСЛЕДНЕЕ число в строке как цену блюда
                 const match = cleanLine.match(/^(.+?)\s*[-–—:=/|]*\s*(\d{2,5})\s*(?:₽|р|руб\.?)?\s*$/i);
                 if (match) {
-                    let name = match[1].replace(/[-–—:.,|/]+$/, '').trim();
+                    let name = match[1].replace(/\s+\d{2,4}$/, '').replace(/[-–—:.,|/]+$/, '').trim();
                     let price = parseInt(match[2], 10);
 
-                    // Отсекаем строки без букв или со слишком странной ценой
                     if (!/[а-яёa-z]/i.test(name) || name.length < 2 || price < 30 || price > 50000) return;
 
-                    let cat = "Горячее";
-                    const lowerName = name.toLowerCase();
-                    if (lowerName.includes('салат') || lowerName.includes('цезарь') || lowerName.includes('греческ') || lowerName.includes('оливье')) cat = "Салаты";
-                    else if (lowerName.includes('суп') || lowerName.includes('том ям') || lowerName.includes('борщ') || lowerName.includes('уха') || lowerName.includes('бульон') || lowerName.includes('солянк') || lowerName.includes('рамен')) cat = "Супы";
-                    else if (lowerName.includes('пицц') || lowerName.includes('бургер') || lowerName.includes('хачапур') || lowerName.includes('фокачч')) cat = "Пицца";
-                    else if (lowerName.includes('чай') || lowerName.includes('кофе') || lowerName.includes('эспрессо') || lowerName.includes('американо') || lowerName.includes('капучино') || lowerName.includes('латте') || lowerName.includes('раф') || lowerName.includes('лимонад') || lowerName.includes('морс') || lowerName.includes('сок') || lowerName.includes('кола') || lowerName.includes('вода') || lowerName.includes('пиво') || lowerName.includes('ipa') || lowerName.includes('вино') || lowerName.includes('коктейл') || lowerName.includes('спритц') || lowerName.includes('виски') || lowerName.includes('водка') || lowerName.includes('джин') || lowerName.includes('ром')) cat = "Бар";
-                    else if (lowerName.includes('десерт') || lowerName.includes('медовик') || lowerName.includes('чизкейк') || lowerName.includes('морожен') || lowerName.includes('тирамису') || lowerName.includes('наполеон') || lowerName.includes('фондан') || lowerName.includes('торт') || lowerName.includes('сырник')) cat = "Десерты";
-                    else if (lowerName.includes('хлеб') || lowerName.includes('гренк') || lowerName.includes('сырн') || lowerName.includes('фри') || lowerName.includes('брускетт') || lowerName.includes('тартар') || lowerName.includes('карпаччо') || lowerName.includes('закуск') || lowerName.includes('нарезк') || lowerName.includes('оливк')) cat = "Закуски";
-
+                    const cat = detectCategoryByName(name, explicitCat);
                     aiScannedParsedItems.push({ name, price, cat });
                 }
             });
 
             if (aiScannedParsedItems.length === 0) {
-                alert("Не удалось автоматически выделить пары «Блюдо + Цена». Проверьте текст в поле выше: в конце каждой строки должна стоять цена числом (например: Цезарь с курицей 690).");
+                alert("Не удалось выделить пары «Блюдо + Цена». Проверьте, чтобы в конце каждой строки стояла цена числом (например: Цезарь с сёмгой — 690).");
                 return;
             }
 
@@ -3155,7 +3222,6 @@
                 return;
             }
 
-            // Тактильная отдача (вибрация) при пробитии каждого блюда!
             triggerHaptic('dish');
             addItemToTableDirect(item.name, item.price, null);
 
@@ -3191,7 +3257,6 @@
 
         function addItemToTableDirect(name, price, modifier) {
             const t = tables[currentTable];
-            // Если это первое блюдо на столе — сразу запускаем таймер стола!
             if (!t.lastVisited) {
                 t.lastVisited = Date.now();
             }
@@ -3213,7 +3278,6 @@
             renderTables();
         }
 
-        // Когда забиваем заказ и жмем "В работу (Столы)" — запускается таймер и заказ сразу улетает в "Столы"
         function saveTableToWork() {
             if (isMenuSearchActive) exitMenuSearchMode();
             if(!currentTable || !tables[currentTable]) return;
@@ -3233,7 +3297,6 @@
             const keys = Object.keys(tables);
             const name = keys[idx];
             if (!name) return;
-            // Тактильная отдача при нажатии "Открыть заказ"
             triggerHaptic('open');
             switchTab('hall');
             document.getElementById('hallGridView').classList.add('hidden');
@@ -3245,7 +3308,6 @@
             renderMenuDirect();
         }
 
-        // Сброс таймера по кнопке "👁️ У стола" прямо из списка активных столов
         function resetTableTimerFromMyTablesByIdx(idx) {
             const keys = Object.keys(tables);
             const name = keys[idx];
@@ -3448,7 +3510,6 @@
                 return;
             }
 
-            // Тактильная отдача (вибрация успеха) при закрытии счета!
             triggerHaptic('success');
 
             const groupSubtotal = groupItems.reduce((sum, item) => sum + item.price, 0);
@@ -3617,9 +3678,7 @@
             saveData(); renderTables(); renderMyTables();
         }
 
-        // Живое посекундное тиканье таймера в "Столах" и карточке стола
         setInterval(tickAllLiveTimers, 1000);
-        // Обновление сетки зала и проверка подписки раз в 30 секунд
         setInterval(() => { renderTables(); updateProStatusUI(); }, 30000);
         
         initCloudData();
