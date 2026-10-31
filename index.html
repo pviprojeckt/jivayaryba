@@ -774,199 +774,6 @@
             </div>
         </div>
     </div> 
-    <script>
-    // ================= ИИ-СКАНЕР МЕНЮ ЧЕРЕЗ GEMINI API (PROXIED) =================
-
-        function openAiScannerModal() {
-            document.getElementById('aiMenuTextInput').value = '';
-            document.getElementById('aiScanResultsBox').classList.add('hidden');
-            const progBox = document.getElementById('aiOcrProgressBox');
-            if(progBox) progBox.classList.add('hidden');
-            aiScannedParsedItems = [];
-            document.getElementById('aiScannerModal').classList.remove('hidden');
-        }
-
-        function closeAiScannerModal() {
-            document.getElementById('aiScannerModal').classList.add('hidden');
-        }
-
-        function clearCurrentMenuCompletely() {
-            if (confirm("Очистить все текущие позиции меню, чтобы загрузить новое с нуля?")) {
-                menuItems = [];
-                stopListSet.clear();
-                saveData();
-                renderMenuDirect();
-                alert("Меню очищено! Теперь вы можете отсканировать свое меню.");
-            }
-        }
-
-        // Перевод файла в формат Base64 для отправки на сервер
-        function fileToBase64(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = () => resolve(reader.result.split(',')[1]);
-                reader.onerror = error => reject(error);
-            });
-        }
-
-        async function handleMenuPhotoUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const progBox = document.getElementById('aiOcrProgressBox');
-            const statusTxt = document.getElementById('aiOcrStatusText');
-            const pctTxt = document.getElementById('aiOcrPercentText');
-            const progBar = document.getElementById('aiOcrProgressBar');
-
-            if(progBox) progBox.classList.remove('hidden');
-            if(statusTxt) statusTxt.innerText = "🤖 Загружаю фото в облако...";
-            if(pctTxt) pctTxt.innerText = "30%";
-            if(progBar) progBar.style.width = "30%";
-            setCloudIndicator('sync', 'ИИ читает...');
-
-            try {
-                const base64Data = await fileToBase64(file);
-                if(statusTxt) statusTxt.innerText = "🤖 Нейросеть распознает меню...";
-                if(pctTxt) pctTxt.innerText = "70%";
-                if(progBar) progBar.style.width = "70%";
-
-                // Отправляем фото на защищенный серверный эндпоинт Vercel (/api/scan)
-                const response = await fetch('/api/scan', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        imageBase64: base64Data,
-                        mimeType: file.type || 'image/jpeg'
-                    })
-                });
-
-                if (!response.ok) {
-                    const errRes = await response.json().catch(() => ({}));
-                    throw new Error(errRes.error || `Ошибка сервера: ${response.status}`);
-                }
-
-                const parsedArray = await response.json();
-
-                if (!Array.isArray(parsedArray) || parsedArray.length === 0) {
-                    throw new Error("Не удалось найти блюда на фото.");
-                }
-
-                aiScannedParsedItems = parsedArray.map(it => ({
-                    name: String(it.name || '').trim(),
-                    price: parseInt(it.price, 10) || 0,
-                    cat: it.cat || 'Горячее'
-                })).filter(it => it.name && it.price > 0);
-
-                document.getElementById('aiMenuTextInput').value = aiScannedParsedItems
-                    .map(it => `${it.name} — ${it.price}`)
-                    .join('\n');
-
-                setCloudIndicator('ok', 'Облако ОК');
-                if(statusTxt) statusTxt.innerText = `✅ Успешно! Найдено: ${aiScannedParsedItems.length} поз.`;
-                if(pctTxt) pctTxt.innerText = "100%";
-                if(progBar) progBar.style.width = "100%";
-                triggerHaptic('success');
-
-                renderAiScannedList();
-                document.getElementById('aiScanResultsBox').classList.remove('hidden');
-
-            } catch (err) {
-                setCloudIndicator('ok', 'Облако ОК');
-                if(statusTxt) statusTxt.innerText = "❌ Ошибка сканирования";
-                if(progBar) progBar.style.width = "0%";
-                alert("Ошибка ИИ-сканера: " + err.message);
-            } finally {
-                event.target.value = '';
-            }
-        }
-
-        // Кнопка "Разобрать блюда и цены" при ручном вводе текста
-        function processAiMenuScan() {
-            const rawText = document.getElementById('aiMenuTextInput').value.trim();
-            if (!rawText) {
-                alert("Сначала выберите фото меню или вставьте текст!");
-                return;
-            }
-
-            aiScannedParsedItems = [];
-            const lines = rawText.split('\n');
-
-            lines.forEach(line => {
-                let cleanLine = line
-                    .replace(/\.{2,}/g, ' ')
-                    .replace(/\b\d+\s*(г|гр|мл|л|шт|ккал)\b/gi, ' ')
-                    .replace(/\s+/g, ' ')
-                    .trim();
-
-                if (cleanLine.length < 3) return;
-
-                const match = cleanLine.match(/^(.+?)\s+(?:\d{2,4}\s+)?[-–—:=/|]*\s*(\d{2,5})\s*(?:₽|р|руб\.?)?\s*$/i);
-                if (match) {
-                    let name = match[1].replace(/[-–—:.,|/]+$/, '').trim();
-                    let price = parseInt(match[2], 10);
-
-                    if (!/[а-яёa-z]/i.test(name) || name.length < 2 || price < 30 || price > 50000) return;
-
-                    let cat = "Горячее";
-                    const lowerName = name.toLowerCase();
-                    if (lowerName.includes('салат') || lowerName.includes('цезарь') || lowerName.includes('греческ') || lowerName.includes('оливье')) cat = "Салаты";
-                    else if (lowerName.includes('суп') || lowerName.includes('том ям') || lowerName.includes('борщ') || lowerName.includes('уха') || lowerName.includes('бульон') || lowerName.includes('солянк') || lowerName.includes('рамен')) cat = "Супы";
-                    else if (lowerName.includes('пицц') || lowerName.includes('бургер') || lowerName.includes('хачапур') || lowerName.includes('фокачч')) cat = "Пицца";
-                    else if (lowerName.includes('чай') || lowerName.includes('кофе') || lowerName.includes('эспрессо') || lowerName.includes('американо') || lowerName.includes('капучино') || lowerName.includes('латте') || lowerName.includes('раф') || lowerName.includes('лимонад') || lowerName.includes('морс') || lowerName.includes('сок') || lowerName.includes('кола') || lowerName.includes('вода') || lowerName.includes('пиво') || lowerName.includes('ipa') || lowerName.includes('вино') || lowerName.includes('коктейл') || lowerName.includes('спритц') || lowerName.includes('виски') || lowerName.includes('водка') || lowerName.includes('джин') || lowerName.includes('ром')) cat = "Бар";
-                    else if (lowerName.includes('десерт') || lowerName.includes('медовик') || lowerName.includes('чизкейк') || lowerName.includes('морожен') || lowerName.includes('тирамису') || lowerName.includes('наполеон') || lowerName.includes('фондан') || lowerName.includes('торт') || lowerName.includes('сырник')) cat = "Десерты";
-                    else if (lowerName.includes('хлеб') || lowerName.includes('гренк') || lowerName.includes('сырн') || lowerName.includes('фри') || lowerName.includes('брускетт') || lowerName.includes('тартар') || lowerName.includes('карпаччо') || lowerName.includes('закуск') || lowerName.includes('нарезк') || lowerName.includes('оливк')) cat = "Закуски";
-
-                    aiScannedParsedItems.push({ name, price, cat });
-                }
-            });
-
-            if (aiScannedParsedItems.length === 0) {
-                alert("Не удалось выделить пары «Блюдо + Цена». Проверьте, чтобы в конце каждой строки стояла цена числом.");
-                return;
-            }
-
-            triggerHaptic('open');
-            renderAiScannedList();
-            document.getElementById('aiScanResultsBox').classList.remove('hidden');
-        }
-
-        function renderAiScannedList() {
-            const list = document.getElementById('aiScannedItemsList');
-            list.innerHTML = '';
-            document.getElementById('aiScannedCount').innerText = aiScannedParsedItems.length;
-
-            aiScannedParsedItems.forEach((item, idx) => {
-                const div = document.createElement('div');
-                div.className = "flex justify-between items-center glass-element px-3 py-2 rounded-xl border border-slate-800 text-xs";
-                div.innerHTML = `
-                    <div class="pr-2">
-                        <span class="font-bold text-slate-200">${item.name}</span>
-                        <div class="text-[9px] text-emerald-400">Категория: ${item.cat}</div>
-                    </div>
-                    <div class="flex items-center space-x-2 shrink-0">
-                        <span class="font-extrabold text-emerald-400">${item.price} ₽</span>
-                        <button onclick="removeScannedItem(${idx})" class="text-rose-400 font-bold px-1">✕</button>
-                    </div>
-                `;
-                list.appendChild(div);
-            });
-        }
-
-        function removeScannedItem(idx) {
-            aiScannedParsedItems.splice(idx, 1);
-            renderAiScannedList();
-        }
-
-        function saveAiScannedMenuToApp() {
-            if (aiScannedParsedItems.length === 0) return;
-            menuItems = [...aiScannedParsedItems, ...menuItems];
-            saveData();
-            triggerHaptic('success');
-            closeAiScannerModal();
-            alert(`✅ Добавлено ${aiScannedParsedItems.length} позиций в ваше меню!`);
-            renderMenuDirect();
-        }
     <!-- МОДАЛКА КОНСТРУКТОРА ЗАЛА И СТОЛОВ -->
     <div id="hallConstructorModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-[80] hidden flex items-center justify-center p-4">
         <div class="glass-panel rounded-[32px] max-w-sm w-full p-6 space-y-4 shadow-2xl border border-slate-700/50 max-h-[90vh] flex flex-col">
@@ -1240,6 +1047,60 @@
         </div>
     </div>
 
+
+    <!-- МОДАЛЬНОЕ ОКНО ИИ-СКАНЕРА МЕНЮ -->
+    <div id="aiScannerModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-xl z-[130] hidden flex items-center justify-center p-3">
+        <div class="glass-panel rounded-[28px] max-w-md w-full max-h-[92dvh] overflow-y-auto p-5 space-y-4 border border-emerald-500/30 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div>
+                    <h3 class="text-sm font-extrabold text-emerald-400">🤖 ИИ-сканер меню</h3>
+                    <p class="text-[10px] text-slate-400 mt-1">Загрузи фото меню или вставь текст вручную</p>
+                </div>
+                <button type="button" onclick="closeAiScannerModal()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-300">✕</button>
+            </div>
+
+            <label class="block text-xs font-bold text-slate-300">Фотография меню
+                <input id="aiMenuPhotoInput" type="file" accept="image/jpeg,image/png,image/webp" capture="environment"
+                    onchange="handleMenuPhotoUpload(event)"
+                    class="block w-full mt-2 text-xs text-slate-400 file:mr-3 file:rounded-xl file:border-0 file:bg-emerald-500 file:px-4 file:py-2.5 file:text-slate-950 file:font-extrabold">
+            </label>
+
+            <div id="aiOcrProgressBox" class="hidden glass-element rounded-2xl p-3 space-y-2">
+                <div class="flex justify-between text-[10px] font-bold text-slate-300">
+                    <span id="aiOcrStatusText">Подготовка...</span>
+                    <span id="aiOcrPercentText">0%</span>
+                </div>
+                <div class="h-2 rounded-full bg-slate-900 overflow-hidden">
+                    <div id="aiOcrProgressBar" class="h-full rounded-full bg-emerald-500 transition-all" style="width:0%"></div>
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <label for="aiMenuTextInput" class="text-xs font-bold text-slate-300">Или вставь позиции вручную</label>
+                <textarea id="aiMenuTextInput" rows="6" placeholder="Цезарь с курицей — 690&#10;Борщ — 450&#10;Капучино — 290"
+                    class="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-2xl p-3 text-xs text-slate-100 outline-none resize-y"></textarea>
+                <button type="button" onclick="processAiMenuScan()" class="w-full glass-element border border-slate-700 text-slate-200 font-bold py-3 rounded-2xl text-xs">
+                    Разобрать текст и цены
+                </button>
+            </div>
+
+            <div id="aiScanResultsBox" class="hidden space-y-2">
+                <div class="flex items-center justify-between">
+                    <h4 class="text-xs font-extrabold text-slate-200">Распознанные позиции</h4>
+                    <span class="text-[10px] text-emerald-400 font-bold">Найдено: <span id="aiScannedCount">0</span></span>
+                </div>
+                <div id="aiScannedItemsList" class="space-y-1.5 max-h-52 overflow-y-auto"></div>
+                <button type="button" onclick="saveAiScannedMenuToApp()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold py-3.5 rounded-2xl text-xs">
+                    Добавить позиции в меню
+                </button>
+            </div>
+
+            <button type="button" onclick="closeAiScannerModal()" class="w-full glass-element text-slate-300 font-bold py-3 rounded-2xl text-xs">
+                Закрыть
+            </button>
+        </div>
+    </div>
+
     <!-- СКРИПТЫ -->
     <script>
         if (window.Telegram && window.Telegram.WebApp) {
@@ -1255,16 +1116,16 @@
 
         const SUPABASE_URL = 'https://avrtgjldydchwgtvgrqt.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_uobDghP-DOkp-xtBc5Q5JA_V1eZwstM';
-        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-        // ================= КЛЮЧ GEMINI VISION API =================
-        const GEMINI_API_KEY = "AQ.Ab8RN6LyKW2AicRqv3xegNng_" + "SAXevEjnmtbyTJ2t7lUWzhf9g";
-
-        const CREATOR_TG_USERNAME = 'patricianw';
+        const supabaseClient = (window.supabase && typeof window.supabase.createClient === 'function')
+            ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+            : null;
+        // Gemini API key хранится только в переменных окружения серверной функции /api/scan.
+const CREATOR_TG_USERNAME = 'patricianw';
         const SECRET_KEY_SALT = 'PATRICIANW_PULT_2026_PRO';
 
         let userId = 'default_user';
         let lastCloudError = null;
+        let saveQueue = Promise.resolve();
         let appTheme = 'dark'; // 'dark' или 'light'
 
         let menuItems = [
@@ -1494,27 +1355,48 @@
         }
 
         function loadLocalFallback() {
-            try {
-                tables = JSON.parse(localStorage.getItem('fish_pro_tables')) || {};
-                if(Object.keys(tables).length === 0) {
-                    for(let i=1; i<=15; i++) tables[`Стол ${i}`] = createEmptyTableObj(2);
+            const readJSON = (key, fallback) => {
+                try {
+                    const raw = localStorage.getItem(key);
+                    return raw === null ? fallback : JSON.parse(raw);
+                } catch (err) {
+                    console.warn(`Повреждён локальный параметр ${key}; использовано значение по умолчанию.`, err);
+                    return fallback;
                 }
-                const savedMenu = localStorage.getItem('fish_pro_menu');
-                if (savedMenu) { try { menuItems = JSON.parse(savedMenu); } catch(e){} }
-                closedHistory = JSON.parse(localStorage.getItem('fish_pro_history')) || [];
-                shiftArchive = JSON.parse(localStorage.getItem('fish_pro_shift_archive')) || [];
-                hourlyRate = Number(localStorage.getItem('fish_pro_hourly_rate')) || 280;
-                shiftTipGoal = Number(localStorage.getItem('fish_pro_goal')) || 3000;
-                stopListSet = new Set(JSON.parse(localStorage.getItem('fish_pro_stoplist')) || []);
-                proUnlimited = localStorage.getItem('fish_pro_unlimited') === 'true';
-                trialUsed = localStorage.getItem('fish_pro_trial_used') === 'true';
-                isCreatorAdmin = localStorage.getItem('fish_pro_admin') === 'true';
-                usedPromoCodes = JSON.parse(localStorage.getItem('fish_pro_used_codes')) || [];
-                appTheme = localStorage.getItem('fish_pro_theme') || 'dark';
-                const expRaw = localStorage.getItem('fish_pro_expires_at');
-                proExpiresAt = expRaw ? Number(expRaw) : null;
-            } catch(e) {}
+            };
+
+            const savedTables = readJSON('fish_pro_tables', {});
+            tables = savedTables && typeof savedTables === 'object' && !Array.isArray(savedTables) ? savedTables : {};
+            if (Object.keys(tables).length === 0) {
+                for (let i = 1; i <= 15; i++) tables[`Стол ${i}`] = createEmptyTableObj(2);
+            }
+
+            const savedMenu = readJSON('fish_pro_menu', null);
+            if (Array.isArray(savedMenu)) menuItems = savedMenu;
+
+            closedHistory = readJSON('fish_pro_history', []);
+            if (!Array.isArray(closedHistory)) closedHistory = [];
+            shiftArchive = readJSON('fish_pro_shift_archive', []);
+            if (!Array.isArray(shiftArchive)) shiftArchive = [];
+
+            const rate = Number(localStorage.getItem('fish_pro_hourly_rate'));
+            hourlyRate = Number.isFinite(rate) && rate >= 0 ? rate : 280;
+            const goal = Number(localStorage.getItem('fish_pro_goal'));
+            shiftTipGoal = Number.isFinite(goal) && goal >= 0 ? goal : 3000;
+
+            const stopList = readJSON('fish_pro_stoplist', []);
+            stopListSet = new Set(Array.isArray(stopList) ? stopList : []);
+            proUnlimited = localStorage.getItem('fish_pro_unlimited') === 'true';
+            trialUsed = localStorage.getItem('fish_pro_trial_used') === 'true';
+            isCreatorAdmin = localStorage.getItem('fish_pro_admin') === 'true';
+            usedPromoCodes = readJSON('fish_pro_used_codes', []);
+            if (!Array.isArray(usedPromoCodes)) usedPromoCodes = [];
+            appTheme = localStorage.getItem('fish_pro_theme') === 'light' ? 'light' : 'dark';
+
+            const expRaw = Number(localStorage.getItem('fish_pro_expires_at'));
+            proExpiresAt = Number.isFinite(expRaw) && expRaw > 0 ? expRaw : null;
         }
+
 
         async function initCloudData() {
             try {
@@ -1552,13 +1434,13 @@
 
                 if (data && data.state) {
                     const s = data.state;
-                    if (s.tables && Object.keys(s.tables).length > 0) tables = s.tables;
-                    if (s.menuItems && s.menuItems.length > 0) menuItems = s.menuItems;
-                    closedHistory = s.closedHistory || [];
-                    shiftArchive = s.shiftArchive || [];
+                    if (s.tables && typeof s.tables === 'object' && !Array.isArray(s.tables)) tables = s.tables;
+                    if (Array.isArray(s.menuItems)) menuItems = s.menuItems;
+                    closedHistory = Array.isArray(s.closedHistory) ? s.closedHistory : [];
+                    shiftArchive = Array.isArray(s.shiftArchive) ? s.shiftArchive : [];
                     hourlyRate = s.hourlyRate !== undefined ? s.hourlyRate : 280;
                     shiftTipGoal = s.shiftTipGoal !== undefined ? s.shiftTipGoal : 3000;
-                    stopListSet = new Set(s.stopListSet || []);
+                    stopListSet = new Set(Array.isArray(s.stopListSet) ? s.stopListSet : []);
                     if (s.proUnlimited !== undefined) proUnlimited = s.proUnlimited;
                     if (s.proExpiresAt !== undefined) proExpiresAt = s.proExpiresAt;
                     if (s.trialUsed !== undefined) trialUsed = s.trialUsed;
@@ -1584,38 +1466,57 @@
         }
 
         async function saveData() {
-            try {
-                localStorage.setItem('fish_pro_tables', JSON.stringify(tables));
-                localStorage.setItem('fish_pro_menu', JSON.stringify(menuItems));
-                localStorage.setItem('fish_pro_history', JSON.stringify(closedHistory));
-                localStorage.setItem('fish_pro_shift_archive', JSON.stringify(shiftArchive));
-                localStorage.setItem('fish_pro_stoplist', JSON.stringify([...stopListSet]));
-                localStorage.setItem('fish_pro_goal', shiftTipGoal);
-                localStorage.setItem('fish_pro_hourly_rate', hourlyRate);
-                localStorage.setItem('fish_pro_unlimited', proUnlimited ? 'true' : 'false');
-                localStorage.setItem('fish_pro_trial_used', trialUsed ? 'true' : 'false');
-                localStorage.setItem('fish_pro_admin', isCreatorAdmin ? 'true' : 'false');
-                localStorage.setItem('fish_pro_used_codes', JSON.stringify(usedPromoCodes));
-                localStorage.setItem('fish_pro_theme', appTheme);
-                if (proExpiresAt) localStorage.setItem('fish_pro_expires_at', String(proExpiresAt));
-                else localStorage.removeItem('fish_pro_expires_at');
+            const persistSnapshot = async () => {
+                try {
+                    // Локальная копия сохраняется первой, чтобы работа не терялась при проблемах сети.
+                    localStorage.setItem('fish_pro_tables', JSON.stringify(tables));
+                    localStorage.setItem('fish_pro_menu', JSON.stringify(menuItems));
+                    localStorage.setItem('fish_pro_history', JSON.stringify(closedHistory));
+                    localStorage.setItem('fish_pro_shift_archive', JSON.stringify(shiftArchive));
+                    localStorage.setItem('fish_pro_stoplist', JSON.stringify([...stopListSet]));
+                    localStorage.setItem('fish_pro_goal', String(shiftTipGoal));
+                    localStorage.setItem('fish_pro_hourly_rate', String(hourlyRate));
+                    localStorage.setItem('fish_pro_unlimited', proUnlimited ? 'true' : 'false');
+                    localStorage.setItem('fish_pro_trial_used', trialUsed ? 'true' : 'false');
+                    localStorage.setItem('fish_pro_admin', isCreatorAdmin ? 'true' : 'false');
+                    localStorage.setItem('fish_pro_used_codes', JSON.stringify(usedPromoCodes));
+                    localStorage.setItem('fish_pro_theme', appTheme);
+                    if (proExpiresAt) localStorage.setItem('fish_pro_expires_at', String(proExpiresAt));
+                    else localStorage.removeItem('fish_pro_expires_at');
 
-                const payload = {
-                    telegram_id: userId,
-                    state: {
-                        tables, menuItems, closedHistory, shiftArchive,
-                        stopListSet: [...stopListSet], hourlyRate, shiftTipGoal,
-                        proUnlimited, proExpiresAt, trialUsed, usedPromoCodes, appTheme
-                    },
-                    updated_at: new Date().toISOString()
-                };
+                    if (!supabaseClient) {
+                        setCloudIndicator('error', 'Локально (нет Supabase)');
+                        return false;
+                    }
 
-                await supabaseClient.from('app_states').upsert(payload, { onConflict: 'telegram_id' });
-                setCloudIndicator('ok', 'Облако ОК');
-            } catch (e) {
-                setCloudIndicator('error', 'Ошибка БД', e);
-            }
+                    const payload = {
+                        telegram_id: userId,
+                        state: {
+                            tables, menuItems, closedHistory, shiftArchive,
+                            stopListSet: [...stopListSet], hourlyRate, shiftTipGoal,
+                            proUnlimited, proExpiresAt, trialUsed, usedPromoCodes, appTheme
+                        },
+                        updated_at: new Date().toISOString()
+                    };
+
+                    const { error } = await supabaseClient
+                        .from('app_states')
+                        .upsert(payload, { onConflict: 'telegram_id' });
+
+                    if (error) throw error;
+                    setCloudIndicator('ok', 'Облако ОК');
+                    return true;
+                } catch (e) {
+                    setCloudIndicator('error', 'Локально сохранено', e);
+                    return false;
+                }
+            };
+
+            // Последовательная запись предотвращает гонки при частых изменениях состояния.
+            saveQueue = saveQueue.then(persistSnapshot, persistSnapshot);
+            return saveQueue;
         }
+
 
         // ================= КРИПТОГРАФИЧЕСКАЯ ЗАЩИТА ОДНОРАЗОВЫХ ПРОМОКОДОВ =================
 
@@ -1983,15 +1884,22 @@
         // ================= ИИ-СКАНЕР МЕНЮ НА БАЗЕ GEMINI VISION API =================
 
         function openAiScannerModal() {
-            document.getElementById('aiMenuTextInput').value = '';
-            document.getElementById('aiScanResultsBox').classList.add('hidden');
-            document.getElementById('aiOcrProgressBox').classList.add('hidden');
+            const textInput = document.getElementById('aiMenuTextInput');
+            const resultsBox = document.getElementById('aiScanResultsBox');
+            const progressBox = document.getElementById('aiOcrProgressBox');
+            const modal = document.getElementById('aiScannerModal');
+            if (textInput) textInput.value = '';
+            const photoInput = document.getElementById('aiMenuPhotoInput');
+            if (photoInput) photoInput.value = '';
+            if (resultsBox) resultsBox.classList.add('hidden');
+            if (progressBox) progressBox.classList.add('hidden');
             aiScannedParsedItems = [];
-            document.getElementById('aiScannerModal').classList.remove('hidden');
+            if (modal) modal.classList.remove('hidden');
         }
 
         function closeAiScannerModal() {
-            document.getElementById('aiScannerModal').classList.add('hidden');
+            const modal = document.getElementById('aiScannerModal');
+            if (modal) modal.classList.add('hidden');
         }
 
         function clearCurrentMenuCompletely() {
@@ -2011,7 +1919,7 @@
             const lower = (name + " " + rawCat).toLowerCase();
             if (lower.includes('салат') || lower.includes('цезарь') || lower.includes('греческ') || lower.includes('оливье')) return "Салаты";
             if (lower.includes('суп') || lower.includes('том ям') || lower.includes('борщ') || lower.includes('уха') || lower.includes('бульон') || lower.includes('солянк') || lower.includes('рамен') || lower.includes('фо бо')) return "Супы";
-            if (lower.includes('пицц') || lower.includes('бургер') || lower.includes('хачапур') || lower.includes('фокачч')) return "Пицца";
+            if (lower.includes('пицц')) return "Пицца";
             if (lower.includes('чай') || lower.includes('кофе') || lower.includes('эспрессо') || lower.includes('американо') || lower.includes('капучино') || lower.includes('латте') || lower.includes('раф') || lower.includes('лимонад') || lower.includes('морс') || lower.includes('сок') || lower.includes('кола') || lower.includes('вода') || lower.includes('пиво') || lower.includes('ipa') || lower.includes('вино') || lower.includes('коктейл') || lower.includes('спритц') || lower.includes('виски') || lower.includes('водка') || lower.includes('джин') || lower.includes('ром') || lower.includes('бар') || lower.includes('напит')) return "Бар";
             if (lower.includes('десерт') || lower.includes('медовик') || lower.includes('чизкейк') || lower.includes('морожен') || lower.includes('тирамису') || lower.includes('наполеон') || lower.includes('фондан') || lower.includes('торт') || lower.includes('сырник') || lower.includes('штрудел')) return "Десерты";
             if (lower.includes('хлеб') || lower.includes('гренк') || lower.includes('сырн') || lower.includes('фри') || lower.includes('брускетт') || lower.includes('тартар') || lower.includes('карпаччо') || lower.includes('закуск') || lower.includes('нарезк') || lower.includes('оливк') || lower.includes('паштет')) return "Закуски";
@@ -2021,154 +1929,149 @@
         // Сжатие фото в цветной JPEG (без разрушающего ч/б фильтра) для быстрой отправки в Gemini Vision
         function prepareImageForGemini(file) {
             return new Promise((resolve, reject) => {
+                if (!file || !/^image\/(jpeg|png|webp)$/i.test(file.type)) {
+                    reject(new Error('Поддерживаются только изображения JPG, PNG и WEBP.'));
+                    return;
+                }
+                if (file.size > 12 * 1024 * 1024) {
+                    reject(new Error('Фото слишком большое. Максимальный размер исходного файла — 12 МБ.'));
+                    return;
+                }
+
                 const img = new Image();
                 const url = URL.createObjectURL(file);
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const maxDim = 1600;
-                    let w = img.width;
-                    let h = img.height;
-                    if (w > maxDim || h > maxDim) {
-                        if (w > h) { h = Math.round(h * (maxDim / w)); w = maxDim; }
-                        else { w = Math.round(w * (maxDim / h)); h = maxDim; }
-                    }
-                    canvas.width = w;
-                    canvas.height = h;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, w, h);
-                    URL.revokeObjectURL(url);
+                const cleanup = () => URL.revokeObjectURL(url);
 
-                    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-                    const base64Data = dataUrl.split(',')[1];
-                    resolve({ base64Data, mimeType: 'image/jpeg' });
+                img.onload = () => {
+                    try {
+                        const maxDim = 1400;
+                        const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+                        const w = Math.max(1, Math.round(img.width * scale));
+                        const h = Math.max(1, Math.round(img.height * scale));
+                        const canvas = document.createElement('canvas');
+                        canvas.width = w;
+                        canvas.height = h;
+                        const ctx = canvas.getContext('2d');
+                        if (!ctx) throw new Error('Браузер не смог обработать изображение.');
+
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(0, 0, w, h);
+                        ctx.drawImage(img, 0, 0, w, h);
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+                        const base64Data = dataUrl.split(',')[1];
+                        if (!base64Data) throw new Error('Не удалось подготовить изображение.');
+                        cleanup();
+                        resolve({ base64Data, mimeType: 'image/jpeg' });
+                    } catch (err) {
+                        cleanup();
+                        reject(err);
+                    }
                 };
-                img.onerror = reject;
+                img.onerror = () => {
+                    cleanup();
+                    reject(new Error('Не удалось открыть изображение. Попробуйте другой файл.'));
+                };
                 img.src = url;
             });
         }
 
         async function callGeminiVisionMenuAPI(base64Data, mimeType) {
-            const cleanKey = (GEMINI_API_KEY || '').trim();
-            if (!cleanKey || cleanKey === 'ВСТАВЬ_СВОЙ_API_КЛЮЧ_СЮДА') {
-                throw new Error('Вставьте ваш Gemini API ключ в переменную GEMINI_API_KEY в коде приложения!');
+            const response = await fetch('/api/scan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ imageBase64: base64Data, mimeType }),
+                cache: 'no-store'
+            });
+
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                throw new Error(payload.error || `Ошибка сервера сканирования: HTTP ${response.status}`);
             }
 
-            const promptText = `Ты профессиональный ИИ-сканер ресторанного меню.
-Внимательно прочитай фотографию меню и извлеки ВСЕ блюда и напитки с их ценами.
-Важные правила:
-1. Если название блюда написано в 2 или 3 строки — объедини его в одну полную строку. Мелкие подписи (например, состав или выбор соуса) не включай в название, если это не часть названия.
-2. В меню рядом с ценой часто указан вес/выход в граммах или миллилитрах (например: "210  590" или "250  640", где первое число 210/250 — это граммы, а второе число 590/640 — это цена в рублях). Всегда бери именно ЦЕНУ блюда, а вес игнорируй!
-3. Для каждой позиции определи категорию строго из этого списка: "Закуски", "Салаты", "Супы", "Горячее", "Пицца", "Десерты", "Бар". Ориентируйся на заголовки разделов на фото (например, САЛАТЫ -> Салаты, РЁБРА / КРЫЛЬЯ -> Горячее) и само блюдо.
-4. Верни ТОЛЬКО валидный JSON-массив объектов формата:
-[
-  {"name": "Тёплый салат с тыквой и куриной грудкой", "price": 590, "cat": "Салаты"}
-]
-Никакого лишнего текста или markdown-оберток.`;
-
-            const modelsToTry = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
-            let lastError = null;
-
-            for (const modelName of modelsToTry) {
-                try {
-                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${cleanKey}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            contents: [{
-                                parts: [
-                                    { text: promptText },
-                                    { inline_data: { mime_type: mimeType, data: base64Data } }
-                                ]
-                            }],
-                            generationConfig: {
-                                temperature: 0.1,
-                                responseMimeType: "application/json"
-                            }
-                        })
-                    });
-
-                    const data = await response.json();
-                    if (!response.ok) {
-                        throw new Error((data && data.error && data.error.message) || `HTTP ${response.status}`);
-                    }
-
-                    const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-                    if (!rawText) throw new Error('Пустой ответ от Gemini Vision API');
-
-                    const cleanedJson = rawText.replace(/```json|```/gi, '').trim();
-                    const parsed = JSON.parse(cleanedJson);
-                    if (Array.isArray(parsed)) return parsed;
-                    if (parsed && Array.isArray(parsed.items)) return parsed.items;
-                } catch (err) {
-                    lastError = err;
-                }
+            const items = Array.isArray(payload) ? payload : payload.items;
+            if (!Array.isArray(items)) {
+                throw new Error('Сервер вернул ответ в неожиданном формате.');
             }
-
-            throw lastError || new Error('Не удалось получить ответ от Gemini API');
+            return items;
         }
 
+        let aiScannerBusy = false;
+
         async function handleMenuPhotoUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
+            const input = event && event.target;
+            const file = input && input.files && input.files[0];
+            if (!file || aiScannerBusy) return;
 
             const progBox = document.getElementById('aiOcrProgressBox');
             const statusTxt = document.getElementById('aiOcrStatusText');
             const pctTxt = document.getElementById('aiOcrPercentText');
             const progBar = document.getElementById('aiOcrProgressBar');
+            const setProgress = (pct, message) => {
+                if (progBox) progBox.classList.remove('hidden');
+                if (statusTxt) statusTxt.textContent = message;
+                if (pctTxt) pctTxt.textContent = `${pct}%`;
+                if (progBar) progBar.style.width = `${pct}%`;
+            };
 
-            progBox.classList.remove('hidden');
-            statusTxt.innerText = "🤖 Подготовка фотографии...";
-            pctTxt.innerText = "15%";
-            progBar.style.width = "15%";
-            setCloudIndicator('sync', 'Gemini читает...');
+            aiScannerBusy = true;
+            if (input) input.disabled = true;
+            setProgress(10, 'Проверяю фотографию...');
+            setCloudIndicator('sync', 'ИИ сканирует...');
 
             try {
                 const { base64Data, mimeType } = await prepareImageForGemini(file);
-
-                statusTxt.innerText = "🤖 Gemini Vision распознаёт блюда и цены...";
-                pctTxt.innerText = "60%";
-                progBar.style.width = "60%";
-
+                setProgress(45, 'Отправляю фото на защищённый сервер...');
                 const itemsFromAi = await callGeminiVisionMenuAPI(base64Data, mimeType);
 
-                aiScannedParsedItems = [];
-                const textLines = [];
-
-                itemsFromAi.forEach(it => {
-                    if (!it || !it.name) return;
-                    const cleanName = String(it.name).replace(/\s+/g, ' ').trim();
-                    const cleanPrice = parseInt(it.price, 10);
-                    if (!cleanName || isNaN(cleanPrice) || cleanPrice <= 0) return;
-
-                    const cleanCat = detectCategoryByName(cleanName, it.cat);
-                    aiScannedParsedItems.push({
-                        name: cleanName,
-                        price: cleanPrice,
-                        cat: cleanCat
+                const validItems = [];
+                for (const it of itemsFromAi) {
+                    if (!it || typeof it !== 'object') continue;
+                    const name = String(it.name || '').replace(/\s+/g, ' ').trim().slice(0, 120);
+                    const price = Number(String(it.price ?? '').replace(/[^\d.,]/g, '').replace(',', '.'));
+                    if (!name || !Number.isFinite(price) || price <= 0 || price > 50000) continue;
+                    validItems.push({
+                        name,
+                        price: Math.round(price),
+                        cat: detectCategoryByName(name, it.cat)
                     });
-                    textLines.push(`${cleanName} — ${cleanPrice} [${cleanCat}]`);
+                }
+
+                // Убираем точные повторы, которые иногда возвращает модель.
+                const seen = new Set();
+                aiScannedParsedItems = validItems.filter(item => {
+                    const key = `${item.name.toLocaleLowerCase('ru-RU')}|${item.price}`;
+                    if (seen.has(key)) return false;
+                    seen.add(key);
+                    return true;
                 });
 
-                document.getElementById('aiMenuTextInput').value = textLines.join('\n');
-                setCloudIndicator('ok', 'Облако ОК');
-                statusTxt.innerText = `✅ Распознано позиций: ${aiScannedParsedItems.length}`;
-                pctTxt.innerText = "100%";
-                progBar.style.width = "100%";
-                triggerHaptic('success');
-
-                if (aiScannedParsedItems.length > 0) {
-                    renderAiScannedList();
-                    document.getElementById('aiScanResultsBox').classList.remove('hidden');
-                } else {
-                    alert("На фото не найдено блюд с ценами. Попробуйте сфотографировать страницу меню четче.");
+                if (aiScannedParsedItems.length === 0) {
+                    throw new Error('Не удалось распознать блюда с корректными ценами. Попробуйте фото крупнее и ровнее.');
                 }
-            } catch (err) {
+
+                const textInput = document.getElementById('aiMenuTextInput');
+                if (textInput) {
+                    textInput.value = aiScannedParsedItems
+                        .map(it => `${it.name} — ${it.price} [${it.cat}]`)
+                        .join('\n');
+                }
+
+                renderAiScannedList();
+                const resultsBox = document.getElementById('aiScanResultsBox');
+                if (resultsBox) resultsBox.classList.remove('hidden');
+                setProgress(100, `Готово! Распознано позиций: ${aiScannedParsedItems.length}`);
                 setCloudIndicator('ok', 'Облако ОК');
-                statusTxt.innerText = "❌ Ошибка распознавания";
-                progBar.style.width = "0%";
-                alert("Ошибка Gemini Vision: " + (err.message || err));
+                triggerHaptic('success');
+            } catch (err) {
+                setProgress(0, 'Не удалось распознать меню');
+                setCloudIndicator('ok', 'Облако ОК');
+                alert('Ошибка ИИ-сканера: ' + (err && err.message ? err.message : 'Неизвестная ошибка'));
             } finally {
-                event.target.value = '';
+                aiScannerBusy = false;
+                if (input) {
+                    input.disabled = false;
+                    input.value = '';
+                }
             }
         }
 
@@ -2222,38 +2125,79 @@
 
         function renderAiScannedList() {
             const list = document.getElementById('aiScannedItemsList');
-            list.innerHTML = '';
-            document.getElementById('aiScannedCount').innerText = aiScannedParsedItems.length;
+            const count = document.getElementById('aiScannedCount');
+            if (!list || !count) return;
+
+            list.replaceChildren();
+            count.textContent = String(aiScannedParsedItems.length);
 
             aiScannedParsedItems.forEach((item, idx) => {
-                const div = document.createElement('div');
-                div.className = "flex justify-between items-center glass-element px-3 py-2 rounded-xl border border-slate-800 text-xs";
-                div.innerHTML = `
-                    <div class="pr-2">
-                        <span class="font-bold text-slate-200">${item.name}</span>
-                        <div class="text-[9px] text-emerald-400">Категория: ${item.cat}</div>
-                    </div>
-                    <div class="flex items-center space-x-2 shrink-0">
-                        <span class="font-extrabold text-emerald-400">${item.price} ₽</span>
-                        <button onclick="removeScannedItem(${idx})" class="text-rose-400 font-bold px-1">✕</button>
-                    </div>
-                `;
-                list.appendChild(div);
+                const row = document.createElement('div');
+                row.className = 'flex justify-between items-center glass-element px-3 py-2 rounded-xl border border-slate-800 text-xs';
+
+                const info = document.createElement('div');
+                info.className = 'pr-2 min-w-0';
+                const name = document.createElement('span');
+                name.className = 'font-bold text-slate-200 break-words';
+                name.textContent = item.name;
+                const category = document.createElement('div');
+                category.className = 'text-[9px] text-emerald-400';
+                category.textContent = `Категория: ${item.cat}`;
+                info.append(name, category);
+
+                const actions = document.createElement('div');
+                actions.className = 'flex items-center space-x-2 shrink-0';
+                const price = document.createElement('span');
+                price.className = 'font-extrabold text-emerald-400';
+                price.textContent = `${item.price} ₽`;
+                const remove = document.createElement('button');
+                remove.type = 'button';
+                remove.className = 'text-rose-400 font-bold px-2 py-1';
+                remove.textContent = '✕';
+                remove.setAttribute('aria-label', `Удалить ${item.name}`);
+                remove.addEventListener('click', () => removeScannedItem(idx));
+                actions.append(price, remove);
+
+                row.append(info, actions);
+                list.appendChild(row);
             });
         }
 
         function removeScannedItem(idx) {
+            if (!Number.isInteger(idx) || idx < 0 || idx >= aiScannedParsedItems.length) return;
             aiScannedParsedItems.splice(idx, 1);
             renderAiScannedList();
+            const resultsBox = document.getElementById('aiScanResultsBox');
+            if (resultsBox && aiScannedParsedItems.length === 0) resultsBox.classList.add('hidden');
         }
 
         function saveAiScannedMenuToApp() {
-            if (aiScannedParsedItems.length === 0) return;
-            menuItems = [...aiScannedParsedItems, ...menuItems];
+            if (!Array.isArray(aiScannedParsedItems) || aiScannedParsedItems.length === 0) {
+                alert('Нет позиций для добавления.');
+                return;
+            }
+
+            const existing = new Set(menuItems.map(item =>
+                `${String(item.name || '').trim().toLocaleLowerCase('ru-RU')}|${Number(item.price)}`
+            ));
+            const additions = aiScannedParsedItems.filter(item => {
+                const key = `${item.name.trim().toLocaleLowerCase('ru-RU')}|${Number(item.price)}`;
+                if (existing.has(key)) return false;
+                existing.add(key);
+                return true;
+            });
+
+            if (additions.length === 0) {
+                alert('Все распознанные позиции уже есть в меню.');
+                closeAiScannerModal();
+                return;
+            }
+
+            menuItems = [...additions, ...menuItems];
             saveData();
             triggerHaptic('success');
             closeAiScannerModal();
-            alert(`✅ Добавлено ${aiScannedParsedItems.length} позиций в ваше меню!`);
+            alert(`✅ Добавлено ${additions.length} новых позиций. Повторы пропущены: ${aiScannedParsedItems.length - additions.length}.`);
             renderMenuDirect();
         }
 
