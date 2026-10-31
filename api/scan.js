@@ -1,154 +1,393 @@
-// Vercel Serverless Function: POST /api/scan
-// Keep GEMINI_API_KEY in Vercel Project Settings -> Environment Variables.
-// Never place the key in index.html or any client-side JavaScript.
+'use strict';
 
-const ALLOWED_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-const ALLOWED_CATEGORIES = new Set([
-  "Закуски", "Салаты", "Супы", "Горячее", "Пицца", "Десерты", "Бар"
-]);
+/**
+ * /api/scan — серверная функция ИИ-сканера меню (Gemini Vision).
+ *
+ * Что делает:
+ *  - принимает фото меню (base64) от Mini App;
+ *  - просит Gemini вернуть СТРОГО структурированный JSON: [{ name, price, cat }];
+ *  - при перегрузке Google (503 "high demand"), лимитах (429), таймаутах — повторяет запрос
+ *    с нарастающей паузой и переключается на запасную модель;
+ *  - никогда не отдаёт клиенту сырой английский текст ошибки Google — только понятные сообщения;
+ *  - (опционально) проверяет подпись Telegram initData, чтобы чужие не жгли ваш ключ Gemini.
+ *
+ * Переменные окружения (Vercel → Settings → Environment Variables):
+ *  GEMINI_API_KEY          — ключ Gemini (обязательно)
+ *  GEMINI_MODELS           — список моделей через запятую по приоритету
+ *                            (по умолчанию: gemini-3.5-flash,gemini-3.1-flash-lite).
+ *                            Названия моделей Google меняет и выключает старые — держите список в env,
+ *                            а не в коде.
+ *  TELEGRAM_BOT_TOKEN      — токен бота. Если задан, запросы без валидной подписи Telegram отклоняются.
+ *  SCAN_TIME_BUDGET_MS     — общий бюджет времени на один скан (по умолчанию 50000).
+ *  SCAN_ATTEMPTS_PER_MODEL — попыток на модель (по умолчанию 2).
+ *  SCAN_RATE_LIMIT         — макс. сканов на пользователя за 10 минут на один инстанс (по умолчанию 12).
+ *
+ * Важно: функции нужно разрешить работать дольше 10 секунд. Для Vercel — vercel.json:
+ *  { "functions": { "api/scan.js": { "maxDuration": 60 } } }
+ */
 
-module.exports = async function handler(req, res) {
-  res.setHeader("Cache-Control", "no-store");
+const crypto = require('crypto');
 
-  if (req.method !== "POST") {
-    res.setHeader("Allow", "POST");
-    return res.status(405).json({ error: "Разрешён только POST-запрос." });
-  }
+const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
+const DEFAULT_MODELS = ['gemini-3.5-flash', 'gemini-3.1-flash-lite'];
+const ALLOWED_MIME = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const CATEGORIES = ['Закуски', 'Салаты', 'Супы', 'Горячее', 'Пицца', 'Десерты', 'Бар'];
+const MAX_BASE64_CHARS = 4000000; // ~3 МБ картинки; у Vercel лимит тела запроса 4.5 МБ
+const MAX_ITEMS = 400;
+const RETRYABLE_STATUSES = new Set([429, 500, 502, 503, 504]);
 
-  const expectedOrigin = process.env.APP_ORIGIN;
-  const requestOrigin = req.headers.origin;
-  if (expectedOrigin && requestOrigin && requestOrigin !== expectedOrigin) {
-    return res.status(403).json({ error: "Запрос с этого домена запрещён." });
-  }
+const PROMPT = [
+  'Ты — сканер ресторанных меню. На фото меню или его часть. Извлеки все блюда и напитки, у которых указана цена.',
+  '',
+  'Правила:',
+  '1. name — только название позиции, без веса, объёма, калорий и описания состава.',
+  '   Если у позиции несколько размеров/объёмов с разными ценами (например 0,3 л — 250 и 0,4 л — 300),',
+  '   верни отдельные позиции и добавь объём в название: «Капучино 0,3 л».',
+  '2. price — число в валюте меню, без символа валюты и без пробелов (1 200 → 1200).',
+  '3. cat — ровно одна категория из списка: ' + CATEGORIES.join(', ') + '.',
+  '   Напитки, кофе, чай, лимонады, пиво, вино, коктейли — «Бар». Основные блюда, паста, стейки, гарниры — «Горячее».',
+  '4. Ничего не выдумывай. Если цена нечитаема или её нет — пропусти позицию.',
+  '5. Игнорируй заголовки разделов, адреса, телефоны, рекламу, акции и пояснения без цены.',
+  '6. Не повторяй одну и ту же позицию дважды. Названия оставляй на языке меню.',
+  '',
+  'Верни только JSON-массив объектов вида {"name": "...", "price": 123, "cat": "..."}.'
+].join('\n');
 
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    return res.status(503).json({ error: "На сервере не настроен GEMINI_API_KEY." });
-  }
-
-  try {
-    const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
-    const imageBase64 = typeof body?.imageBase64 === "string"
-      ? body.imageBase64.replace(/\s/g, "")
-      : "";
-    const mimeType = String(body?.mimeType || "").toLowerCase();
-
-    if (!ALLOWED_MIME_TYPES.has(mimeType)) {
-      return res.status(400).json({ error: "Поддерживаются только JPG, PNG и WEBP." });
-    }
-    if (!imageBase64 || !/^[A-Za-z0-9+/]+={0,2}$/.test(imageBase64)) {
-      return res.status(400).json({ error: "Изображение отсутствует или имеет неверный формат." });
-    }
-    if (imageBase64.length > 4_200_000) {
-      return res.status(413).json({ error: "Изображение слишком большое. Попробуйте фото меньшего размера." });
-    }
-
-    const prompt = `Ты профессиональный сканер ресторанного меню.
-Извлеки все блюда и напитки с ценами с фотографии.
-Правила:
-1. Объединяй название, если оно занимает несколько строк. Не добавляй описание состава.
-2. Если рядом с ценой есть вес/объём (например, "210 590"), первое число может быть граммами, а второе ценой. Выбирай именно цену.
-3. Не выдумывай отсутствующие цены. Пропускай позиции, у которых цену невозможно уверенно прочитать.
-4. Категория должна быть строго одной из: Закуски, Салаты, Супы, Горячее, Пицца, Десерты, Бар.
-5. Верни только JSON-массив объектов с полями name (строка), price (целое число в рублях), cat (строка).`;
-
-    const googleResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        signal: AbortSignal.timeout(25_000),
-        body: JSON.stringify({
-          contents: [{
-            parts: [
-              { text: prompt },
-              { inline_data: { mime_type: mimeType, data: imageBase64 } }
-            ]
-          }],
-          generationConfig: {
-            temperature: 0.1,
-            responseMimeType: "application/json",
-            responseSchema: {
-              type: "ARRAY",
-              items: {
-                type: "OBJECT",
-                properties: {
-                  name: { type: "STRING" },
-                  price: { type: "INTEGER" },
-                  cat: {
-                    type: "STRING",
-                    enum: ["Закуски", "Салаты", "Супы", "Горячее", "Пицца", "Десерты", "Бар"]
-                  }
-                },
-                required: ["name", "price", "cat"]
-              }
-            }
-          }
-        })
-      }
-    );
-
-    const googleData = await googleResponse.json().catch(() => ({}));
-    if (!googleResponse.ok) {
-      const message = googleData?.error?.message || `Gemini вернул HTTP ${googleResponse.status}`;
-      const status = googleResponse.status === 429 ? 429 : 502;
-      return res.status(status).json({ error: message });
-    }
-
-    const rawText = googleData?.candidates?.[0]?.content?.parts
-      ?.map(part => part.text || "")
-      .join("")
-      .trim();
-
-    if (!rawText) {
-      return res.status(502).json({ error: "Gemini вернул пустой ответ. Попробуйте другое фото." });
-    }
-
-    let parsed;
-    try {
-      parsed = JSON.parse(rawText.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, ""));
-    } catch {
-      return res.status(502).json({ error: "Не удалось разобрать ответ ИИ. Повторите сканирование." });
-    }
-
-    const candidates = Array.isArray(parsed) ? parsed : parsed?.items;
-    if (!Array.isArray(candidates)) {
-      return res.status(502).json({ error: "ИИ вернул неожиданный формат данных." });
-    }
-
-    const items = [];
-    const seen = new Set();
-    for (const candidate of candidates.slice(0, 200)) {
-      if (!candidate || typeof candidate !== "object") continue;
-      const name = String(candidate.name || "").replace(/\s+/g, " ").trim().slice(0, 120);
-      const price = Number(candidate.price);
-      const category = ALLOWED_CATEGORIES.has(candidate.cat) ? candidate.cat : "Горячее";
-      if (!name || !Number.isInteger(price) || price <= 0 || price > 50000) continue;
-
-      const key = `${name.toLocaleLowerCase("ru-RU")}|${price}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      items.push({ name, price, cat: category });
-    }
-
-    if (items.length === 0) {
-      return res.status(200).json({ items: [], message: "Не найдено позиций с уверенно распознанными ценами." });
-    }
-
-    return res.status(200).json({ items });
-  } catch (error) {
-    const isTimeout = error?.name === "TimeoutError" || error?.name === "AbortError";
-    return res.status(isTimeout ? 504 : 500).json({
-      error: isTimeout
-        ? "Сканирование заняло слишком много времени. Попробуйте фото меньшего размера."
-        : "Внутренняя ошибка сканера. Попробуйте позже."
-    });
+const RESPONSE_SCHEMA = {
+  type: 'ARRAY',
+  items: {
+    type: 'OBJECT',
+    properties: {
+      name: { type: 'STRING' },
+      price: { type: 'NUMBER' },
+      cat: { type: 'STRING', enum: CATEGORIES }
+    },
+    required: ['name', 'price', 'cat']
   }
 };
 
+// ---------------------------------------------------------------- конфиг
 
-module.exports.config = {
-  api: {
-    bodyParser: { sizeLimit: "5mb" }
+function getConfig() {
+  const models = (process.env.GEMINI_MODELS || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return {
+    apiKey: process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '',
+    models: models.length ? models : DEFAULT_MODELS,
+    botToken: process.env.TELEGRAM_BOT_TOKEN || '',
+    budgetMs: Number(process.env.SCAN_TIME_BUDGET_MS) || 50000,
+    attemptsPerModel: Math.max(1, Number(process.env.SCAN_ATTEMPTS_PER_MODEL) || 2),
+    attemptTimeoutMs: Number(process.env.SCAN_ATTEMPT_TIMEOUT_MS) || 28000,
+    backoffBaseMs: Number(process.env.SCAN_BACKOFF_BASE_MS) || 900,
+    rateLimit: Number(process.env.SCAN_RATE_LIMIT) || 12
+  };
+}
+
+// ---------------------------------------------------------------- Telegram initData
+
+/**
+ * Проверка подписи Telegram Mini App initData по документации Telegram:
+ * secret = HMAC_SHA256("WebAppData", bot_token); hash = HMAC_SHA256(secret, data_check_string).
+ * Возвращает объект пользователя или null.
+ */
+function verifyTelegramInitData(initData, botToken, maxAgeSec) {
+  if (!initData || typeof initData !== 'string' || !botToken) return null;
+  const params = new URLSearchParams(initData);
+  const hash = params.get('hash');
+  if (!hash || !/^[0-9a-f]{64}$/i.test(hash)) return null;
+  params.delete('hash');
+
+  const dataCheckString = Array.from(params.entries())
+    .sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0))
+    .map(([k, v]) => k + '=' + v)
+    .join('\n');
+
+  const secret = crypto.createHmac('sha256', 'WebAppData').update(botToken).digest();
+  const calc = crypto.createHmac('sha256', secret).update(dataCheckString).digest();
+  const given = Buffer.from(hash, 'hex');
+  if (calc.length !== given.length || !crypto.timingSafeEqual(calc, given)) return null;
+
+  const authDate = Number(params.get('auth_date'));
+  const age = Date.now() / 1000 - authDate;
+  if (!Number.isFinite(authDate) || age > (maxAgeSec || 86400) || age < -300) return null;
+
+  try {
+    const user = JSON.parse(params.get('user') || 'null');
+    return user && typeof user === 'object' ? user : null;
+  } catch (e) {
+    return null;
   }
+}
+
+// ---------------------------------------------------------------- простой лимит частоты
+
+const rateBuckets = new Map();
+function isRateLimited(key, limit) {
+  const now = Date.now();
+  const windowMs = 10 * 60 * 1000;
+  const arr = (rateBuckets.get(key) || []).filter((t) => now - t < windowMs);
+  if (arr.length >= limit) {
+    rateBuckets.set(key, arr);
+    return true;
+  }
+  arr.push(now);
+  rateBuckets.set(key, arr);
+  if (rateBuckets.size > 5000) {
+    for (const [k, v] of rateBuckets) {
+      if (!v.length || now - v[v.length - 1] > windowMs) rateBuckets.delete(k);
+    }
+  }
+  return false;
+}
+
+// ---------------------------------------------------------------- разбор ответа модели
+
+function stripFences(text) {
+  return String(text || '')
+    .replace(/^\s*```(?:json)?\s*/i, '')
+    .replace(/\s*```\s*$/i, '')
+    .trim();
+}
+
+/** Парсит JSON; если ответ обрезан (MAX_TOKENS), спасает все полностью записанные объекты. */
+function parseModelJson(text) {
+  const clean = stripFences(text);
+  if (!clean) return null;
+  try {
+    return JSON.parse(clean);
+  } catch (e) {
+    const start = clean.indexOf('[');
+    if (start === -1) return null;
+    let end = clean.lastIndexOf('}');
+    while (end > start) {
+      try {
+        return JSON.parse(clean.slice(start, end + 1) + ']');
+      } catch (err) {
+        end = clean.lastIndexOf('}', end - 1);
+      }
+    }
+    return null;
+  }
+}
+
+function toPrice(raw) {
+  if (typeof raw === 'number') return Number.isFinite(raw) ? raw : NaN;
+  let s = String(raw == null ? '' : raw).replace(/[\s\u00a0\u202f]/g, '').replace(/[^\d.,]/g, '');
+  if (!s) return NaN;
+  if (/^\d{1,3}([.,]\d{3})+$/.test(s)) s = s.replace(/[.,]/g, '');
+  else s = s.replace(',', '.');
+  return Number(s);
+}
+
+function sanitizeItems(arr) {
+  const out = [];
+  const seen = new Set();
+  for (const it of arr) {
+    if (!it || typeof it !== 'object') continue;
+    const name = String(it.name == null ? '' : it.name).replace(/\s+/g, ' ').trim().slice(0, 120);
+    const price = toPrice(it.price);
+    if (!name || !Number.isFinite(price) || price <= 0 || price > 50000) continue;
+    const cat = CATEGORIES.includes(it.cat) ? it.cat : '';
+    const key = name.toLowerCase() + '|' + Math.round(price);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({ name, price: Math.round(price), cat });
+    if (out.length >= MAX_ITEMS) break;
+  }
+  return out;
+}
+
+function extractItems(json) {
+  const cand = json && Array.isArray(json.candidates) ? json.candidates[0] : null;
+  if (!cand || !cand.content || !Array.isArray(cand.content.parts)) return null;
+  const text = cand.content.parts
+    .filter((p) => p && typeof p.text === 'string' && !p.thought)
+    .map((p) => p.text)
+    .join('');
+  const parsed = parseModelJson(text);
+  let arr = null;
+  if (Array.isArray(parsed)) arr = parsed;
+  else if (parsed && Array.isArray(parsed.items)) arr = parsed.items;
+  else if (parsed && Array.isArray(parsed.menu)) arr = parsed.menu;
+  return arr ? sanitizeItems(arr) : null;
+}
+
+// ---------------------------------------------------------------- вызов Gemini
+
+async function callGemini(model, cfg, imageBase64, mimeType, timeoutMs) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(GEMINI_BASE + '/' + encodeURIComponent(model) + ':generateContent', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': cfg.apiKey },
+      body: JSON.stringify({
+        contents: [
+          {
+            role: 'user',
+            parts: [{ text: PROMPT }, { inline_data: { mime_type: mimeType, data: imageBase64 } }]
+          }
+        ],
+        generationConfig: {
+          temperature: 0.1,
+          maxOutputTokens: 16000,
+          responseMimeType: 'application/json',
+          responseSchema: RESPONSE_SCHEMA
+        }
+      }),
+      signal: controller.signal
+    });
+    const raw = await res.text();
+    let json = null;
+    try {
+      json = JSON.parse(raw);
+    } catch (e) {
+      /* не JSON — оставим raw для логов */
+    }
+    return { ok: res.ok, status: res.status, json, raw };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/** Перебирает модели и повторяет запросы, пока не получится или не кончится бюджет времени. */
+async function scanWithFallback(cfg, imageBase64, mimeType) {
+  const started = Date.now();
+  const failures = []; // { model, status, note }
+  const timeLeft = () => cfg.budgetMs - (Date.now() - started);
+
+  for (const model of cfg.models) {
+    for (let attempt = 1; attempt <= cfg.attemptsPerModel; attempt++) {
+      if (timeLeft() < 4000) return { items: null, failures, outOfTime: true };
+
+      let retry = false;
+      try {
+        const r = await callGemini(model, cfg, imageBase64, mimeType, Math.min(cfg.attemptTimeoutMs, timeLeft() - 500));
+        if (r.ok) {
+          const items = extractItems(r.json);
+          if (items) return { items, model, failures };
+          const blocked = r.json && r.json.promptFeedback && r.json.promptFeedback.blockReason;
+          failures.push({ model, status: 'bad_output', note: blocked ? 'blocked:' + blocked : 'unparseable' });
+          retry = !blocked && attempt < cfg.attemptsPerModel; // модель иногда отдаёт мусор — одна повторная попытка
+        } else {
+          const msg = r.json && r.json.error && r.json.error.message ? r.json.error.message : String(r.raw).slice(0, 200);
+          failures.push({ model, status: r.status, note: msg });
+          retry = RETRYABLE_STATUSES.has(r.status);
+          // 404 = модель выключена/не существует, 400/401/403 = проблема запроса или ключа: повтор не поможет.
+        }
+      } catch (e) {
+        failures.push({ model, status: e && e.name === 'AbortError' ? 'timeout' : 'network', note: String(e && e.message) });
+        retry = true;
+      }
+
+      if (!retry) break; // к следующей модели
+      const pause = cfg.backoffBaseMs * Math.pow(2, attempt - 1) + Math.random() * 300;
+      if (timeLeft() > pause + 4000) await sleep(pause);
+    }
+  }
+  return { items: null, failures };
+}
+
+// ---------------------------------------------------------------- HTTP-обработчик
+
+function send(res, status, body) {
+  res.setHeader('Cache-Control', 'no-store');
+  res.status(status).json(body);
+}
+
+function readBody(req) {
+  const b = req.body;
+  if (b && typeof b === 'object' && !Buffer.isBuffer(b)) return b;
+  if (typeof b === 'string') {
+    try {
+      return JSON.parse(b);
+    } catch (e) {
+      return null;
+    }
+  }
+  return null;
+}
+
+function clientIp(req) {
+  const fwd = req.headers && req.headers['x-forwarded-for'];
+  return (typeof fwd === 'string' && fwd.split(',')[0].trim()) || 'unknown';
+}
+
+async function handler(req, res) {
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST');
+    return send(res, 405, { error: 'Метод не поддерживается.' });
+  }
+
+  const cfg = getConfig();
+  if (!cfg.apiKey) {
+    console.error('[scan] GEMINI_API_KEY не задан в переменных окружения');
+    return send(res, 500, { error: 'Сканер не настроен на сервере. Напишите разработчику.' });
+  }
+
+  // 1) Авторизация через подпись Telegram (включается наличием TELEGRAM_BOT_TOKEN)
+  let rateKey = 'ip:' + clientIp(req);
+  if (cfg.botToken) {
+    const initData = req.headers && req.headers['x-telegram-init-data'];
+    const user = verifyTelegramInitData(Array.isArray(initData) ? initData[0] : initData, cfg.botToken, 86400);
+    if (!user || !user.id) {
+      return send(res, 401, { error: 'Откройте приложение из Telegram и попробуйте снова.' });
+    }
+    rateKey = 'tg:' + user.id;
+  }
+
+  // 2) Лимит частоты
+  if (isRateLimited(rateKey, cfg.rateLimit)) {
+    return send(res, 429, { error: 'Слишком много сканирований подряд. Подождите несколько минут.' });
+  }
+
+  // 3) Валидация входа
+  const body = readBody(req);
+  if (!body) return send(res, 400, { error: 'Некорректный запрос.' });
+  const imageBase64 = typeof body.imageBase64 === 'string' ? body.imageBase64.replace(/^data:[^,]+,/, '') : '';
+  const mimeType = typeof body.mimeType === 'string' ? body.mimeType.toLowerCase() : '';
+  if (!ALLOWED_MIME.has(mimeType)) return send(res, 400, { error: 'Поддерживаются только фото JPG, PNG и WEBP.' });
+  if (!imageBase64 || !/^[A-Za-z0-9+/]+={0,2}$/.test(imageBase64)) return send(res, 400, { error: 'Фото повреждено. Попробуйте другое.' });
+  if (imageBase64.length > MAX_BASE64_CHARS) return send(res, 413, { error: 'Фото слишком большое. Сделайте снимок поменьше.' });
+
+  // 4) Сканирование с повторами и запасными моделями
+  const result = await scanWithFallback(cfg, imageBase64, mimeType);
+
+  if (result.items) {
+    if (result.failures.length) {
+      console.warn('[scan] успех после сбоев:', JSON.stringify(result.failures), '→ модель', result.model);
+    }
+    if (result.items.length === 0) {
+      return send(res, 422, { error: 'На фото не нашлось блюд с ценами. Сфотографируйте меню ровнее и крупнее.' });
+    }
+    return send(res, 200, { items: result.items, model: result.model });
+  }
+
+  console.error('[scan] все попытки неудачны:', JSON.stringify(result.failures));
+  const statuses = result.failures.map((f) => f.status);
+  const authLike = statuses.length > 0 && statuses.every((s) => s === 401 || s === 403 || s === 404 || s === 400);
+  if (authLike) {
+    return send(res, 500, { error: 'Сканер временно недоступен из-за настроек сервера. Напишите разработчику.' });
+  }
+  if (statuses.length > 0 && statuses.every((s) => s === 429)) {
+    return send(res, 429, { error: 'Достигнут лимит запросов к ИИ. Подождите минуту и повторите.' });
+  }
+  if (statuses.every((s) => s === 'bad_output')) {
+    return send(res, 502, { error: 'ИИ не смог разобрать это фото. Попробуйте сфотографировать меню ближе и ровнее.' });
+  }
+  return send(res, 503, { error: 'ИИ-сервис Google сейчас перегружен. Мы уже пробовали несколько раз — повторите через минуту.' });
+}
+
+module.exports = handler;
+module.exports._internals = {
+  verifyTelegramInitData,
+  parseModelJson,
+  sanitizeItems,
+  extractItems,
+  scanWithFallback,
+  getConfig
 };
