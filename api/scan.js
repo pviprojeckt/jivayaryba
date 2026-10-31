@@ -9,7 +9,8 @@
  *  - при перегрузке Google (503 "high demand"), лимитах (429), таймаутах — повторяет запрос
  *    с нарастающей паузой и переключается на запасную модель;
  *  - никогда не отдаёт клиенту сырой английский текст ошибки Google — только понятные сообщения;
- *  - (опционально) проверяет подпись Telegram initData, чтобы чужие не жгли ваш ключ Gemini.
+ *  - пускает только проверенных пользователей Telegram с активной подпиской PRO (или пробным периодом),
+ *    чтобы чужие не жгли ваш ключ Gemini.
  *
  * Переменные окружения (Vercel → Settings → Environment Variables):
  *  GEMINI_API_KEY          — ключ Gemini (обязательно)
@@ -17,16 +18,16 @@
  *                            (по умолчанию: gemini-3.5-flash,gemini-3.1-flash-lite).
  *                            Названия моделей Google меняет и выключает старые — держите список в env,
  *                            а не в коде.
- *  TELEGRAM_BOT_TOKEN      — токен бота. Если задан, запросы без валидной подписи Telegram отклоняются.
+ *  (Telegram/Supabase переменные описаны в _lib.js: TELEGRAM_BOT_TOKEN, SUPABASE_SECRET_KEY, ADMIN_TELEGRAM_IDS.)
  *  SCAN_TIME_BUDGET_MS     — общий бюджет времени на один скан (по умолчанию 50000).
  *  SCAN_ATTEMPTS_PER_MODEL — попыток на модель (по умолчанию 2).
- *  SCAN_RATE_LIMIT         — макс. сканов на пользователя за 10 минут на один инстанс (по умолчанию 12).
+ *  SCAN_RATE_LIMIT         — макс. сканов на пользователя за 10 минут (по умолчанию 30).
  *
  * Важно: функции нужно разрешить работать дольше 10 секунд. Для Vercel — vercel.json:
  *  { "functions": { "api/scan.js": { "maxDuration": 60 } } }
  */
 
-const crypto = require('crypto');
+const lib = require('./_lib');
 
 const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 const DEFAULT_MODELS = ['gemini-3.5-flash', 'gemini-3.1-flash-lite'];
@@ -76,70 +77,12 @@ function getConfig() {
   return {
     apiKey: process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '',
     models: models.length ? models : DEFAULT_MODELS,
-    botToken: process.env.TELEGRAM_BOT_TOKEN || '',
     budgetMs: Number(process.env.SCAN_TIME_BUDGET_MS) || 50000,
     attemptsPerModel: Math.max(1, Number(process.env.SCAN_ATTEMPTS_PER_MODEL) || 2),
     attemptTimeoutMs: Number(process.env.SCAN_ATTEMPT_TIMEOUT_MS) || 28000,
     backoffBaseMs: Number(process.env.SCAN_BACKOFF_BASE_MS) || 900,
-    rateLimit: Number(process.env.SCAN_RATE_LIMIT) || 12
+    rateLimit: Number(process.env.SCAN_RATE_LIMIT) || 30
   };
-}
-
-// ---------------------------------------------------------------- Telegram initData
-
-/**
- * Проверка подписи Telegram Mini App initData по документации Telegram:
- * secret = HMAC_SHA256("WebAppData", bot_token); hash = HMAC_SHA256(secret, data_check_string).
- * Возвращает объект пользователя или null.
- */
-function verifyTelegramInitData(initData, botToken, maxAgeSec) {
-  if (!initData || typeof initData !== 'string' || !botToken) return null;
-  const params = new URLSearchParams(initData);
-  const hash = params.get('hash');
-  if (!hash || !/^[0-9a-f]{64}$/i.test(hash)) return null;
-  params.delete('hash');
-
-  const dataCheckString = Array.from(params.entries())
-    .sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0))
-    .map(([k, v]) => k + '=' + v)
-    .join('\n');
-
-  const secret = crypto.createHmac('sha256', 'WebAppData').update(botToken).digest();
-  const calc = crypto.createHmac('sha256', secret).update(dataCheckString).digest();
-  const given = Buffer.from(hash, 'hex');
-  if (calc.length !== given.length || !crypto.timingSafeEqual(calc, given)) return null;
-
-  const authDate = Number(params.get('auth_date'));
-  const age = Date.now() / 1000 - authDate;
-  if (!Number.isFinite(authDate) || age > (maxAgeSec || 86400) || age < -300) return null;
-
-  try {
-    const user = JSON.parse(params.get('user') || 'null');
-    return user && typeof user === 'object' ? user : null;
-  } catch (e) {
-    return null;
-  }
-}
-
-// ---------------------------------------------------------------- простой лимит частоты
-
-const rateBuckets = new Map();
-function isRateLimited(key, limit) {
-  const now = Date.now();
-  const windowMs = 10 * 60 * 1000;
-  const arr = (rateBuckets.get(key) || []).filter((t) => now - t < windowMs);
-  if (arr.length >= limit) {
-    rateBuckets.set(key, arr);
-    return true;
-  }
-  arr.push(now);
-  rateBuckets.set(key, arr);
-  if (rateBuckets.size > 5000) {
-    for (const [k, v] of rateBuckets) {
-      if (!v.length || now - v[v.length - 1] > windowMs) rateBuckets.delete(k);
-    }
-  }
-  return false;
 }
 
 // ---------------------------------------------------------------- разбор ответа модели
@@ -312,11 +255,6 @@ function readBody(req) {
   return null;
 }
 
-function clientIp(req) {
-  const fwd = req.headers && req.headers['x-forwarded-for'];
-  return (typeof fwd === 'string' && fwd.split(',')[0].trim()) || 'unknown';
-}
-
 async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -329,20 +267,27 @@ async function handler(req, res) {
     return send(res, 500, { error: 'Сканер не настроен на сервере. Напишите разработчику.' });
   }
 
-  // 1) Авторизация через подпись Telegram (включается наличием TELEGRAM_BOT_TOKEN)
-  let rateKey = 'ip:' + clientIp(req);
-  if (cfg.botToken) {
-    const initData = req.headers && req.headers['x-telegram-init-data'];
-    const user = verifyTelegramInitData(Array.isArray(initData) ? initData[0] : initData, cfg.botToken, 86400);
-    if (!user || !user.id) {
-      return send(res, 401, { error: 'Откройте приложение из Telegram и попробуйте снова.' });
-    }
-    rateKey = 'tg:' + user.id;
+  // 1) Кто это: только проверенный пользователь Telegram (подпись проверяется на сервере)
+  const auth = lib.authenticate(req);
+  if (!auth.ok) return send(res, auth.status, { error: auth.error });
+
+  // 2) Лимит частоты на пользователя
+  if (lib.rateLimited('scan:' + auth.userId, cfg.rateLimit, 10 * 60 * 1000)) {
+    return send(res, 429, { error: 'Слишком много сканирований подряд. Подождите несколько минут.' });
   }
 
-  // 2) Лимит частоты
-  if (isRateLimited(rateKey, cfg.rateLimit)) {
-    return send(res, 429, { error: 'Слишком много сканирований подряд. Подождите несколько минут.' });
+  // 2.1) Подписка: сканер стоит денег, поэтому только PRO / пробный период / админ
+  if (!auth.isAdmin) {
+    let row = null;
+    try {
+      row = await lib.getSubscription(auth.userId);
+    } catch (e) {
+      console.error('[scan] не удалось проверить подписку:', e && e.message);
+      return send(res, 503, { error: 'Не удалось проверить подписку. Повторите через минуту.' });
+    }
+    if (!lib.proView(row, false).active) {
+      return send(res, 402, { error: 'Для сканирования нужна активная подписка PRO. Активируйте промокод в приложении.' });
+    }
   }
 
   // 3) Валидация входа
@@ -384,7 +329,6 @@ async function handler(req, res) {
 
 module.exports = handler;
 module.exports._internals = {
-  verifyTelegramInitData,
   parseModelJson,
   sanitizeItems,
   extractItems,
