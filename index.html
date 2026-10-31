@@ -6,8 +6,7 @@
     <title>Пульт Официанта PRO</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
+        <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         
         :root {
@@ -674,13 +673,14 @@
             <input type="text" id="promoCodeInput" placeholder="Введите код..." onkeydown="if(event.key==='Enter') applyPromoCode()" class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs text-slate-100 outline-none font-bold uppercase tracking-wider">
             <button onclick="applyPromoCode()" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-extrabold py-3.5 rounded-2xl text-xs shadow-lg tap-scale">✨ Активировать код</button>
 
-            <!-- СКРЫТАЯ ПАНЕЛЬ РАЗРАБОТЧИКА (ОТКРЫВАЕТСЯ ПОСЛЕ ВВОДА 1BEZLEMIT) -->
+            <!-- ПАНЕЛЬ АДМИНА (показывается только админу; права проверяет сервер) -->
             <div id="adminKeygenBox" class="hidden pt-4 border-t border-slate-800 space-y-3 text-xs">
                 <div class="flex items-center justify-between">
                     <span class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400">🛠 Генератор одноразовых ключей (Админ)</span>
                 </div>
-                <p class="text-[10px] text-slate-400">Вставьте ID покупателя из сообщения в Telegram. Ключ сработает только 1 раз и только на его аккаунте:</p>
+                <p class="text-[10px] text-slate-400">Вставьте ID покупателя из сообщения в Telegram. Ключ сработает только 1 раз и только на его аккаунте. Можно и выдать доступ сразу, без ключа:</p>
                 <input type="text" id="adminTargetUserId" placeholder="ID клиента (напр: 482910452)" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-100 font-mono outline-none">
+                <label class="flex items-center space-x-2 text-[10px] text-slate-300 cursor-pointer"><input type="checkbox" id="adminGrantDirect" class="accent-emerald-500"><span>Выдать сразу, без ключа (покупатель просто перезайдёт в приложение)</span></label>
                 <div class="grid grid-cols-5 gap-1">
                     <button onclick="generatePersonalKey(30)" class="glass-element hover:bg-slate-800 py-2 rounded-xl font-bold text-[10px] text-slate-200 tap-scale">1 мес</button>
                     <button onclick="generatePersonalKey(90)" class="glass-element hover:bg-slate-800 py-2 rounded-xl font-bold text-[10px] text-sky-300 tap-scale">3 мес</button>
@@ -1114,14 +1114,9 @@
             }
         }
 
-        const SUPABASE_URL = 'https://avrtgjldydchwgtvgrqt.supabase.co';
-        const SUPABASE_KEY = 'sb_publishable_uobDghP-DOkp-xtBc5Q5JA_V1eZwstM';
-        const supabaseClient = (window.supabase && typeof window.supabase.createClient === 'function')
-            ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
-            : null;
-        // Gemini API key хранится только в переменных окружения серверной функции /api/scan.
-const CREATOR_TG_USERNAME = 'patricianw';
-        const SECRET_KEY_SALT = 'PATRICIANW_PULT_2026_PRO';
+        // Данные и подписка хранятся на сервере (/api/state, /api/pro, /api/admin).
+        // В этом файле нет ни ключей, ни секретов, ни логики проверки подписки.
+        const CREATOR_TG_USERNAME = 'patricianw'; // публичный контакт для оплаты (не секрет)
 
         let userId = 'default_user';
         let lastCloudError = null;
@@ -1154,6 +1149,9 @@ const CREATOR_TG_USERNAME = 'patricianw';
         let trialUsed = false;
         let usedPromoCodes = [];
         let isCreatorAdmin = false;
+        let proStatusLoaded = false;
+        let proStatusError = '';
+        let promoBusy = false;
 
         let selectedTariffDays = 30;
         let selectedTariffPrice = 290;
@@ -1386,35 +1384,113 @@ const CREATOR_TG_USERNAME = 'patricianw';
 
             const stopList = readJSON('fish_pro_stoplist', []);
             stopListSet = new Set(Array.isArray(stopList) ? stopList : []);
-            proUnlimited = localStorage.getItem('fish_pro_unlimited') === 'true';
-            trialUsed = localStorage.getItem('fish_pro_trial_used') === 'true';
-            isCreatorAdmin = localStorage.getItem('fish_pro_admin') === 'true';
-            usedPromoCodes = readJSON('fish_pro_used_codes', []);
-            if (!Array.isArray(usedPromoCodes)) usedPromoCodes = [];
             appTheme = localStorage.getItem('fish_pro_theme') === 'light' ? 'light' : 'dark';
-
-            const expRaw = Number(localStorage.getItem('fish_pro_expires_at'));
-            proExpiresAt = Number.isFinite(expRaw) && expRaw > 0 ? expRaw : null;
         }
 
 
+        // ================= СВЯЗЬ С СЕРВЕРОМ =================
+
+        // Единая точка запросов: личность подтверждается подписью Telegram (initData), а не тем, что пишет клиент.
+        async function apiPost(path, body, timeoutMs) {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), timeoutMs || 20000);
+            try {
+                const headers = { 'Content-Type': 'application/json' };
+                const initData = getTelegramInitData();
+                if (initData) headers['X-Telegram-Init-Data'] = initData;
+                const response = await fetch(path, {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify(body || {}),
+                    cache: 'no-store',
+                    signal: controller.signal
+                });
+                const payload = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    const err = new Error((payload && payload.error) || `Ошибка сервера (${response.status})`);
+                    err.status = response.status;
+                    throw err;
+                }
+                return payload;
+            } catch (e) {
+                if (e && e.name === 'AbortError') {
+                    const err = new Error('Сервер слишком долго отвечает. Попробуйте ещё раз.');
+                    err.status = 0;
+                    throw err;
+                }
+                if (e instanceof TypeError) {
+                    const err = new Error('Нет связи с сервером. Проверьте интернет.');
+                    err.status = 0;
+                    throw err;
+                }
+                throw e;
+            } finally {
+                clearTimeout(timer);
+            }
+        }
+
+        // ================= СТАТУС ПОДПИСКИ (источник истины — сервер) =================
+
+        const PRO_CACHE_KEY = 'fish_pro_cache_v2';
+        const LEGACY_PRO_KEYS = ['fish_pro_unlimited', 'fish_pro_trial_used', 'fish_pro_admin', 'fish_pro_used_codes', 'fish_pro_expires_at'];
+
+        function clearLegacyProStorage() {
+            try { LEGACY_PRO_KEYS.forEach(k => localStorage.removeItem(k)); } catch (e) { /* ignore */ }
+        }
+
+        // Копия последнего ответа сервера нужна только чтобы приложение открывалось без сети (подвал, плохой сигнал).
+        // Платные функции на сервере (сканер) она не открывает: там проверка идёт заново.
+        function loadProCache() {
+            try {
+                const c = JSON.parse(localStorage.getItem(PRO_CACHE_KEY) || 'null');
+                if (!c || String(c.userId) !== String(userId)) return;
+                if (!c.savedAt || Date.now() - c.savedAt > 14 * 24 * 60 * 60 * 1000) return;
+                proUnlimited = !!c.unlimited;
+                proExpiresAt = Number.isFinite(c.expiresAt) ? c.expiresAt : null;
+                trialUsed = !!c.trialUsed;
+            } catch (e) { /* ignore */ }
+        }
+
+        function applyProStatus(pro, isAdmin) {
+            proUnlimited = !!(pro && pro.unlimited);
+            proExpiresAt = pro && Number.isFinite(pro.expiresAt) ? pro.expiresAt : null;
+            trialUsed = !!(pro && pro.trialUsed);
+            isCreatorAdmin = !!isAdmin;
+            proStatusLoaded = true;
+            proStatusError = '';
+            try {
+                localStorage.setItem(PRO_CACHE_KEY, JSON.stringify({
+                    userId, unlimited: proUnlimited, expiresAt: proExpiresAt, trialUsed, savedAt: Date.now()
+                }));
+            } catch (e) { /* ignore */ }
+            updateProStatusUI();
+        }
+
+        async function refreshProStatus() {
+            try {
+                const r = await apiPost('/api/pro', { action: 'status' });
+                if (r && r.userId) userId = String(r.userId);
+                applyProStatus(r && r.pro, r && r.isAdmin);
+                return true;
+            } catch (e) {
+                proStatusError = (e && e.message) || 'Не удалось проверить подписку.';
+                updateProStatusUI();
+                // Нет связи — пробуем снова. Ошибка 401 (не из Telegram) от повторов не исправится.
+                if (!proStatusLoaded && !(e && e.status === 401)) setTimeout(refreshProStatus, 8000);
+                return false;
+            }
+        }
+
         async function initCloudData() {
             try {
-                if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
-                    userId = String(window.Telegram.WebApp.initDataUnsafe.user.id);
-                    const tgUsername = (window.Telegram.WebApp.initDataUnsafe.user.username || '').toLowerCase();
-                    if (tgUsername === CREATOR_TG_USERNAME.toLowerCase()) {
-                        isCreatorAdmin = true;
-                    }
-                } else {
-                    if (!localStorage.getItem('fish_pro_test_id')) {
-                        localStorage.setItem('fish_pro_test_id', String(Math.floor(100000000 + Math.random() * 900000000)));
-                    }
-                    userId = localStorage.getItem('fish_pro_test_id');
-                }
-            } catch(e) { userId = 'fallback_user'; }
+                const tgUser = window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe
+                    && window.Telegram.WebApp.initDataUnsafe.user;
+                userId = tgUser && tgUser.id ? String(tgUser.id) : '—'; // только для показа; настоящий ID подтверждает сервер
+            } catch (e) { userId = '—'; }
 
+            clearLegacyProStorage();
             loadLocalFallback();
+            loadProCache();
             applyAppThemeUI();
             document.getElementById('gateUserIdLabel').innerText = userId;
             selectedCalendarDateKey = getTodayDateKey();
@@ -1423,17 +1499,13 @@ const CREATOR_TG_USERNAME = 'patricianw';
             updateProStatusUI();
             setCloudIndicator('sync', 'Синхр...');
 
+            await refreshProStatus();
+
             try {
-                const { data, error } = await supabaseClient
-                    .from('app_states')
-                    .select('state')
-                    .eq('telegram_id', userId)
-                    .maybeSingle();
+                const resp = await apiPost('/api/state', { action: 'load' });
+                const s = resp && resp.state;
 
-                if (error) throw error;
-
-                if (data && data.state) {
-                    const s = data.state;
+                if (s) {
                     if (s.tables && typeof s.tables === 'object' && !Array.isArray(s.tables)) tables = s.tables;
                     if (Array.isArray(s.menuItems)) menuItems = s.menuItems;
                     closedHistory = Array.isArray(s.closedHistory) ? s.closedHistory : [];
@@ -1441,15 +1513,11 @@ const CREATOR_TG_USERNAME = 'patricianw';
                     hourlyRate = s.hourlyRate !== undefined ? s.hourlyRate : 280;
                     shiftTipGoal = s.shiftTipGoal !== undefined ? s.shiftTipGoal : 3000;
                     stopListSet = new Set(Array.isArray(s.stopListSet) ? s.stopListSet : []);
-                    if (s.proUnlimited !== undefined) proUnlimited = s.proUnlimited;
-                    if (s.proExpiresAt !== undefined) proExpiresAt = s.proExpiresAt;
-                    if (s.trialUsed !== undefined) trialUsed = s.trialUsed;
-                    if (s.usedPromoCodes !== undefined) usedPromoCodes = s.usedPromoCodes;
                     if (s.appTheme !== undefined) {
                         appTheme = s.appTheme;
                         applyAppThemeUI();
                     }
-                    
+
                     const tableKeys = Object.keys(tables);
                     if (tableKeys.length > 0 && !tables[currentTable]) currentTable = tableKeys[0];
 
@@ -1476,34 +1544,17 @@ const CREATOR_TG_USERNAME = 'patricianw';
                     localStorage.setItem('fish_pro_stoplist', JSON.stringify([...stopListSet]));
                     localStorage.setItem('fish_pro_goal', String(shiftTipGoal));
                     localStorage.setItem('fish_pro_hourly_rate', String(hourlyRate));
-                    localStorage.setItem('fish_pro_unlimited', proUnlimited ? 'true' : 'false');
-                    localStorage.setItem('fish_pro_trial_used', trialUsed ? 'true' : 'false');
-                    localStorage.setItem('fish_pro_admin', isCreatorAdmin ? 'true' : 'false');
-                    localStorage.setItem('fish_pro_used_codes', JSON.stringify(usedPromoCodes));
                     localStorage.setItem('fish_pro_theme', appTheme);
-                    if (proExpiresAt) localStorage.setItem('fish_pro_expires_at', String(proExpiresAt));
-                    else localStorage.removeItem('fish_pro_expires_at');
 
-                    if (!supabaseClient) {
-                        setCloudIndicator('error', 'Локально (нет Supabase)');
-                        return false;
-                    }
-
-                    const payload = {
-                        telegram_id: userId,
+                    // Статус подписки в облако не отправляется: его знает только сервер.
+                    await apiPost('/api/state', {
+                        action: 'save',
                         state: {
                             tables, menuItems, closedHistory, shiftArchive,
-                            stopListSet: [...stopListSet], hourlyRate, shiftTipGoal,
-                            proUnlimited, proExpiresAt, trialUsed, usedPromoCodes, appTheme
-                        },
-                        updated_at: new Date().toISOString()
-                    };
+                            stopListSet: [...stopListSet], hourlyRate, shiftTipGoal, appTheme
+                        }
+                    }, 30000);
 
-                    const { error } = await supabaseClient
-                        .from('app_states')
-                        .upsert(payload, { onConflict: 'telegram_id' });
-
-                    if (error) throw error;
                     setCloudIndicator('ok', 'Облако ОК');
                     return true;
                 } catch (e) {
@@ -1518,36 +1569,48 @@ const CREATOR_TG_USERNAME = 'patricianw';
         }
 
 
-        // ================= КРИПТОГРАФИЧЕСКАЯ ЗАЩИТА ОДНОРАЗОВЫХ ПРОМОКОДОВ =================
+        // ================= ВЫДАЧА ДОСТУПА (АДМИН; ПРОВЕРКА ПРАВ — НА СЕРВЕРЕ) =================
 
-        function computeKeySignature(daysStr, targetUidStr, nonceStr) {
-            const raw = `${daysStr}:${targetUidStr}:${nonceStr}:${SECRET_KEY_SALT}`;
-            let hash = 5381;
-            for (let i = 0; i < raw.length; i++) {
-                hash = ((hash << 5) + hash) + raw.charCodeAt(i);
-                hash = hash & hash;
-            }
-            return Math.abs(hash).toString(36).toUpperCase().slice(0, 4).padStart(4, 'X');
-        }
-
-        function generatePersonalKey(days) {
+        async function generatePersonalKey(days) {
+            if (!isCreatorAdmin || promoBusy) return;
             const targetId = (document.getElementById('adminTargetUserId').value || '').trim();
+            const directEl = document.getElementById('adminGrantDirect');
+            const direct = !!(directEl && directEl.checked);
+
             if (!targetId) {
                 alert("Введите ID покупателя (он присылает его в сообщении вместе с чеком)!");
                 return;
             }
-            const nonce = String(Math.floor(100 + Math.random() * 900));
-            const sig = computeKeySignature(String(days), targetId, nonce);
-            const fullKey = `PULT-${days}-${targetId}-${nonce}-${sig}`;
+            if (!/^\d{1,15}$/.test(targetId)) {
+                alert("ID должен состоять только из цифр.");
+                return;
+            }
 
+            const unlimited = days === 9999;
             const resBox = document.getElementById('adminGeneratedKeyResultBox');
             const resText = document.getElementById('adminGeneratedKeyText');
-            resText.innerText = fullKey;
-            resBox.classList.remove('hidden');
+            const label = unlimited ? 'БЕЗЛИМИТ' : days + ' дн.';
 
-            navigator.clipboard.writeText(fullKey);
-            triggerHaptic('success');
-            alert(`Одноразовый ключ на ${days === 9999 ? 'БЕЗЛИМИТ' : days + ' дн.'} для ID ${targetId} скопирован!\n\n${fullKey}`);
+            promoBusy = true;
+            try {
+                if (direct) {
+                    await apiPost('/api/admin', { action: 'grant', targetId, days: unlimited ? undefined : days, unlimited });
+                    resBox.classList.add('hidden');
+                    triggerHaptic('success');
+                    alert(`✅ Доступ (${label}) выдан пользователю ${targetId}. Пусть перезайдёт в приложение.`);
+                } else {
+                    const r = await apiPost('/api/admin', { action: 'create_code', days: unlimited ? undefined : days, unlimited, targetId });
+                    resText.innerText = r.code;
+                    resBox.classList.remove('hidden');
+                    try { await navigator.clipboard.writeText(r.code); } catch (e) { /* ignore */ }
+                    triggerHaptic('success');
+                    alert(`Одноразовый ключ на ${label} для ID ${targetId} (скопирован):\n\n${r.code}\n\nКод показывается один раз: на сервере хранится только его хэш.`);
+                }
+            } catch (e) {
+                alert('❌ ' + ((e && e.message) || 'Не удалось выполнить действие.'));
+            } finally {
+                promoBusy = false;
+            }
         }
 
         function copyGeneratedAdminKey() {
@@ -1578,93 +1641,39 @@ const CREATOR_TG_USERNAME = 'patricianw';
             return "🔒 Истек";
         }
 
-        function processPromoString(rawCode) {
-            const code = (rawCode || '').trim().toUpperCase();
+        async function processPromoString(rawCode) {
+            const code = (rawCode || '').trim();
             if (!code) {
                 alert("Введите промокод!");
                 return false;
             }
-
-            if (code === "1BEZLEMIT") {
-                proUnlimited = true;
-                proExpiresAt = null;
-                isCreatorAdmin = true;
-                saveData();
-                updateProStatusUI();
-                document.getElementById('adminKeygenBox').classList.remove('hidden');
+            if (promoBusy) return false;
+            promoBusy = true;
+            try {
+                const r = await apiPost('/api/pro', { action: 'redeem', code });
+                applyProStatus(r.pro, r.isAdmin);
                 triggerHaptic('success');
-                alert("👑 Мастер-доступ 1BEZLEMIT активирован! Включен вечный PRO и открыта Админ-панель генерации ключей.");
-                return true;
-            }
-
-            if (code === "TEST") {
-                if (trialUsed) {
-                    alert("❌ Вы уже использовали бесплатный промокод TEST на этом аккаунте! Для продолжения оформите подписку.");
-                    return false;
-                }
-                trialUsed = true;
-                const baseTime = (proExpiresAt && proExpiresAt > Date.now()) ? proExpiresAt : Date.now();
-                proExpiresAt = baseTime + (7 * 24 * 60 * 60 * 1000);
-                saveData();
-                updateProStatusUI();
-                triggerHaptic('success');
-                alert("🎉 Промокод TEST активирован! Вам открыт полный PRO-доступ на 7 дней.");
-                return true;
-            }
-
-            if (code.startsWith("PULT-")) {
-                if (usedPromoCodes.includes(code)) {
-                    alert("❌ Этот промокод уже был использован и сгорел! Каждый ключ одноразовый.");
-                    return false;
-                }
-
-                const parts = code.split("-");
-                if (parts.length !== 5) {
-                    alert("❌ Неверный формат ключа.");
-                    return false;
-                }
-
-                const [, daysStr, targetUid, nonceStr, sigProvided] = parts;
-                const daysNum = parseInt(daysStr, 10);
-
-                if (targetUid !== String(userId)) {
-                    alert(`❌ Этот промокод выпущен для другого пользователя (ID: ${targetUid})! Передача кода коллегам запрещена.`);
-                    return false;
-                }
-
-                const expectedSig = computeKeySignature(daysStr, targetUid, nonceStr);
-                if (sigProvided !== expectedSig || isNaN(daysNum) || daysNum <= 0) {
-                    alert("❌ Недействительный или поврежденный промокод!");
-                    return false;
-                }
-
-                usedPromoCodes.push(code);
-                triggerHaptic('success');
-
-                if (daysNum === 9999) {
-                    proUnlimited = true;
-                    proExpiresAt = null;
-                    saveData();
-                    updateProStatusUI();
+                if (r.kind === 'trial') {
+                    alert("🎉 Промокод TEST активирован! Вам открыт полный PRO-доступ на 7 дней.");
+                } else if (r.pro && r.pro.unlimited) {
                     alert("👑 Персональный безлимитный PRO-доступ успешно активирован!");
                 } else {
-                    const baseTime = (proExpiresAt && proExpiresAt > Date.now()) ? proExpiresAt : Date.now();
-                    proExpiresAt = baseTime + (daysNum * 24 * 60 * 60 * 1000);
-                    saveData();
-                    updateProStatusUI();
-                    alert(`🎉 Оплата подтверждена! Подписка PRO активирована на ${daysNum} дн.`);
+                    const until = r.pro && r.pro.expiresAt ? new Date(r.pro.expiresAt).toLocaleDateString('ru-RU') : '';
+                    alert(`🎉 Оплата подтверждена! Подписка PRO активна${until ? ' до ' + until : ''}.`);
                 }
                 return true;
+            } catch (e) {
+                alert('❌ ' + ((e && e.message) || 'Не удалось активировать промокод.'));
+                return false;
+            } finally {
+                promoBusy = false;
             }
-
-            alert("❌ Неверный промокод.");
-            return false;
         }
 
-        function activatePromoFromGate() {
-            const val = document.getElementById('gatePromoInput').value;
-            if (processPromoString(val)) {
-                document.getElementById('gatePromoInput').value = '';
+        async function activatePromoFromGate() {
+            const input = document.getElementById('gatePromoInput');
+            if (await processPromoString(input.value)) {
+                input.value = '';
             }
         }
 
@@ -1672,7 +1681,8 @@ const CREATOR_TG_USERNAME = 'patricianw';
             document.getElementById('promoCodeInput').value = '';
             document.getElementById('promoModalUserId').innerText = userId;
             document.getElementById('modalProStatusInfo').innerText = getProHumanStatusText();
-            if (isCreatorAdmin || proUnlimited) {
+            // Панель только для админа. Реальная защита — проверка на сервере, а не скрытие кнопок.
+            if (isCreatorAdmin) {
                 document.getElementById('adminKeygenBox').classList.remove('hidden');
             } else {
                 document.getElementById('adminKeygenBox').classList.add('hidden');
@@ -1684,12 +1694,10 @@ const CREATOR_TG_USERNAME = 'patricianw';
             document.getElementById('promoModal').classList.add('hidden');
         }
 
-        function applyPromoCode() {
+        async function applyPromoCode() {
             const val = document.getElementById('promoCodeInput').value;
-            if (processPromoString(val)) {
-                if (val.trim().toUpperCase() !== "1BEZLEMIT") {
-                    closePromoModal();
-                }
+            if (await processPromoString(val)) {
+                closePromoModal();
             }
         }
 
@@ -1742,12 +1750,20 @@ const CREATOR_TG_USERNAME = 'patricianw';
             const gateEl = document.getElementById('proGateOverlay');
             const bannerEl = document.getElementById('expiringProBanner');
             const bannerSub = document.getElementById('expiringProSubtitle');
+            const titleEl = document.getElementById('gateMainTitle');
+            const subEl = document.getElementById('gateSubTitle');
             document.getElementById('gateUserIdLabel').innerText = userId;
 
             if (!isProCurrentlyActive()) {
-                if (trialUsed) {
-                    document.getElementById('gateMainTitle').innerText = "Период доступа истек";
-                    document.getElementById('gateSubTitle').innerText = "Ваш пробный период завершен. Оформите подписку переводом на карту и введите полученный одноразовый ключ:";
+                if (!proStatusLoaded) {
+                    titleEl.innerText = proStatusError ? "Не удалось проверить доступ" : "Проверяю доступ...";
+                    subEl.innerText = proStatusError || "Секунду, проверяю вашу подписку.";
+                } else if (trialUsed) {
+                    titleEl.innerText = "Период доступа истек";
+                    subEl.innerText = "Ваш доступ завершен. Оформите подписку переводом на карту и введите полученный одноразовый ключ:";
+                } else {
+                    titleEl.innerText = "Доступ к Пульту PRO";
+                    subEl.innerHTML = "Введите промокод (или <b>TEST</b> для 7 дней бесплатного доступа), либо оформите подписку";
                 }
                 gateEl.classList.remove('hidden');
                 bannerEl.classList.add('hidden');
@@ -3864,6 +3880,8 @@ const CREATOR_TG_USERNAME = 'patricianw';
 
         setInterval(tickAllLiveTimers, 1000);
         setInterval(() => { renderTables(); updateProStatusUI(); }, 30000);
+        setInterval(() => { if (!document.hidden && proStatusLoaded) refreshProStatus(); }, 10 * 60 * 1000);
+        document.addEventListener('visibilitychange', () => { if (!document.hidden && proStatusLoaded) refreshProStatus(); });
         
         initCloudData();
     </script>
