@@ -1054,13 +1054,13 @@
             <div class="flex items-center justify-between border-b border-slate-800 pb-3">
                 <div>
                     <h3 class="text-sm font-extrabold text-emerald-400">🤖 ИИ-сканер меню</h3>
-                    <p class="text-[10px] text-slate-400 mt-1">Загрузи фото меню или вставь текст вручную</p>
+                    <p class="text-[10px] text-slate-400 mt-1">Загрузи фото меню (можно несколько страниц) или вставь текст вручную</p>
                 </div>
                 <button type="button" onclick="closeAiScannerModal()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-300">✕</button>
             </div>
 
             <label class="block text-xs font-bold text-slate-300">Фотография меню
-                <input id="aiMenuPhotoInput" type="file" accept="image/jpeg,image/png,image/webp" capture="environment"
+                <input id="aiMenuPhotoInput" type="file" accept="image/jpeg,image/png,image/webp" multiple
                     onchange="handleMenuPhotoUpload(event)"
                     class="block w-full mt-2 text-xs text-slate-400 file:mr-3 file:rounded-xl file:border-0 file:bg-emerald-500 file:px-4 file:py-2.5 file:text-slate-950 file:font-extrabold">
             </label>
@@ -1881,6 +1881,16 @@ const CREATOR_TG_USERNAME = 'patricianw';
             }
         }
 
+        // Экранирование текста перед вставкой в innerHTML (названия блюд приходят от ИИ и из облака).
+        function escapeHtml(value) {
+            return String(value == null ? '' : value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
         // ================= ИИ-СКАНЕР МЕНЮ НА БАЗЕ GEMINI VISION API =================
 
         function openAiScannerModal() {
@@ -1917,12 +1927,18 @@ const CREATOR_TG_USERNAME = 'patricianw';
             if (validCats.includes(rawCat)) return rawCat;
 
             const lower = (name + " " + rawCat).toLowerCase();
-            if (lower.includes('салат') || lower.includes('цезарь') || lower.includes('греческ') || lower.includes('оливье')) return "Салаты";
-            if (lower.includes('суп') || lower.includes('том ям') || lower.includes('борщ') || lower.includes('уха') || lower.includes('бульон') || lower.includes('солянк') || lower.includes('рамен') || lower.includes('фо бо')) return "Супы";
-            if (lower.includes('пицц')) return "Пицца";
-            if (lower.includes('чай') || lower.includes('кофе') || lower.includes('эспрессо') || lower.includes('американо') || lower.includes('капучино') || lower.includes('латте') || lower.includes('раф') || lower.includes('лимонад') || lower.includes('морс') || lower.includes('сок') || lower.includes('кола') || lower.includes('вода') || lower.includes('пиво') || lower.includes('ipa') || lower.includes('вино') || lower.includes('коктейл') || lower.includes('спритц') || lower.includes('виски') || lower.includes('водка') || lower.includes('джин') || lower.includes('ром') || lower.includes('бар') || lower.includes('напит')) return "Бар";
-            if (lower.includes('десерт') || lower.includes('медовик') || lower.includes('чизкейк') || lower.includes('морожен') || lower.includes('тирамису') || lower.includes('наполеон') || lower.includes('фондан') || lower.includes('торт') || lower.includes('сырник') || lower.includes('штрудел')) return "Десерты";
-            if (lower.includes('хлеб') || lower.includes('гренк') || lower.includes('сырн') || lower.includes('фри') || lower.includes('брускетт') || lower.includes('тартар') || lower.includes('карпаччо') || lower.includes('закуск') || lower.includes('нарезк') || lower.includes('оливк') || lower.includes('паштет')) return "Закуски";
+            // Совпадение с НАЧАЛА слова (иначе «кола» находится внутри «шоколадный», «морс» — внутри «морской»).
+            const startsWith = (stems) => new RegExp('(^|[^а-яёa-z])(' + stems.join('|') + ')', 'i').test(lower);
+            // Совпадение целого слова (для коротких слов вроде «ром», «раф», «сок»).
+            const isWord = (words) => new RegExp('(^|[^а-яёa-z])(' + words.join('|') + ')($|[^а-яёa-z])', 'i').test(lower);
+
+            if (startsWith(['салат', 'цезарь', 'греческ', 'оливье'])) return "Салаты";
+            if (startsWith(['суп', 'том ям', 'борщ', 'бульон', 'солянк', 'рамен', 'фо бо']) || isWord(['уха', 'ухи'])) return "Супы";
+            if (startsWith(['пицц'])) return "Пицца";
+            if (startsWith(['чай', 'кофе', 'эспрессо', 'американо', 'капучино', 'латте', 'лимонад', 'пиво', 'пивн', 'коктейл', 'спритц', 'виски', 'водка', 'напит', 'кола', 'лагер', 'сидр'])
+                || isWord(['раф', 'ром', 'бар', 'вода', 'воды', 'сок', 'соки', 'сока', 'морс', 'морсы', 'вино', 'вина', 'джин', 'эль', 'ipa'])) return "Бар";
+            if (startsWith(['десерт', 'медовик', 'чизкейк', 'морожен', 'тирамису', 'наполеон', 'фондан', 'сырник', 'штрудел']) || isWord(['торт', 'торты', 'торта'])) return "Десерты";
+            if (startsWith(['хлеб', 'гренк', 'сырн', 'брускетт', 'тартар', 'карпаччо', 'закуск', 'нарезк', 'оливк', 'паштет']) || isWord(['фри'])) return "Закуски";
             return "Горячее";
         }
 
@@ -1944,7 +1960,7 @@ const CREATOR_TG_USERNAME = 'patricianw';
 
                 img.onload = () => {
                     try {
-                        const maxDim = 1400;
+                        const maxDim = 2000;
                         const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
                         const w = Math.max(1, Math.round(img.width * scale));
                         const h = Math.max(1, Math.round(img.height * scale));
@@ -1957,7 +1973,7 @@ const CREATOR_TG_USERNAME = 'patricianw';
                         ctx.fillStyle = '#ffffff';
                         ctx.fillRect(0, 0, w, h);
                         ctx.drawImage(img, 0, 0, w, h);
-                        const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
                         const base64Data = dataUrl.split(',')[1];
                         if (!base64Data) throw new Error('Не удалось подготовить изображение.');
                         cleanup();
@@ -1975,32 +1991,94 @@ const CREATOR_TG_USERNAME = 'patricianw';
             });
         }
 
-        async function callGeminiVisionMenuAPI(base64Data, mimeType) {
-            const response = await fetch('/api/scan', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ imageBase64: base64Data, mimeType }),
-                cache: 'no-store'
-            });
+        const AI_SCAN_MAX_PHOTOS = 6;
 
-            const payload = await response.json().catch(() => ({}));
-            if (!response.ok) {
-                throw new Error(payload.error || `Ошибка сервера сканирования: HTTP ${response.status}`);
-            }
+        function sleepMs(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
 
-            const items = Array.isArray(payload) ? payload : payload.items;
-            if (!Array.isArray(items)) {
-                throw new Error('Сервер вернул ответ в неожиданном формате.');
+        function getTelegramInitData() {
+            try {
+                return (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) || '';
+            } catch (e) { return ''; }
+        }
+
+        // Цена из ответа ИИ: число или строка вида "1 200", "1.200", "99,5 ₽".
+        function parseMenuPrice(raw) {
+            if (typeof raw === 'number') return Number.isFinite(raw) ? raw : NaN;
+            let str = String(raw == null ? '' : raw).replace(/[\s\u00a0\u202f]/g, '').replace(/[^\d.,]/g, '');
+            if (!str) return NaN;
+            if (/^\d{1,3}([.,]\d{3})+$/.test(str)) str = str.replace(/[.,]/g, '');
+            else str = str.replace(',', '.');
+            return Number(str);
+        }
+
+        function friendlyScanError(status, serverMessage) {
+            if (serverMessage && typeof serverMessage === 'string') return serverMessage;
+            if (status === 413) return 'Фото слишком большое. Сделайте снимок поменьше.';
+            if (status === 429) return 'Слишком много запросов. Подождите минуту и повторите.';
+            if (status === 401 || status === 403) return 'Нет доступа. Откройте приложение из Telegram.';
+            if (status === 502 || status === 503 || status === 504) return 'ИИ-сервис сейчас перегружен. Повторите через минуту.';
+            return `Ошибка сервера сканирования: HTTP ${status}`;
+        }
+
+        // Запрос к серверной функции с автоповтором при перегрузке/таймауте/обрыве сети.
+        async function callGeminiVisionMenuAPI(base64Data, mimeType, onRetry) {
+            const MAX_ATTEMPTS = 3;
+            const RETRYABLE = new Set([429, 500, 502, 503, 504]);
+            let lastError = null;
+
+            for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), 70000);
+                try {
+                    const headers = { 'Content-Type': 'application/json' };
+                    const initData = getTelegramInitData();
+                    if (initData) headers['X-Telegram-Init-Data'] = initData;
+
+                    const response = await fetch('/api/scan', {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify({ imageBase64: base64Data, mimeType }),
+                        cache: 'no-store',
+                        signal: controller.signal
+                    });
+                    const payload = await response.json().catch(() => ({}));
+
+                    if (response.ok) {
+                        const items = Array.isArray(payload) ? payload : payload.items;
+                        if (!Array.isArray(items)) throw new Error('Сервер вернул ответ в неожиданном формате.');
+                        return items;
+                    }
+
+                    const httpErr = new Error(friendlyScanError(response.status, payload && payload.error));
+                    httpErr.retryable = RETRYABLE.has(response.status);
+                    throw httpErr;
+                } catch (rawErr) {
+                    let err = rawErr;
+                    if (rawErr && rawErr.name === 'AbortError') {
+                        err = new Error('Сервер слишком долго отвечает. Попробуйте ещё раз.');
+                        err.retryable = true;
+                    } else if (rawErr instanceof TypeError) {
+                        err = new Error('Нет связи с сервером. Проверьте интернет и попробуйте снова.');
+                        err.retryable = true;
+                    }
+                    lastError = err;
+                    if (!err.retryable || attempt === MAX_ATTEMPTS) break;
+                    if (typeof onRetry === 'function') onRetry(attempt + 1, MAX_ATTEMPTS);
+                    await sleepMs(1500 * attempt + Math.random() * 500);
+                } finally {
+                    clearTimeout(timer);
+                }
             }
-            return items;
+            throw lastError || new Error('Неизвестная ошибка сканирования.');
         }
 
         let aiScannerBusy = false;
 
         async function handleMenuPhotoUpload(event) {
             const input = event && event.target;
-            const file = input && input.files && input.files[0];
-            if (!file || aiScannerBusy) return;
+            const allFiles = input && input.files ? Array.from(input.files) : [];
+            if (allFiles.length === 0 || aiScannerBusy) return;
+            const files = allFiles.slice(0, AI_SCAN_MAX_PHOTOS);
 
             const progBox = document.getElementById('aiOcrProgressBox');
             const statusTxt = document.getElementById('aiOcrStatusText');
@@ -2015,19 +2093,39 @@ const CREATOR_TG_USERNAME = 'patricianw';
 
             aiScannerBusy = true;
             if (input) input.disabled = true;
-            setProgress(10, 'Проверяю фотографию...');
             setCloudIndicator('sync', 'ИИ сканирует...');
 
+            const collected = [];
+            const failures = [];
+
             try {
-                const { base64Data, mimeType } = await prepareImageForGemini(file);
-                setProgress(45, 'Отправляю фото на защищённый сервер...');
-                const itemsFromAi = await callGeminiVisionMenuAPI(base64Data, mimeType);
+                for (let i = 0; i < files.length; i++) {
+                    const suffix = files.length > 1 ? ` (фото ${i + 1} из ${files.length})` : '';
+                    const span = 100 / files.length;
+                    const pct = (fraction) => Math.min(99, Math.round(i * span + fraction * span));
+                    try {
+                        setProgress(pct(0.1), 'Проверяю фотографию' + suffix + '...');
+                        const { base64Data, mimeType } = await prepareImageForGemini(files[i]);
+                        setProgress(pct(0.4), 'Отправляю фото на защищённый сервер' + suffix + '...');
+                        const items = await callGeminiVisionMenuAPI(base64Data, mimeType, (attempt, max) => {
+                            setProgress(pct(0.5), `ИИ перегружен, пробую ещё раз (${attempt}/${max})` + suffix + '...');
+                        });
+                        setProgress(pct(0.9), 'Разбираю ответ' + suffix + '...');
+                        collected.push(...items);
+                    } catch (photoErr) {
+                        failures.push((photoErr && photoErr.message) || 'Неизвестная ошибка');
+                    }
+                }
+
+                if (collected.length === 0) {
+                    throw new Error(failures[0] || 'Не удалось распознать блюда. Попробуйте фото крупнее и ровнее.');
+                }
 
                 const validItems = [];
-                for (const it of itemsFromAi) {
+                for (const it of collected) {
                     if (!it || typeof it !== 'object') continue;
                     const name = String(it.name || '').replace(/\s+/g, ' ').trim().slice(0, 120);
-                    const price = Number(String(it.price ?? '').replace(/[^\d.,]/g, '').replace(',', '.'));
+                    const price = parseMenuPrice(it.price);
                     if (!name || !Number.isFinite(price) || price <= 0 || price > 50000) continue;
                     validItems.push({
                         name,
@@ -2036,7 +2134,7 @@ const CREATOR_TG_USERNAME = 'patricianw';
                     });
                 }
 
-                // Убираем точные повторы, которые иногда возвращает модель.
+                // Убираем точные повторы (в том числе между страницами меню).
                 const seen = new Set();
                 aiScannedParsedItems = validItems.filter(item => {
                     const key = `${item.name.toLocaleLowerCase('ru-RU')}|${item.price}`;
@@ -2059,9 +2157,16 @@ const CREATOR_TG_USERNAME = 'patricianw';
                 renderAiScannedList();
                 const resultsBox = document.getElementById('aiScanResultsBox');
                 if (resultsBox) resultsBox.classList.remove('hidden');
-                setProgress(100, `Готово! Распознано позиций: ${aiScannedParsedItems.length}`);
+                const partial = failures.length > 0 ? ` (не обработано фото: ${failures.length})` : '';
+                setProgress(100, `Готово! Распознано позиций: ${aiScannedParsedItems.length}${partial}`);
                 setCloudIndicator('ok', 'Облако ОК');
                 triggerHaptic('success');
+                if (failures.length > 0) {
+                    alert(`Часть фото обработать не удалось (${failures.length} из ${files.length}): ${failures[0]}\nЗагрузите их ещё раз отдельно.`);
+                }
+                if (allFiles.length > AI_SCAN_MAX_PHOTOS) {
+                    alert(`За один раз обрабатывается до ${AI_SCAN_MAX_PHOTOS} фото. Остальные загрузите отдельно.`);
+                }
             } catch (err) {
                 setProgress(0, 'Не удалось распознать меню');
                 setCloudIndicator('ok', 'Облако ОК');
@@ -2365,7 +2470,7 @@ const CREATOR_TG_USERNAME = 'patricianw';
                 row.className = "flex justify-between items-center glass-element px-3 py-2 rounded-xl border border-slate-800";
                 row.innerHTML = `
                     <div class="flex items-center space-x-2">
-                        <span class="font-extrabold text-slate-200">${name}</span>
+                        <span class="font-extrabold text-slate-200">${escapeHtml(name)}</span>
                         ${hasOrder ? '<span class="text-[9px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-bold">В работе</span>' : ''}
                     </div>
                     <div class="flex items-center space-x-1.5">
@@ -2725,8 +2830,8 @@ const CREATOR_TG_USERNAME = 'patricianw';
                     div.onclick = () => openArchiveBillDetail(shift.dateKey, idx);
                     div.innerHTML = `
                         <div>
-                            <span class="font-extrabold text-slate-200">${h.tableName}</span> <span class="text-[10px] text-slate-400">(${h.time || ''})</span>
-                            <div class="text-[10px] text-slate-400 mt-0.5">Чек: ${h.subtotal} ₽ • Чай: <span class="text-amber-300">${h.tipType}</span></div>
+                            <span class="font-extrabold text-slate-200">${escapeHtml(h.tableName)}</span> <span class="text-[10px] text-slate-400">(${h.time || ''})</span>
+                            <div class="text-[10px] text-slate-400 mt-0.5">Чек: ${h.subtotal} ₽ • Чай: <span class="text-amber-300">${escapeHtml(h.tipType)}</span></div>
                         </div>
                         <span class="text-emerald-400 font-extrabold">+${h.tip} ₽</span>
                     `;
@@ -2857,7 +2962,7 @@ const CREATOR_TG_USERNAME = 'patricianw';
                 div.className = `flex justify-between items-center p-3 rounded-2xl border ${isStopped ? 'bg-rose-500/10 border-rose-500/30' : 'glass-panel border-slate-800'}`;
                 div.innerHTML = `
                     <div class="pr-2">
-                        <div class="font-bold text-xs ${isStopped ? 'text-rose-300 line-through' : 'text-slate-200'}">${item.name}</div>
+                        <div class="font-bold text-xs ${isStopped ? 'text-rose-300 line-through' : 'text-slate-200'}">${escapeHtml(item.name)}</div>
                         <div class="text-[10px] text-slate-400">${item.price} ₽</div>
                     </div>
                     <button onclick="toggleStopItemByIdx(${idx})" class="px-3.5 py-2 rounded-xl text-xs font-extrabold tap-scale shadow ${isStopped ? 'bg-rose-600 text-white' : 'glass-panel text-slate-300'}">
@@ -2913,7 +3018,7 @@ const CREATOR_TG_USERNAME = 'patricianw';
                 btn.onclick = () => handleTableClick(name);
                 btn.innerHTML = `
                     <div class="flex justify-between items-center w-full">
-                        <span class="font-extrabold text-xs truncate pr-1">${name}</span>
+                        <span class="font-extrabold text-xs truncate pr-1">${escapeHtml(name)}</span>
                         <span class="text-[10px] font-mono opacity-80 shrink-0">${hasOrder && t.lastVisited ? timerDisplay : ''}</span>
                     </div>
                     <div>
@@ -3034,7 +3139,7 @@ const CREATOR_TG_USERNAME = 'patricianw';
 
                 let gBtn = document.createElement('button');
                 gBtn.className = `px-3 py-1.5 rounded-xl text-xs font-bold tap-scale flex items-center space-x-1 ${t.activeGuest === gLabel ? 'bg-slate-100 text-slate-950 shadow' : 'glass-element text-slate-300'}`;
-                gBtn.innerHTML = `<span>👤 ${gLabel}</span> <span onclick="event.stopPropagation(); renameGuest(${i})" class="text-[10px] opacity-75 ml-1 px-1 hover:opacity-100">✏️</span>`;
+                gBtn.innerHTML = `<span>👤 ${escapeHtml(gLabel)}</span> <span onclick="event.stopPropagation(); renameGuest(${i})" class="text-[10px] opacity-75 ml-1 px-1 hover:opacity-100">✏️</span>`;
                 gBtn.onclick = (function(nameLabel) { return () => { t.activeGuest = nameLabel; renderTableCard(); }; })(gLabel);
                 
                 guestsContainer.appendChild(gBtn);
@@ -3053,11 +3158,11 @@ const CREATOR_TG_USERNAME = 'patricianw';
                     div.className = "flex justify-between items-center glass-element px-3.5 py-2.5 rounded-2xl text-xs border border-slate-800/80";
                     div.innerHTML = `
                         <div>
-                            <div class="font-extrabold text-slate-100 text-xs tracking-wide">${item.name}</div>
+                            <div class="font-extrabold text-slate-100 text-xs tracking-wide">${escapeHtml(item.name)}</div>
                             <div class="text-[10px] text-slate-400 mt-0.5 flex items-center space-x-1.5 flex-wrap">
-                                <span class="text-slate-300 font-bold">${item.course}</span> • 
-                                <span class="text-emerald-400 font-semibold">${item.guest}</span>
-                                <span class="text-rose-300 font-medium">${item.modifier ? '(' + item.modifier + ')' : ''}</span>
+                                <span class="text-slate-300 font-bold">${escapeHtml(item.course)}</span> • 
+                                <span class="text-emerald-400 font-semibold">${escapeHtml(item.guest)}</span>
+                                <span class="text-rose-300 font-medium">${item.modifier ? '(' + escapeHtml(item.modifier) + ')' : ''}</span>
                                 <button onclick="editItemModifier(${idx})" class="text-slate-300 hover:text-white ml-1">✏️</button>
                             </div>
                         </div>
@@ -3119,12 +3224,12 @@ const CREATOR_TG_USERNAME = 'patricianw';
                 
                 let guestsCheckboxesHtml = allGuests.map((gName, guestIdx) => {
                     let isChecked = groupGuests.includes(gName);
-                    return `<label class="flex items-center space-x-2 text-xs text-slate-300"><input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleGuestInGroupByIdx(${gIdx}, ${guestIdx})" class="rounded bg-slate-900 border-slate-700"><span>${gName}</span></label>`;
+                    return `<label class="flex items-center space-x-2 text-xs text-slate-300"><input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleGuestInGroupByIdx(${gIdx}, ${guestIdx})" class="rounded bg-slate-900 border-slate-700"><span>${escapeHtml(gName)}</span></label>`;
                 }).join('');
 
                 div.innerHTML = `
                     <div class="flex justify-between items-center">
-                        <span class="font-extrabold text-slate-200 text-xs">${groupName}</span>
+                        <span class="font-extrabold text-slate-200 text-xs">${escapeHtml(groupName)}</span>
                         <span class="font-extrabold text-emerald-400">${groupSum} ₽</span>
                     </div>
                     <div class="grid grid-cols-2 gap-1.5 pt-1">${guestsCheckboxesHtml}</div>
@@ -3262,7 +3367,7 @@ const CREATOR_TG_USERNAME = 'patricianw';
                 div.className = `flex justify-between items-center px-3.5 py-2.5 rounded-2xl border transition ${isStopped ? 'bg-rose-500/5 border-rose-500/20 opacity-50' : 'glass-element border-slate-800 hover:border-slate-600'}`;
                 div.innerHTML = `
                     <div class="pr-2 flex-1">
-                        <div class="font-bold text-xs ${isStopped ? 'text-rose-300 line-through' : 'text-slate-200'}">${item.name}</div>
+                        <div class="font-bold text-xs ${isStopped ? 'text-rose-300 line-through' : 'text-slate-200'}">${escapeHtml(item.name)}</div>
                         <div class="text-[10px] ${isStopped ? 'text-rose-400 font-extrabold' : 'text-slate-300 font-extrabold'} mt-0.5">
                             ${isStopped ? '🛑 В СТОПЕ' : item.price + ' ₽'}
                         </div>
@@ -3419,8 +3524,8 @@ const CREATOR_TG_USERNAME = 'patricianw';
                 card.innerHTML = `
                     <div class="flex justify-between items-center">
                         <div class="flex items-center space-x-2.5">
-                            <span class="font-extrabold text-sm text-slate-100">${name}</span>
-                            <span data-live-timer-table="${name}" class="text-xs px-3 py-1 rounded-full font-mono font-extrabold border shadow ${timerColors}">⏱ ${timerText}</span>
+                            <span class="font-extrabold text-sm text-slate-100">${escapeHtml(name)}</span>
+                            <span data-live-timer-table="${escapeHtml(name)}" class="text-xs px-3 py-1 rounded-full font-mono font-extrabold border shadow ${timerColors}">⏱ ${timerText}</span>
                         </div>
                         <span class="font-extrabold text-sm text-emerald-400">${total} ₽</span>
                     </div>
@@ -3502,10 +3607,10 @@ const CREATOR_TG_USERNAME = 'patricianw';
                 div.onclick = () => { selectedCheckoutGroup = groupName; renderCheckoutBillsPreview(); };
                 div.innerHTML = `
                     <div class="flex justify-between items-center font-extrabold text-slate-200 text-xs">
-                        <span>🧾 ${groupName} <span class="text-[10px] text-slate-400 font-normal">(${groupGuests.join(', ') || 'нет'})</span></span>
+                        <span>🧾 ${escapeHtml(groupName)} <span class="text-[10px] text-slate-400 font-normal">(${escapeHtml(groupGuests.join(', ')) || 'нет'})</span></span>
                         <span class="text-emerald-400">${groupSum} ₽</span>
                     </div>
-                    <div class="text-[10px] text-slate-400 truncate mt-0.5">${itemsListText}</div>
+                    <div class="text-[10px] text-slate-400 truncate mt-0.5">${escapeHtml(itemsListText)}</div>
                 `;
                 container.appendChild(div);
             }
@@ -3655,8 +3760,8 @@ const CREATOR_TG_USERNAME = 'patricianw';
                     div.onclick = () => openHistoryDetail(index);
                     div.innerHTML = `
                         <div>
-                            <span class="font-extrabold text-slate-200">${h.tableName}</span> <span class="text-[10px] text-slate-400">(${h.time})</span>
-                            <div class="text-[10px] text-slate-400 mt-0.5">Оплата: <span class="text-slate-200 font-bold">${h.paymentMethod || 'Нал'}</span> • Чай: <span class="text-amber-300">${h.tipType}</span></div>
+                            <span class="font-extrabold text-slate-200">${escapeHtml(h.tableName)}</span> <span class="text-[10px] text-slate-400">(${h.time})</span>
+                            <div class="text-[10px] text-slate-400 mt-0.5">Оплата: <span class="text-slate-200 font-bold">${escapeHtml(h.paymentMethod || 'Нал')}</span> • Чай: <span class="text-amber-300">${escapeHtml(h.tipType)}</span></div>
                         </div>
                         <span class="text-emerald-400 font-extrabold">+${h.tip} ₽</span>
                     `;
@@ -3689,8 +3794,8 @@ const CREATOR_TG_USERNAME = 'patricianw';
                     row.className = "flex justify-between items-center glass-element p-2.5 rounded-xl border border-slate-800 mb-1.5";
                     row.innerHTML = `
                         <div>
-                            <div class="text-slate-200 font-bold">${item.name}</div>
-                            <div class="text-[10px] text-slate-400"><span class="text-slate-300">${item.course}</span> • <span class="text-emerald-400">${item.guest}</span> ${item.modifier ? '('+item.modifier+')' : ''}</div>
+                            <div class="text-slate-200 font-bold">${escapeHtml(item.name)}</div>
+                            <div class="text-[10px] text-slate-400"><span class="text-slate-300">${escapeHtml(item.course)}</span> • <span class="text-emerald-400">${escapeHtml(item.guest)}</span> ${item.modifier ? '('+escapeHtml(item.modifier)+')' : ''}</div>
                         </div>
                         <span class="font-bold text-slate-200">${item.price} ₽</span>
                     `;
