@@ -131,6 +131,13 @@
         body.light-theme #viralCardCaptureArea .text-white {
             color: #ffffff !important;
         }
+    
+        /* Шпаргалка по блюду (ТТК и слоган): читаемые цвета в светлой теме */
+        body.light-theme .ttk-btn-on { color: #b45309 !important; background: rgba(245, 158, 11, 0.16) !important; border-color: rgba(217, 119, 6, 0.5) !important; }
+        body.light-theme .ttk-note { color: #b45309 !important; }
+        body.light-theme .ttk-label-amber { color: #b45309 !important; }
+        body.light-theme .ttk-label-emerald { color: #047857 !important; }
+        body.light-theme .ttk-slogan-box { background: rgba(245, 158, 11, 0.12) !important; border-color: rgba(217, 119, 6, 0.45) !important; }
     </style>
 </head>
 <body class="flex flex-col justify-between selection:bg-emerald-500 selection:text-slate-950">
@@ -1098,6 +1105,56 @@
             <button type="button" onclick="closeAiScannerModal()" class="w-full glass-element text-slate-300 font-bold py-3 rounded-2xl text-xs">
                 Закрыть
             </button>
+        </div>
+    </div>
+
+    <!-- МОДАЛКА ПРОСМОТРА: ШПАРГАЛКА ПО БЛЮДУ (ТТК И СЛОГАН) -->
+    <div id="dishTtkViewModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-[90] hidden flex items-center justify-center p-4" onclick="if (event.target === this) closeDishTtkView()">
+        <div class="glass-panel rounded-[32px] max-w-sm w-full p-5 space-y-3.5 shadow-2xl border border-slate-700/50 max-h-[88vh] overflow-y-auto">
+            <div class="flex justify-between items-start">
+                <div class="pr-2 min-w-0">
+                    <h3 id="dishTtkViewTitle" class="font-extrabold text-sm text-slate-100 leading-snug break-words"></h3>
+                    <div id="dishTtkViewPrice" class="text-[11px] text-slate-400 font-bold mt-0.5"></div>
+                </div>
+                <button type="button" onclick="closeDishTtkView()" aria-label="Закрыть" class="glass-element w-8 h-8 shrink-0 rounded-full text-slate-300 text-sm font-bold tap-scale">✕</button>
+            </div>
+
+            <div class="ttk-slogan-box rounded-2xl p-3.5 border border-amber-500/30 bg-amber-500/10">
+                <div class="ttk-label-amber text-[10px] font-extrabold uppercase tracking-wider text-amber-400 mb-1.5">💬 Как продать гостю (слоган):</div>
+                <div id="dishTtkViewSlogan" class="text-sm font-bold text-slate-100 whitespace-pre-line leading-snug break-words" style="white-space: pre-line"></div>
+            </div>
+
+            <div class="glass-element rounded-2xl p-3.5 border border-slate-800">
+                <div class="ttk-label-emerald text-[10px] font-extrabold uppercase tracking-wider text-emerald-400 mb-1.5">📖 ТТК и состав блюда:</div>
+                <div id="dishTtkViewTtk" class="text-xs text-slate-200 whitespace-pre-line leading-relaxed break-words" style="white-space: pre-line"></div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 pt-1">
+                <button type="button" onclick="editDishTtkFromView()" class="glass-element text-slate-200 py-3 rounded-2xl text-xs font-extrabold tap-scale">✏️ Изменить ТТК</button>
+                <button type="button" id="dishTtkViewAddBtn" onclick="addDishFromTtkView()" class="bg-slate-100 text-slate-950 py-3 rounded-2xl text-xs font-extrabold tap-scale shadow-lg">＋ Добавить в заказ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- МОДАЛКА РЕДАКТИРОВАНИЯ: ТТК И СЛОГАН -->
+    <div id="dishTtkEditModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-[92] hidden flex items-center justify-center p-4">
+        <div class="glass-panel rounded-[32px] max-w-sm w-full p-5 space-y-3 shadow-2xl border border-slate-700/50 max-h-[90vh] overflow-y-auto">
+            <div>
+                <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Шпаргалка по блюду</div>
+                <h3 id="dishTtkEditTitle" class="font-extrabold text-sm text-slate-100 leading-snug break-words mt-0.5"></h3>
+            </div>
+            <div class="space-y-1.5">
+                <label for="dishTtkEditSlogan" class="ttk-label-amber block text-[11px] font-extrabold text-amber-400">🔥 Краткий продающий слоган (как вкусно предложить гостю)</label>
+                <textarea id="dishTtkEditSlogan" rows="2" maxlength="200" placeholder="Например: Сочная вырезка с дымком, хит этой недели" class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs text-slate-100 outline-none resize-none"></textarea>
+            </div>
+            <div class="space-y-1.5">
+                <label for="dishTtkEditTtk" class="ttk-label-emerald block text-[11px] font-extrabold text-emerald-400">📋 ТТК (состав, граммовки, соусы, аллергены, время подачи)</label>
+                <textarea id="dishTtkEditTtk" rows="5" maxlength="1500" placeholder="Состав, граммовка, соус, аллергены, время подачи..." class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs text-slate-100 outline-none resize-none"></textarea>
+            </div>
+            <div class="grid grid-cols-2 gap-2 pt-1">
+                <button type="button" onclick="closeDishTtkEdit()" class="glass-element text-slate-300 py-3 rounded-2xl text-xs font-bold tap-scale">Отмена</button>
+                <button type="button" onclick="saveDishTtk()" class="bg-emerald-500 text-slate-950 py-3 rounded-2xl text-xs font-extrabold tap-scale shadow-lg">💾 Сохранить</button>
+            </div>
         </div>
     </div>
 
@@ -2976,16 +3033,26 @@
             menuItems.forEach((item, idx) => {
                 if (!item.name.toLowerCase().includes(search)) return;
                 const isStopped = stopListSet.has(item.name);
+                const hasSlogan = !!(item.slogan && String(item.slogan).trim());
+                const hasTtk = !!(item.ttk && String(item.ttk).trim());
+                const hasSheet = hasSlogan || hasTtk;
+                const sheetNote = hasSheet
+                    ? `<div class="ttk-note text-[9px] font-bold text-amber-400 mt-0.5">${hasSlogan ? '🔥 слоган' : ''}${hasSlogan && hasTtk ? ' · ' : ''}${hasTtk ? '📋 ТТК' : ''} заполнено</div>`
+                    : '';
                 const div = document.createElement('div');
                 div.className = `flex justify-between items-center p-3 rounded-2xl border ${isStopped ? 'bg-rose-500/10 border-rose-500/30' : 'glass-panel border-slate-800'}`;
                 div.innerHTML = `
-                    <div class="pr-2">
+                    <div class="pr-2 min-w-0 flex-1">
                         <div class="font-bold text-xs ${isStopped ? 'text-rose-300 line-through' : 'text-slate-200'}">${escapeHtml(item.name)}</div>
                         <div class="text-[10px] text-slate-400">${item.price} ₽</div>
+                        ${sheetNote}
                     </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button onclick="openDishTtkEdit(${idx})" class="px-3 py-2 rounded-xl text-[11px] font-extrabold tap-scale ${hasSheet ? 'ttk-btn-on text-amber-400 border border-amber-500/40 bg-amber-500/10' : 'glass-element text-slate-400'}">📋 ТТК</button>
                     <button onclick="toggleStopItemByIdx(${idx})" class="px-3.5 py-2 rounded-xl text-xs font-extrabold tap-scale shadow ${isStopped ? 'bg-rose-600 text-white' : 'glass-panel text-slate-300'}">
                         ${isStopped ? '❌ В стопе' : '✅ Активно'}
                     </button>
+                    </div>
                 `;
                 container.appendChild(div);
             });
@@ -3000,6 +3067,99 @@
             saveData();
             renderStopList();
             renderMenuDirect();
+        }
+
+        // ================= ШПАРГАЛКА ОФИЦИАНТА: ТТК И ПРОДАЮЩИЙ СЛОГАН =================
+
+        let dishTtkViewIdx = null; // индекс блюда в menuItems для окна просмотра
+        let dishTtkEditIdx = null; // индекс блюда в menuItems для окна редактирования
+
+        function dishHasCheatSheet(item) {
+            return !!(item && ((item.slogan && String(item.slogan).trim()) || (item.ttk && String(item.ttk).trim())));
+        }
+
+        function openDishTtkView(idx) {
+            const item = menuItems[idx];
+            if (!item) return;
+            triggerHaptic('open');
+            dishTtkViewIdx = idx;
+
+            const slogan = String(item.slogan || '').trim();
+            const ttk = String(item.ttk || '').trim();
+
+            // Весь текст выводится через textContent: названия и заметки не могут внедрить HTML.
+            document.getElementById('dishTtkViewTitle').textContent = item.name;
+            document.getElementById('dishTtkViewPrice').textContent = item.price + ' ₽' + (item.isHosper ? ' за 100 г' : '');
+
+            const sloganEl = document.getElementById('dishTtkViewSlogan');
+            sloganEl.textContent = slogan || 'Слоган еще не добавлен';
+            sloganEl.classList.toggle('opacity-60', !slogan);
+            sloganEl.classList.toggle('italic', !slogan);
+
+            const ttkEl = document.getElementById('dishTtkViewTtk');
+            ttkEl.textContent = ttk || 'ТТК еще не добавлено. Нажмите «Изменить ТТК», чтобы дописать состав.';
+            ttkEl.classList.toggle('opacity-60', !ttk);
+            ttkEl.classList.toggle('italic', !ttk);
+
+            const addBtn = document.getElementById('dishTtkViewAddBtn');
+            const stopped = stopListSet.has(item.name);
+            const canAdd = !!currentTable && !!tables[currentTable] && !stopped;
+            addBtn.disabled = !canAdd;
+            addBtn.textContent = stopped ? '🛑 Блюдо в стопе' : '＋ Добавить в заказ';
+            addBtn.classList.toggle('opacity-50', !canAdd);
+            addBtn.classList.toggle('cursor-not-allowed', !canAdd);
+
+            document.getElementById('dishTtkViewModal').classList.remove('hidden');
+        }
+
+        function closeDishTtkView() {
+            document.getElementById('dishTtkViewModal').classList.add('hidden');
+            dishTtkViewIdx = null;
+        }
+
+        function editDishTtkFromView() {
+            const idx = dishTtkViewIdx;
+            closeDishTtkView();
+            if (idx !== null) openDishTtkEdit(idx);
+        }
+
+        function addDishFromTtkView() {
+            const idx = dishTtkViewIdx;
+            const item = menuItems[idx];
+            if (!item || !currentTable || !tables[currentTable] || stopListSet.has(item.name)) return;
+            closeDishTtkView();
+            orderMenuItemByIdx(idx, null); // то же поведение, что у кнопки «+ Добавить» (включая выбор веса для весовых блюд)
+        }
+
+        function openDishTtkEdit(idx) {
+            const item = menuItems[idx];
+            if (!item) return;
+            triggerHaptic('open');
+            dishTtkEditIdx = idx;
+            document.getElementById('dishTtkEditTitle').textContent = item.name;
+            document.getElementById('dishTtkEditSlogan').value = item.slogan || '';
+            document.getElementById('dishTtkEditTtk').value = item.ttk || '';
+            document.getElementById('dishTtkEditModal').classList.remove('hidden');
+        }
+
+        function closeDishTtkEdit() {
+            document.getElementById('dishTtkEditModal').classList.add('hidden');
+            dishTtkEditIdx = null;
+        }
+
+        function saveDishTtk() {
+            const item = menuItems[dishTtkEditIdx];
+            if (!item) {
+                closeDishTtkEdit();
+                return;
+            }
+            item.slogan = document.getElementById('dishTtkEditSlogan').value.trim();
+            item.ttk = document.getElementById('dishTtkEditTtk').value.trim();
+            triggerHaptic('success');
+            saveData();
+            renderStopList();
+            renderMenuDirect();
+            closeDishTtkEdit();
         }
 
         // ================= ЗАЛ, СТОЛЫ И КАРТОЧКА ЗАКАЗА =================
@@ -3381,6 +3541,7 @@
                 if (search.length > 0 ? !matchSearch : !matchCat) return;
 
                 const isStopped = stopListSet.has(item.name);
+                const hasSheet = dishHasCheatSheet(item);
                 const div = document.createElement('div');
                 div.className = `flex justify-between items-center px-3.5 py-2.5 rounded-2xl border transition ${isStopped ? 'bg-rose-500/5 border-rose-500/20 opacity-50' : 'glass-element border-slate-800 hover:border-slate-600'}`;
                 div.innerHTML = `
@@ -3390,9 +3551,12 @@
                             ${isStopped ? '🛑 В СТОПЕ' : item.price + ' ₽'}
                         </div>
                     </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button type="button" onclick="openDishTtkView(${idx})" aria-label="Шпаргалка по блюду" class="w-9 h-9 flex items-center justify-center rounded-xl text-lg font-black leading-none tap-scale ${hasSheet ? 'ttk-btn-on bg-amber-500/15 text-amber-400 border border-amber-500/30' : 'glass-element text-slate-400'}">*</button>
                     <button ${isStopped ? 'disabled' : ''} onclick="orderMenuItemByIdx(${idx}, this)" class="${isStopped ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : 'bg-slate-100 hover:bg-white text-slate-950 shadow-lg'} font-extrabold px-3.5 py-2 rounded-xl text-xs tap-scale shrink-0">
                         ${isStopped ? 'Стоп' : '+ Добавить'}
                     </button>
+                    </div>
                 `;
                 list.appendChild(div);
             });
