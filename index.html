@@ -1409,6 +1409,7 @@
                 if (!response.ok) {
                     const err = new Error((payload && payload.error) || `Ошибка сервера (${response.status})`);
                     err.status = response.status;
+                    err.reason = payload && payload.reason ? String(payload.reason) : '';
                     throw err;
                 }
                 return payload;
@@ -1474,6 +1475,7 @@
                 return true;
             } catch (e) {
                 proStatusError = (e && e.message) || 'Не удалось проверить подписку.';
+                if (e && e.reason) proStatusError += ` (код: ${e.reason})`;
                 updateProStatusUI();
                 // Нет связи — пробуем снова. Ошибка 401 (не из Telegram) от повторов не исправится.
                 if (!proStatusLoaded && !(e && e.status === 401)) setTimeout(refreshProStatus, 8000);
