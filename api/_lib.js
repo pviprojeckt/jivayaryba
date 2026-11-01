@@ -19,11 +19,16 @@ const DEFAULT_SUPABASE_URL = 'https://avrtgjldydchwgtvgrqt.supabase.co';
 const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // без похожих символов: 0/O, 1/I/L
 const TRIAL_DAYS = 7;
 
+/** Значения из панели Vercel часто копируются с пробелом, переводом строки или кавычками — чистим. */
+function cleanEnv(v) {
+  return String(v || '').trim().replace(/^["']+|["']+$/g, '').trim();
+}
+
 function cfg() {
   return {
-    botToken: process.env.TELEGRAM_BOT_TOKEN || '',
+    botToken: cleanEnv(process.env.TELEGRAM_BOT_TOKEN),
     supabaseUrl: (process.env.SUPABASE_URL || DEFAULT_SUPABASE_URL).replace(/\/+$/, ''),
-    supabaseKey: process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '',
+    supabaseKey: cleanEnv(process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY),
     adminIds: new Set(
       (process.env.ADMIN_TELEGRAM_IDS || '')
         .split(',')
@@ -84,15 +89,23 @@ function verifyInitData(initData, botToken, maxAgeSec) {
   if (!hash || !/^[0-9a-f]{64}$/i.test(hash)) return { ok: false, reason: 'missing' };
   params.delete('hash');
 
-  const dataCheckString = Array.from(params.entries())
-    .sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0))
-    .map(([k, v]) => k + '=' + v)
-    .join('\n');
-
+  // Telegram добавил в initData поле signature (для сторонней проверки). Для проверки по токену бота
+  // подходит строка из всех полей кроме hash; на случай отличий принимаем и вариант без signature.
+  // Подделать подпись нельзя ни в одном из вариантов без токена вашего бота.
   const secret = crypto.createHmac('sha256', 'WebAppData').update(botToken).digest();
-  const calc = crypto.createHmac('sha256', secret).update(dataCheckString).digest();
   const given = Buffer.from(hash, 'hex');
-  if (calc.length !== given.length || !crypto.timingSafeEqual(calc, given)) return { ok: false, reason: 'bad_signature' };
+  const entries = Array.from(params.entries()).sort((x, y) => (x[0] < y[0] ? -1 : x[0] > y[0] ? 1 : 0));
+  const variants = [entries, entries.filter(([k]) => k !== 'signature')];
+  let signatureOk = false;
+  for (const list of variants) {
+    const dataCheckString = list.map(([k, v]) => k + '=' + v).join('\n');
+    const calc = crypto.createHmac('sha256', secret).update(dataCheckString).digest();
+    if (calc.length === given.length && crypto.timingSafeEqual(calc, given)) {
+      signatureOk = true;
+      break;
+    }
+  }
+  if (!signatureOk) return { ok: false, reason: 'bad_signature', keys: entries.map(([k]) => k) };
 
   const authDate = Number(params.get('auth_date'));
   const age = Date.now() / 1000 - authDate;
@@ -112,13 +125,25 @@ function verifyInitData(initData, botToken, maxAgeSec) {
 /** Единая проверка «кто это» для всех функций. */
 function authenticate(req) {
   const c = cfg();
-  if (!c.botToken) return { ok: false, status: 500, error: 'Сервер не настроен (нет TELEGRAM_BOT_TOKEN). Напишите разработчику.' };
+  if (!c.botToken) {
+    return { ok: false, status: 500, reason: 'no_token', error: 'Сервер не настроен (нет TELEGRAM_BOT_TOKEN). Напишите разработчику.' };
+  }
   const h = req.headers && req.headers['x-telegram-init-data'];
-  const v = verifyInitData(Array.isArray(h) ? h[0] : h, c.botToken, c.initDataMaxAge);
+  const raw = Array.isArray(h) ? h[0] : h;
+  const v = verifyInitData(raw, c.botToken, c.initDataMaxAge);
   if (!v.ok) {
+    // Безопасная диагностика для владельца (в логах Vercel): ни токен, ни подпись не выводятся.
+    console.error(
+      '[auth] отказ:', v.reason,
+      '| initData получено:', raw ? 'да, ' + String(raw).length + ' симв.' : 'нет',
+      '| поля:', (v.keys || []).join(',') || '-',
+      '| токен похож на настоящий:', /^\d{6,}:[A-Za-z0-9_-]{30,}$/.test(c.botToken),
+      '| id бота из токена:', c.botToken.split(':')[0]
+    );
     return {
       ok: false,
       status: 401,
+      reason: v.reason,
       error:
         v.reason === 'expired'
           ? 'Сессия устарела. Закройте приложение и откройте его в Telegram заново.'

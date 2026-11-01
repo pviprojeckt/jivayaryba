@@ -269,7 +269,7 @@ async function handler(req, res) {
 
   // 1) Кто это: только проверенный пользователь Telegram (подпись проверяется на сервере)
   const auth = lib.authenticate(req);
-  if (!auth.ok) return send(res, auth.status, { error: auth.error });
+  if (!auth.ok) return send(res, auth.status, { error: auth.error, reason: auth.reason });
 
   // 2) Лимит частоты на пользователя
   if (lib.rateLimited('scan:' + auth.userId, cfg.rateLimit, 10 * 60 * 1000)) {

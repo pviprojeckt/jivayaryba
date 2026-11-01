@@ -16,7 +16,7 @@ const isTid = (v) => typeof v === 'string' && /^\d{1,15}$/.test(v);
 
 module.exports = lib.wrap(async (req, res) => {
   const auth = lib.authenticate(req);
-  if (!auth.ok) return lib.send(res, auth.status, { error: auth.error });
+  if (!auth.ok) return lib.send(res, auth.status, { error: auth.error, reason: auth.reason });
   if (!auth.isAdmin) return lib.send(res, 403, { error: 'Недостаточно прав.' });
   if (lib.rateLimited('admin:' + auth.userId, 60, 10 * 60 * 1000)) {
     return lib.send(res, 429, { error: 'Слишком много запросов. Подождите.' });

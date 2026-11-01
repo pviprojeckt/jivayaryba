@@ -11,7 +11,7 @@ const lib = require('./_lib');
 
 module.exports = lib.wrap(async (req, res) => {
   const auth = lib.authenticate(req);
-  if (!auth.ok) return lib.send(res, auth.status, { error: auth.error });
+  if (!auth.ok) return lib.send(res, auth.status, { error: auth.error, reason: auth.reason });
 
   const body = lib.readBody(req) || {};
   const action = String(body.action || 'status');
