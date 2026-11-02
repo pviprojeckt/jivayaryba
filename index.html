@@ -16,8 +16,9 @@
         html, body {
             font-family: 'Plus Jakarta Sans', sans-serif;
             -webkit-tap-highlight-color: transparent;
-            background-color: #07090b;
-            color: #f8fafc;
+            background-color: #09090b;
+            color: #f4f4f5;
+            font-variant-numeric: tabular-nums; /* ровные цифры в суммах, счётчиках и таймерах */
             height: 100vh;
             height: 100dvh;
             overflow: hidden;
@@ -30,28 +31,87 @@
             padding-top: max(var(--safe-top), 84px);
         }
 
+        /* ================= FINTECH PRO: поверхности ================= */
         .glass-panel { 
-            background: linear-gradient(135deg, rgba(17, 24, 32, 0.88) 0%, rgba(10, 14, 19, 0.96) 100%); 
-            backdrop-filter: blur(28px); 
-            -webkit-backdrop-filter: blur(28px); 
+            background: linear-gradient(180deg, #16161a 0%, #111114 100%);
             border: 1px solid rgba(255, 255, 255, 0.07);
-            box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.8);
+            box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08), 0 20px 40px -15px rgba(0, 0, 0, 0.85);
         }
 
         .glass-element {
-            background: rgba(30, 41, 59, 0.4);
-            backdrop-filter: blur(16px);
+            background: #1c1c22;
             border: 1px solid rgba(255, 255, 255, 0.06);
         }
 
+        /* Нейтральный графит вместо синеватого slate для полей и подложек */
+        body .bg-slate-950 { background-color: #0c0c0f; }
+        body .bg-slate-900 { background-color: #131316; }
+        body .bg-slate-800 { background-color: #1c1c22; }
+        body .border-slate-800 { border-color: rgba(255, 255, 255, 0.08); }
+        body .border-slate-700 { border-color: rgba(255, 255, 255, 0.12); }
+
+        /* ================= Иконки (Lucide-стиль) ================= */
+        .ic { display: inline-block; vertical-align: -0.2em; flex-shrink: 0; }
+        :where(.ic) { width: 1em; height: 1em; }
+
+        /* ================= Нижнее меню: «классический минимализм» ================= */
+        .nav-btn {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            padding: 9px 0 7px;
+            color: #71717a;
+            background: transparent;
+            transition: color 0.15s ease;
+        }
+        .nav-btn:hover { color: #d4d4d8; }
+        .nav-btn.active { color: #34d399; }
+        .nav-btn.active::before {
+            content: '';
+            position: absolute;
+            top: -1px;
+            left: 50%;
+            width: 26px;
+            height: 2px;
+            margin-left: -13px;
+            border-radius: 0 0 3px 3px;
+            background: #34d399;
+            box-shadow: 0 0 10px rgba(52, 211, 153, 0.85);
+        }
+
+        /* ================= Столы-виджеты в зале ================= */
+        .tbl-widget { text-align: left; border: 1px solid rgba(255, 255, 255, 0.07); transition: border-color 0.2s ease, background 0.2s ease, transform 0.12s ease; }
+        .tbl-widget.tbl-free {
+            background: #121215;
+            border-color: rgba(255, 255, 255, 0.05);
+            color: #a1a1aa;
+        }
+        .tbl-widget.tbl-ok,
+        .tbl-widget.tbl-warn {
+            background: linear-gradient(180deg, #17171b 0%, #111114 100%);
+            box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08), 0 14px 28px -14px rgba(0, 0, 0, 0.85);
+            color: #f4f4f5;
+        }
+        .tbl-widget.tbl-warn { border-color: rgba(251, 191, 36, 0.22); }
+        .tbl-widget.tbl-alert {
+            background: linear-gradient(180deg, #1d1215 0%, #140d10 100%);
+            border-color: rgba(244, 63, 94, 0.5);
+            box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.06), 0 0 0 1px rgba(244, 63, 94, 0.12), 0 14px 28px -14px rgba(0, 0, 0, 0.85);
+            color: #f4f4f5;
+        }
+        .tbl-widget.tbl-selected { box-shadow: 0 0 0 2px rgba(244, 244, 245, 0.6); }
+
         .viral-story-card {
-            background: radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.22) 0%, rgba(15, 23, 42, 0.95) 55%, #06090e 100%);
+            background: radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.22) 0%, rgba(17, 17, 20, 0.96) 55%, #09090b 100%);
             border: 1px solid rgba(16, 185, 129, 0.35);
             box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.9);
         }
 
         .viral-inner-box {
-            background: rgba(15, 23, 42, 0.85);
+            background: rgba(17, 17, 20, 0.85);
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
         
@@ -65,33 +125,35 @@
 
         /* ================= СВЕТЛАЯ ТЕМА (LIGHT THEME OVERRIDES) ================= */
         body.light-theme {
-            background-color: #f1f5f9 !important;
-            color: #0f172a !important;
+            background-color: #f4f4f5 !important;
+            color: #09090b !important;
         }
         body.light-theme #mainAppHeader,
         body.light-theme #bottomNav,
         body.light-theme #proGateOverlay {
-            background-color: rgba(241, 245, 249, 0.95) !important;
-            border-color: #cbd5e1 !important;
+            background-color: rgba(244, 244, 245, 0.96) !important;
+            border-color: #e4e4e7 !important;
         }
         body.light-theme .glass-panel {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.96) 0%, rgba(248, 250, 252, 0.98) 100%) !important;
-            border: 1px solid #cbd5e1 !important;
-            box-shadow: 0 12px 32px -8px rgba(15, 23, 42, 0.08) !important;
+            background: #ffffff !important;
+            border: 1px solid #e4e4e7 !important;
+            box-shadow: 0 1px 2px rgba(9, 9, 11, 0.04), 0 14px 30px -14px rgba(9, 9, 11, 0.14) !important;
         }
         body.light-theme .glass-element {
-            background: rgba(226, 232, 240, 0.65) !important;
-            border: 1px solid #cbd5e1 !important;
+            background: #f4f4f5 !important;
+            border: 1px solid #e4e4e7 !important;
         }
         body.light-theme .text-slate-100,
-        body.light-theme .text-slate-200 {
-            color: #0f172a !important;
+        body.light-theme .text-slate-200,
+        body.light-theme .text-white {
+            color: #09090b !important;
         }
         body.light-theme .text-slate-300 {
-            color: #334155 !important;
+            color: #3f3f46 !important;
         }
-        body.light-theme .text-slate-400 {
-            color: #64748b !important;
+        body.light-theme .text-slate-400,
+        body.light-theme .text-slate-500 {
+            color: #71717a !important;
         }
         body.light-theme .bg-slate-950,
         body.light-theme .bg-slate-950\/60,
@@ -99,18 +161,21 @@
         body.light-theme .bg-slate-950\/80,
         body.light-theme .bg-slate-950\/90 {
             background-color: #ffffff !important;
-            border-color: #cbd5e1 !important;
-            color: #0f172a !important;
+            border-color: #e4e4e7 !important;
+            color: #09090b !important;
+        }
+        body.light-theme .bg-slate-800 {
+            background-color: #e4e4e7 !important;
         }
         body.light-theme .border-slate-800,
         body.light-theme .border-slate-800\/80,
         body.light-theme .border-slate-800\/60,
         body.light-theme .border-slate-700,
         body.light-theme .border-slate-700\/50 {
-            border-color: #e2e8f0 !important;
+            border-color: #e4e4e7 !important;
         }
         body.light-theme .bg-slate-100 {
-            background-color: #0f172a !important;
+            background-color: #09090b !important;
             color: #ffffff !important;
         }
         body.light-theme .text-emerald-400 {
@@ -131,21 +196,34 @@
         body.light-theme #viralCardCaptureArea .text-white {
             color: #ffffff !important;
         }
-    
+
+        /* Нижнее меню и столы в светлой теме */
+        body.light-theme .nav-btn { color: #71717a !important; }
+        body.light-theme .nav-btn:hover { color: #3f3f46 !important; }
+        body.light-theme .nav-btn.active { color: #059669 !important; }
+        body.light-theme .nav-btn.active::before { background: #059669; box-shadow: none; }
+        body.light-theme .tbl-widget.tbl-free { background: #f4f4f5 !important; border-color: #e4e4e7 !important; color: #71717a !important; }
+        body.light-theme .tbl-widget.tbl-ok,
+        body.light-theme .tbl-widget.tbl-warn { background: #ffffff !important; border-color: #e4e4e7 !important; box-shadow: 0 1px 2px rgba(9, 9, 11, 0.04), 0 10px 22px -12px rgba(9, 9, 11, 0.16) !important; color: #09090b !important; }
+        body.light-theme .tbl-widget.tbl-warn { border-color: rgba(217, 119, 6, 0.4) !important; }
+        body.light-theme .tbl-widget.tbl-alert { background: #fff1f2 !important; border-color: rgba(225, 29, 72, 0.5) !important; box-shadow: none !important; color: #09090b !important; }
+        body.light-theme .tbl-widget.tbl-selected { box-shadow: 0 0 0 2px #09090b !important; }
+
         /* Шпаргалка по блюду (ТТК и слоган): читаемые цвета в светлой теме */
         body.light-theme .ttk-btn-on { color: #b45309 !important; background: rgba(245, 158, 11, 0.16) !important; border-color: rgba(217, 119, 6, 0.5) !important; }
         body.light-theme .ttk-note { color: #b45309 !important; }
         body.light-theme .ttk-label-amber { color: #b45309 !important; }
         body.light-theme .ttk-label-emerald { color: #047857 !important; }
+        body.light-theme .commission-accent { color: #b45309 !important; }
         body.light-theme .ttk-slogan-box { background: rgba(245, 158, 11, 0.12) !important; border-color: rgba(217, 119, 6, 0.45) !important; }
     </style>
 </head>
 <body class="flex flex-col justify-between selection:bg-emerald-500 selection:text-slate-950">
 
     <!-- ЭКРАН ДОСТУПА (БЛОКИРОВКА ПРИ ОТСУТСТВИИ ИЛИ ИСТЕЧЕНИИ ПОДПИСКИ) -->
-    <div id="proGateOverlay" class="fixed inset-0 bg-[#07090b] z-[100] hidden flex flex-col items-center justify-center p-6">
+    <div id="proGateOverlay" class="fixed inset-0 bg-[#09090b] z-[100] hidden flex flex-col items-center justify-center p-6">
         <div class="glass-panel rounded-[36px] max-w-sm w-full p-7 space-y-4 border border-amber-500/40 shadow-2xl text-center">
-            <div class="w-16 h-16 rounded-3xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-3xl mx-auto shadow-lg">🔒</div>
+            <div class="w-16 h-16 rounded-3xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-3xl mx-auto shadow-lg"><svg class="ic w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
             <div class="space-y-1">
                 <h2 id="gateMainTitle" class="text-lg font-extrabold text-slate-100 uppercase tracking-wider">Доступ к Пульту PRO</h2>
                 <p id="gateSubTitle" class="text-xs text-slate-400 leading-relaxed">Введите промокод (или <b>TEST</b> для 7 дней бесплатного доступа), либо оформите подписку</p>
@@ -155,20 +233,20 @@
                 <span class="text-slate-400">Ваш личный ID:</span>
                 <button onclick="copyMyUserId()" class="font-mono font-extrabold text-sky-400 hover:underline flex items-center space-x-1">
                     <span id="gateUserIdLabel">...</span>
-                    <span>📋</span>
+                    <span><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg></span>
                 </button>
             </div>
 
             <div class="space-y-2.5 pt-1">
                 <input type="text" id="gatePromoInput" placeholder="Введите промокод..." onkeydown="if(event.key==='Enter') activatePromoFromGate()" class="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-2xl px-4 py-3 text-center text-xs text-slate-100 outline-none font-extrabold uppercase tracking-widest">
                 <button onclick="activatePromoFromGate()" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-extrabold py-3.5 rounded-2xl text-xs shadow-xl tap-scale uppercase tracking-wider">
-                    ✨ Активировать промокод
+                    <svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg> Активировать промокод
                 </button>
             </div>
 
             <div class="pt-2 border-t border-slate-800/80 space-y-2">
                 <button onclick="openCardPaymentModal()" class="w-full glass-element hover:bg-slate-800 text-emerald-400 border border-emerald-500/30 font-extrabold py-3.5 rounded-2xl text-xs tap-scale flex items-center justify-center space-x-1.5 shadow">
-                    <span>💳</span>
+                    <span><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg></span>
                     <span>Купить PRO (Перевод на карту)</span>
                 </button>
             </div>
@@ -176,10 +254,10 @@
     </div>
 
     <!-- Шапка -->
-    <header id="mainAppHeader" class="bg-[#07090b]/90 backdrop-blur-2xl border-b border-slate-800/60 shrink-0 px-5 py-3 z-40">
+    <header id="mainAppHeader" class="bg-[#09090b]/90 backdrop-blur-2xl border-b border-slate-800/60 shrink-0 px-5 py-3 z-40">
         <div class="max-w-md mx-auto flex items-center justify-between">
             <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/60 flex items-center justify-center text-lg shadow-inner">⚡</div>
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/60 flex items-center justify-center text-lg shadow-inner"><svg class="ic w-5 h-5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
                 <div>
                     <h1 class="font-extrabold text-xs tracking-wider text-slate-100 uppercase">Пульт Официанта PRO</h1>
                     <button onclick="handleCloudStatusClick()" class="flex items-center space-x-1.5 mt-0.5 tap-scale text-left">
@@ -193,7 +271,7 @@
                     <span class="text-[10px] text-slate-400 font-medium">Чай:</span>
                     <span id="headerTipSum">0 ₽</span>
                 </div>
-                <button onclick="resetAllTimers()" class="glass-element hover:bg-slate-800 text-slate-300 p-2 rounded-2xl text-xs tap-scale shadow" title="Сбросить все таймеры">🔄</button>
+                <button onclick="resetAllTimers()" class="glass-element hover:bg-slate-800 text-slate-300 p-2 rounded-2xl text-xs tap-scale shadow" title="Сбросить все таймеры"><svg class="ic w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg></button>
             </div>
         </div>
     </header>
@@ -204,7 +282,7 @@
         <!-- ПЛАШКА ПРЕДУПРЕЖДЕНИЯ (ПОЯВЛЯЕТСЯ ТОЛЬКО КОГДА ОСТАЛОСЬ <= 3 ДНЕЙ) -->
         <div id="expiringProBanner" class="glass-panel rounded-2xl p-3.5 hidden justify-between items-center shadow-lg border border-amber-500/40 bg-gradient-to-r from-amber-950/30 to-slate-900">
             <div class="flex items-center space-x-2.5">
-                <div class="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-sm">⏳</div>
+                <div class="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-sm"><svg class="ic w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/></svg></div>
                 <div>
                     <div class="text-[10px] uppercase font-extrabold text-amber-400 tracking-wider">Подписка заканчивается</div>
                     <div class="text-[11px] font-bold text-slate-200" id="expiringProSubtitle">Осталось менее 3 дней</div>
@@ -219,13 +297,13 @@
         <div id="tabHall" class="tab-content space-y-4">
             <div id="hallGridView" class="space-y-4">
                 <div class="flex justify-between items-center px-1">
-                    <h2 id="hallHeaderTitle" class="text-xs font-bold uppercase tracking-widest text-slate-400">🗺 Зал (15 столов)</h2>
+                    <h2 id="hallHeaderTitle" class="text-xs font-bold uppercase tracking-widest text-slate-400"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" x2="9" y1="3" y2="18"/><line x1="15" x2="15" y1="6" y2="21"/></svg> Зал (15 столов)</h2>
                     <div class="flex items-center space-x-1.5">
                         <button onclick="openHallConstructorModal()" class="text-xs glass-element hover:bg-slate-800 px-3 py-2 rounded-2xl text-sky-400 border border-sky-500/20 transition font-extrabold shadow tap-scale">
-                            ⚙️ Зал
+                            <svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg> Зал
                         </button>
                         <button onclick="filterAttention()" id="attentionFilterBtn" class="text-xs glass-element hover:bg-slate-800 px-3 py-2 rounded-2xl text-slate-300 transition font-bold shadow tap-scale">
-                            ⚠️ (<span id="attentionCount">0</span>)
+                            <svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> (<span id="attentionCount">0</span>)
                         </button>
                     </div>
                 </div>
@@ -243,16 +321,16 @@
                         <p class="text-[10px] text-slate-400 mt-0.5 font-semibold" id="tableGuestsCountInfo">Гостей: 2</p>
                     </div>
                     <div class="flex space-x-1.5">
-                        <button onclick="backToHallGrid()" class="glass-element text-slate-300 font-bold px-3 py-2 rounded-2xl text-xs tap-scale shadow">← Назад</button>
-                        <button onclick="markTableVisited()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-2xl text-xs font-extrabold tap-scale shadow-lg">👁️ У стола</button>
+                        <button onclick="backToHallGrid()" class="glass-element text-slate-300 font-bold px-3 py-2 rounded-2xl text-xs tap-scale shadow"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg> Назад</button>
+                        <button onclick="markTableVisited()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-2xl text-xs font-extrabold tap-scale shadow-lg"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg> У стола</button>
                     </div>
                 </div>
 
                 <div id="orderEditingSection" class="space-y-3">
                     <div class="space-y-1.5 bg-slate-950/60 p-2.5 rounded-2xl border border-slate-800/80 shadow-inner">
                         <div class="flex justify-between items-center">
-                            <span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Гость (✏️ — дать имя):</span>
-                            <span id="compactCourseIndicator" class="text-[9px] font-extrabold text-emerald-400 hidden">Курс: ⚡ Сразу</span>
+                            <span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Гость (<svg class="ic w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> — дать имя):</span>
+                            <span id="compactCourseIndicator" class="text-[9px] font-extrabold text-emerald-400 hidden">Курс: <svg class="ic w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Сразу</span>
                         </div>
                         <div id="guestsListBtns" class="flex flex-wrap gap-1.5"></div>
                     </div>
@@ -260,7 +338,7 @@
                     <div id="tableCoursesBlock" class="space-y-1">
                         <span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Курс подачи блюд:</span>
                         <div class="grid grid-cols-4 gap-1.5">
-                            <button onclick="setCourseActive('⚡ Сразу')" id="courseBtn_Сразу" class="course-active-btn bg-slate-100 text-slate-950 py-2 rounded-xl text-[11px] font-extrabold shadow-md">⚡ Сразу</button>
+                            <button onclick="setCourseActive('Сразу')" id="courseBtn_Сразу" class="course-active-btn bg-slate-100 text-slate-950 py-2 rounded-xl text-[11px] font-extrabold shadow-md"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Сразу</button>
                             <button onclick="setCourseActive('1 курс')" id="courseBtn_1к" class="course-active-btn glass-element text-slate-300 py-2 rounded-xl text-[11px] font-semibold">1к Закуски</button>
                             <button onclick="setCourseActive('2 курс')" id="courseBtn_2к" class="course-active-btn glass-element text-slate-300 py-2 rounded-xl text-[11px] font-semibold">2к Супы</button>
                             <button onclick="setCourseActive('3 курс')" id="courseBtn_3к" class="course-active-btn glass-element text-slate-300 py-2 rounded-xl text-[11px] font-semibold">3к Горячее</button>
@@ -270,11 +348,12 @@
                     <div class="space-y-2.5 pt-1 border-t border-slate-800/80">
                         <div class="flex items-center space-x-1.5">
                             <div class="relative flex-1">
-                                <input type="text" id="menuSearch" placeholder="🔍 Поиск блюда или напитка..." onfocus="enterMenuSearchMode()" oninput="renderMenuDirect()" onkeydown="if(event.key==='Enter'){ this.blur(); exitMenuSearchMode(); }" class="w-full glass-element border-slate-700 focus:border-emerald-500 rounded-2xl pl-3.5 pr-8 py-2.5 text-xs text-slate-100 outline-none placeholder-slate-500 shadow-inner">
-                                <button id="clearSearchTextBtn" onclick="clearMenuSearchInput()" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-slate-800 text-slate-300 text-[10px] flex items-center justify-center">✕</button>
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"><svg class="ic w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></span>
+                                <input type="text" id="menuSearch" placeholder="Поиск блюда или напитка..." onfocus="enterMenuSearchMode()" oninput="renderMenuDirect()" onkeydown="if(event.key==='Enter'){ this.blur(); exitMenuSearchMode(); }" class="w-full glass-element border-slate-700 focus:border-emerald-500 rounded-2xl pl-9 pr-8 py-2.5 text-xs text-slate-100 outline-none placeholder-slate-500 shadow-inner">
+                                <button id="clearSearchTextBtn" onclick="clearMenuSearchInput()" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-slate-800 text-slate-300 text-[10px] flex items-center justify-center"><svg class="ic w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
                             </div>
                             <button id="exitSearchModeBtn" onclick="exitMenuSearchMode()" class="hidden bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold px-3.5 py-2.5 rounded-2xl text-xs shadow-lg tap-scale shrink-0">
-                                ✓ Готово
+                                <svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Готово
                             </button>
                         </div>
 
@@ -286,7 +365,7 @@
                             <button onclick="filterCat('Горячее')" class="cat-tab glass-element text-slate-300 px-3 py-1.5 rounded-xl whitespace-nowrap font-medium">Горячее</button>
                             <button onclick="filterCat('Пицца')" class="cat-tab glass-element text-slate-300 px-3 py-1.5 rounded-xl whitespace-nowrap font-medium">Пицца</button>
                             <button onclick="filterCat('Десерты')" class="cat-tab glass-element text-slate-300 px-3 py-1.5 rounded-xl whitespace-nowrap font-medium">Десерты</button>
-                            <button onclick="filterCat('Бар')" class="cat-tab glass-element text-sky-400 border border-sky-500/30 px-3 py-1.5 rounded-xl whitespace-nowrap font-bold">🍸 Бар</button>
+                            <button onclick="filterCat('Бар')" class="cat-tab glass-element text-sky-400 border border-sky-500/30 px-3 py-1.5 rounded-xl whitespace-nowrap font-bold"><svg class="ic w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 22h8"/><path d="M12 11v11"/><path d="m19 3-7 8-7-8Z"/></svg> Бар</button>
                         </div>
 
                         <div id="directMenuList" class="space-y-1.5 max-h-56 overflow-y-auto pr-1"></div>
@@ -295,7 +374,7 @@
 
                 <div id="showMenuToggleBtnContainer" class="hidden">
                     <button onclick="toggleOrderReviewMode(false)" class="w-full glass-element bg-slate-800/50 border border-slate-700 text-slate-200 font-extrabold py-3 rounded-2xl text-xs tap-scale flex items-center justify-center space-x-2 shadow-lg">
-                        <span>➕</span>
+                        <span><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></span>
                         <span>Добавить еще позиции в заказ</span>
                     </button>
                 </div>
@@ -312,11 +391,11 @@
 
                     <div class="grid grid-cols-2 gap-2 pt-1">
                         <button onclick="saveTableToWork()" class="bg-slate-100 hover:bg-white text-slate-950 font-extrabold py-3.5 rounded-2xl text-xs shadow-xl tap-scale flex items-center justify-center space-x-1.5">
-                            <span>💾</span>
+                            <span><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg></span>
                             <span>В работу (Столы)</span>
                         </button>
                         <button onclick="openCheckoutModal()" class="bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-extrabold py-3.5 rounded-2xl text-xs shadow-xl tap-scale flex items-center justify-center space-x-1.5">
-                            <span>✅</span>
+                            <span><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></span>
                             <span>Расчет стола</span>
                         </button>
                     </div>
@@ -327,7 +406,7 @@
         <!-- ВКЛАДКА 2: Мои столы -->
         <div id="tabMyTables" class="tab-content space-y-3 hidden">
             <div class="flex justify-between items-center px-1">
-                <h2 class="text-xs font-bold uppercase tracking-widest text-slate-400">⚡ Мои столы в работе</h2>
+                <h2 class="text-xs font-bold uppercase tracking-widest text-slate-400"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Мои столы в работе</h2>
                 <span id="activeTablesCountBadge" class="text-[10px] glass-element text-slate-300 px-3 py-1 rounded-full font-bold">0 в работе</span>
             </div>
             <div id="myActiveTablesList" class="space-y-3"></div>
@@ -338,17 +417,17 @@
             <div class="glass-panel rounded-3xl p-4 space-y-3 shadow-lg border border-slate-700/50">
                 <div class="flex justify-between items-center">
                     <div>
-                        <h3 class="text-xs font-extrabold uppercase tracking-widest text-slate-200">⏱ Управление сменой</h3>
+                        <h3 class="text-xs font-extrabold uppercase tracking-widest text-slate-200"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="10" x2="14" y1="2" y2="2"/><line x1="12" x2="15" y1="14" y2="11"/><circle cx="12" cy="14" r="8"/></svg> Управление сменой</h3>
                         <p class="text-[10px] text-slate-400 mt-0.5">Сохрани в календарь или открой карточку для сторис</p>
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-2">
                     <button onclick="openViralShareFromCurrentShift()" class="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 py-3 rounded-2xl text-xs font-extrabold tap-scale shadow-lg flex items-center justify-center space-x-1.5">
-                        <span>🔥</span>
+                        <span><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></span>
                         <span>Сторис смены</span>
                     </button>
                     <button onclick="openFinishShiftModal()" class="bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 py-3 rounded-2xl text-xs font-extrabold tap-scale shadow flex items-center justify-center space-x-1.5">
-                        <span>🏁</span>
+                        <span><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></svg></span>
                         <span>Закрыть смену</span>
                     </button>
                 </div>
@@ -357,7 +436,7 @@
             <div class="glass-panel rounded-3xl p-4 space-y-3 shadow-lg border border-slate-700/50">
                 <div class="flex justify-between items-center">
                     <div>
-                        <h3 class="text-xs font-extrabold uppercase tracking-widest text-slate-200">🎯 Цель по чаевым на сегодня</h3>
+                        <h3 class="text-xs font-extrabold uppercase tracking-widest text-slate-200"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> Цель по чаевым на сегодня</h3>
                         <p id="tipGoalSubtitle" class="text-[10px] text-slate-400 mt-0.5">Заработано 0 ₽ из 3000 ₽</p>
                     </div>
                     <button onclick="openEditGoalModal()" class="text-xs glass-element bg-slate-800 text-slate-300 border border-slate-700 px-3 py-1.5 rounded-xl font-bold tap-scale">Изменить</button>
@@ -365,7 +444,7 @@
                 <div class="w-full bg-slate-950 h-3 rounded-full overflow-hidden p-0.5 border border-slate-800">
                     <div id="tipGoalProgressBar" class="bg-gradient-to-r from-emerald-500 to-teal-300 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
                 </div>
-                <div id="tipGoalMessage" class="text-[11px] text-slate-300 font-medium text-center italic">Поставь цель и вперед к победе! 🚀</div>
+                <div id="tipGoalMessage" class="text-[11px] text-slate-300 font-medium text-center italic">Поставь цель и вперед к победе! <svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg></div>
             </div>
 
             <div class="grid grid-cols-2 gap-3">
@@ -373,8 +452,8 @@
                     <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Чаевые за сегодня</p>
                     <p id="statsTotalTips" class="text-2xl font-extrabold text-slate-100">0 ₽</p>
                     <div class="text-[10px] text-slate-400 pt-1 flex justify-between border-t border-slate-800/60 mt-1">
-                        <span>💵 Нал: <b id="statsCashTips" class="text-emerald-400">0 ₽</b></span>
-                        <span>💳 Б/н: <b id="statsCardTips" class="text-sky-400">0 ₽</b></span>
+                        <span><svg class="ic w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg> Нал: <b id="statsCashTips" class="text-emerald-400">0 ₽</b></span>
+                        <span><svg class="ic w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg> Б/н: <b id="statsCardTips" class="text-sky-400">0 ₽</b></span>
                     </div>
                 </div>
                 <div class="glass-panel p-4 rounded-3xl space-y-1 shadow-lg">
@@ -383,13 +462,17 @@
                     <div class="text-[10px] text-slate-400 pt-1 border-t border-slate-800/60 mt-1 flex justify-between">
                         <span>Ставка: <b id="currentRateInfoBadge" class="text-slate-200">280 ₽/ч</b></span>
                     </div>
+                    <div class="text-[10px] text-slate-400 flex justify-between">
+                        <span>Продажи: <b id="currentSalesPercentBadge" class="text-slate-200">3%</b></span>
+                        <span><b id="currentCommissionBadge" class="commission-accent text-amber-400">+0 ₽</b></span>
+                    </div>
                 </div>
             </div>
 
             <div class="glass-panel rounded-3xl p-4 space-y-3 shadow-lg">
                 <div class="flex justify-between items-center">
                     <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400">Счета за сегодня (тап для деталей)</h3>
-                    <button onclick="openManualTipModal()" class="text-xs glass-element text-slate-300 border border-slate-700 px-3 py-1.5 rounded-2xl font-extrabold tap-scale">＋ Чай вручную</button>
+                    <button onclick="openManualTipModal()" class="text-xs glass-element text-slate-300 border border-slate-700 px-3 py-1.5 rounded-2xl font-extrabold tap-scale"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg> Чай вручную</button>
                 </div>
                 <div id="closedTablesHistory" class="space-y-2 max-h-72 overflow-y-auto pr-1 text-xs">
                     <p class="text-slate-500 text-center py-6 italic">Нет закрытых счетов за текущую смену</p>
@@ -400,11 +483,11 @@
         <!-- ВКЛАДКА 4: Стоп-лист -->
         <div id="tabStopList" class="tab-content space-y-4 hidden">
             <div class="flex justify-between items-center px-1">
-                <h2 class="text-xs font-bold uppercase tracking-widest text-rose-400">🛑 Стоп-лист</h2>
+                <h2 class="text-xs font-bold uppercase tracking-widest text-rose-400"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg> Стоп-лист</h2>
                 <span id="stopListCountBadge" class="text-[10px] glass-element text-rose-400 px-3 py-1 rounded-full font-bold">0 в стопе</span>
             </div>
             <div class="glass-panel rounded-3xl p-3.5 space-y-3">
-                <input type="text" id="stopListSearch" placeholder="🔍 Найти блюдо или напиток в стоп-лист..." oninput="renderStopList()" class="w-full bg-slate-950/80 border border-slate-800 rounded-2xl px-4 py-3 text-xs text-slate-100 outline-none">
+                <div class="relative"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"><svg class="ic w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></span><input type="text" id="stopListSearch" placeholder="Найти блюдо или напиток в стоп-лист..." oninput="renderStopList()" class="w-full bg-slate-950/80 border border-slate-800 rounded-2xl pl-9 pr-4 py-3 text-xs text-slate-100 outline-none"></div>
                 <div id="stopListContainer" class="space-y-2 max-h-[60vh] overflow-y-auto pr-1"></div>
             </div>
         </div>
@@ -412,42 +495,56 @@
         <!-- ВКЛАДКА 5: ПРОФИЛЬ -->
         <div id="tabProfile" class="tab-content space-y-4 hidden">
             <!-- ВЕРХНЯЯ ПАНЕЛЬ НАСТРОЕК ПРОФИЛЯ И ТЕМЫ -->
-            <div class="glass-panel rounded-2xl p-3 flex justify-between items-center shadow border border-slate-700/50">
+            <div class="glass-panel rounded-2xl p-3 flex flex-wrap gap-2 justify-between items-center shadow border border-slate-700/50">
                 <div class="flex items-center space-x-2.5">
-                    <div class="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-sm">💼</div>
+                    <div class="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-sm"><svg class="ic w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></div>
                     <div>
                         <div class="text-[9px] uppercase font-bold text-slate-400">Ставка</div>
                         <div class="flex items-center space-x-1.5">
-                            <span id="profileHourlyRateDisplay" class="text-xs font-extrabold text-slate-100">280 ₽/ч</span>
-                            <button onclick="openRateModal()" class="text-[9px] text-sky-400 font-bold hover:underline">✏️</button>
+                            <span id="profileHourlyRateDisplay" class="text-xs font-extrabold text-slate-100 whitespace-nowrap">280 ₽/ч</span>
+                            <button onclick="openRateModal()" class="text-[9px] text-sky-400 font-bold hover:underline"><svg class="ic w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg></button>
                         </div>
                     </div>
                 </div>
                 <div class="flex items-center space-x-1.5">
                     <button onclick="toggleAppTheme()" id="themeToggleBtn" class="glass-element hover:bg-slate-800 text-slate-200 px-2.5 py-2 rounded-xl text-xs font-extrabold tap-scale flex items-center space-x-1 shadow" title="Переключить тему">
-                        <span id="themeToggleIcon">☀️</span>
+                        <span id="themeToggleIcon"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg></span>
                         <span id="themeToggleText" class="text-[10px]">Светлая</span>
                     </button>
-                    <button onclick="openPromoModal()" class="glass-element hover:bg-slate-800 text-slate-300 px-2.5 py-2 rounded-xl text-xs font-bold tap-scale" title="Промокод">🔑</button>
-                    <button onclick="openCardPaymentModal()" class="bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2.5 py-2 rounded-xl text-[11px] font-extrabold tap-scale shadow" title="Купить PRO">💳 PRO</button>
+                    <button onclick="openPromoModal()" class="glass-element hover:bg-slate-800 text-slate-300 px-2.5 py-2 rounded-xl text-xs font-bold tap-scale" title="Промокод"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg></button>
+                    <button onclick="openCardPaymentModal()" class="bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2.5 py-2 rounded-xl text-[11px] font-extrabold tap-scale shadow" title="Купить PRO"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg> PRO</button>
                     <button onclick="openAddPastShiftModal()" class="bg-slate-100 hover:bg-white text-slate-950 px-2.5 py-2 rounded-xl text-[11px] font-extrabold tap-scale shadow">
-                        ＋ Смена
+                        <svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg> Смена
                     </button>
                 </div>
             </div>
 
+            <div class="glass-panel rounded-2xl px-3 py-2.5 flex justify-between items-center shadow border border-amber-500/20">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-sm"><svg class="ic w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></div>
+                    <div>
+                        <div class="text-[9px] uppercase font-bold text-slate-400">% от личных продаж</div>
+                        <div class="flex items-center space-x-1.5">
+                            <span id="profileSalesPercentDisplay" class="commission-accent text-xs font-extrabold text-amber-400">3%</span>
+                            <button onclick="openSalesPercentModal()" class="text-[9px] text-sky-400 font-bold hover:underline"><svg class="ic w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-[10px] text-slate-400 text-right leading-snug">Считается от кассы<br>закрытых столов</div>
+            </div>
+
             <div class="glass-panel p-1.5 rounded-2xl grid grid-cols-2 gap-1.5 border border-slate-800">
-                <button onclick="switchProfileSubTab('calendar')" id="profileSubBtnCalendar" class="py-2.5 rounded-xl text-xs font-extrabold bg-slate-100 text-slate-950 shadow tap-scale">📅 Календарь смен</button>
-                <button onclick="switchProfileSubTab('report')" id="profileSubBtnReport" class="py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-200 tap-scale">📈 Отчет за месяц</button>
+                <button onclick="switchProfileSubTab('calendar')" id="profileSubBtnCalendar" class="py-2.5 rounded-xl text-xs font-extrabold bg-slate-100 text-slate-950 shadow tap-scale"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg> Календарь смен</button>
+                <button onclick="switchProfileSubTab('report')" id="profileSubBtnReport" class="py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-200 tap-scale"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg> Отчет за месяц</button>
             </div>
 
             <div class="flex justify-between items-center px-2">
-                <button onclick="changeProfileMonth(-1)" class="glass-element w-9 h-9 rounded-xl flex items-center justify-center text-slate-300 font-bold tap-scale">◀</button>
+                <button onclick="changeProfileMonth(-1)" class="glass-element w-9 h-9 rounded-xl flex items-center justify-center text-slate-300 font-bold tap-scale"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
                 <div class="text-center">
                     <h3 id="profileCurrentMonthLabel" class="text-sm font-extrabold text-slate-100 uppercase tracking-wider">Октябрь 2026</h3>
                     <p id="profileMonthQuickSummary" class="text-[10px] text-emerald-400 font-bold">Смен: 0 • Доход: 0 ₽</p>
                 </div>
-                <button onclick="changeProfileMonth(1)" class="glass-element w-9 h-9 rounded-xl flex items-center justify-center text-slate-300 font-bold tap-scale">▶</button>
+                <button onclick="changeProfileMonth(1)" class="glass-element w-9 h-9 rounded-xl flex items-center justify-center text-slate-300 font-bold tap-scale"><svg class="ic w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
             </div>
 
             <!-- ПОД-ВКЛАДКА 1: КАЛЕНДАРЬ -->
@@ -466,17 +563,22 @@
                             <p id="selectedDaySubtitle" class="text-[10px] text-slate-400 mt-0.5">Нажмите на любую дату, чтобы увидеть архив смены</p>
                         </div>
                         <div id="selectedDayActions" class="hidden flex items-center space-x-1.5">
-                            <button onclick="openViralShareFromArchiveDay()" class="text-[10px] bg-amber-500/15 text-amber-300 border border-amber-500/30 px-2.5 py-1.5 rounded-xl font-extrabold tap-scale">📸 Сторис</button>
-                            <button onclick="deleteSelectedDayShift()" class="text-[10px] bg-rose-500/10 text-rose-400 border border-rose-500/30 px-2.5 py-1.5 rounded-xl font-bold tap-scale">🗑</button>
+                            <button onclick="openViralShareFromArchiveDay()" class="text-[10px] bg-amber-500/15 text-amber-300 border border-amber-500/30 px-2.5 py-1.5 rounded-xl font-extrabold tap-scale"><svg class="ic w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg> Сторис</button>
+                            <button onclick="deleteSelectedDayShift()" class="text-[10px] bg-rose-500/10 text-rose-400 border border-rose-500/30 px-2.5 py-1.5 rounded-xl font-bold tap-scale"><svg class="ic w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg></button>
                         </div>
                     </div>
 
                     <div id="selectedDayContent" class="hidden space-y-3">
-                        <div class="grid grid-cols-3 gap-2 text-center">
+                        <div class="grid grid-cols-2 gap-2 text-center">
                             <div class="glass-element p-2.5 rounded-2xl">
                                 <div class="text-[9px] text-slate-400 uppercase font-bold">По ставке</div>
                                 <div id="dayArchiveWage" class="text-xs font-extrabold text-slate-100 mt-0.5">0 ₽</div>
                                 <div id="dayArchiveHours" class="text-[9px] text-sky-400 font-semibold">0 ч</div>
+                            </div>
+                            <div class="glass-element p-2.5 rounded-2xl">
+                                <div class="text-[9px] text-slate-400 uppercase font-bold">% с продаж</div>
+                                <div id="dayArchiveCommission" class="commission-accent text-xs font-extrabold text-amber-400 mt-0.5">0 ₽</div>
+                                <div id="dayArchiveCommissionNote" class="text-[9px] text-slate-400">от кассы 0 ₽</div>
                             </div>
                             <div class="glass-element p-2.5 rounded-2xl">
                                 <div class="text-[9px] text-slate-400 uppercase font-bold">Чаевые</div>
@@ -500,14 +602,14 @@
                 <!-- КОМПАКТНЫЕ КНОПКИ НАСТРОЕК ПОД КАЛЕНДАРЕМ -->
                 <div class="grid grid-cols-2 gap-2 pt-2">
                     <button onclick="openAiScannerModal()" class="glass-panel hover:bg-slate-800 p-3 rounded-2xl flex items-center space-x-2.5 border border-emerald-500/20 tap-scale shadow">
-                        <span class="text-lg">🤖</span>
+                        <span class="text-lg"><svg class="ic w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg></span>
                         <div class="text-left">
                             <div class="text-xs font-extrabold text-slate-100">ИИ-сканер</div>
                             <div class="text-[9px] text-emerald-400">Gemini Vision</div>
                         </div>
                     </button>
                     <button onclick="openHallConstructorModal()" class="glass-panel hover:bg-slate-800 p-3 rounded-2xl flex items-center space-x-2.5 border border-sky-500/20 tap-scale shadow">
-                        <span class="text-lg">🗺️</span>
+                        <span class="text-lg"><svg class="ic w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" x2="9" y1="3" y2="18"/><line x1="15" x2="15" y1="6" y2="21"/></svg></span>
                         <div class="text-left">
                             <div class="text-xs font-extrabold text-slate-100">Зал и столы</div>
                             <div id="profileTablesCountInfo" class="text-[9px] text-sky-400">15 позиций</div>
@@ -521,7 +623,7 @@
                 <div class="glass-panel rounded-[32px] p-5 space-y-4 border border-emerald-500/30 shadow-2xl">
                     <div class="flex justify-between items-start">
                         <div>
-                            <span class="text-[10px] uppercase font-extrabold tracking-widest text-emerald-400">💰 Общий доход за месяц</span>
+                            <span class="text-[10px] uppercase font-extrabold tracking-widest text-emerald-400"><svg class="ic w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg> Общий доход за месяц</span>
                             <div id="reportTotalIncome" class="text-3xl font-extrabold text-slate-100 mt-1">0 ₽</div>
                         </div>
                         <span id="reportShiftsCountBadge" class="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-3 py-1 rounded-full text-xs font-extrabold">0 смен</span>
@@ -530,11 +632,13 @@
                     <div class="space-y-1.5">
                         <div class="w-full bg-slate-950 h-3 rounded-full overflow-hidden flex border border-slate-800 p-0.5">
                             <div id="reportWageBar" class="bg-sky-500 h-full rounded-l-full transition-all duration-500" style="width: 50%"></div>
+                            <div id="reportCommissionBar" class="bg-amber-400 h-full transition-all duration-500" style="width: 0%"></div>
                             <div id="reportTipsBar" class="bg-emerald-400 h-full rounded-r-full transition-all duration-500" style="width: 50%"></div>
                         </div>
-                        <div class="flex justify-between text-[10px] font-bold">
-                            <span class="text-sky-400">🔹 По ставке: <span id="reportWagePercent">0%</span></span>
-                            <span class="text-emerald-400">🔸 Чаевые: <span id="reportTipsPercent">0%</span></span>
+                        <div class="flex justify-between flex-wrap gap-x-2 text-[10px] font-bold">
+                            <span class="text-sky-400"><svg class="ic w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5" fill="currentColor" stroke="none"/></svg> По ставке: <span id="reportWagePercent">0%</span></span>
+                            <span class="commission-accent text-amber-400"><svg class="ic w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5" fill="currentColor" stroke="none"/></svg> % с продаж: <span id="reportCommissionPercent">0%</span></span>
+                            <span class="text-emerald-400"><svg class="ic w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5" fill="currentColor" stroke="none"/></svg> Чаевые: <span id="reportTipsPercent">0%</span></span>
                         </div>
                     </div>
                 </div>
@@ -551,11 +655,16 @@
                         <p id="reportRateNote" class="text-[10px] text-slate-400">Ставка 280 ₽/ч</p>
                     </div>
                     <div class="glass-panel p-4 rounded-3xl space-y-1">
+                        <p class="text-[10px] text-slate-400 uppercase font-bold">% от продаж</p>
+                        <p id="reportTotalCommission" class="commission-accent text-xl font-extrabold text-amber-400">0 ₽</p>
+                        <p id="reportCommissionNote" class="text-[10px] text-slate-400">С кассы 0 ₽</p>
+                    </div>
+                    <div class="glass-panel p-4 rounded-3xl space-y-1">
                         <p class="text-[10px] text-slate-400 uppercase font-bold">Всего чаевых</p>
                         <p id="reportTotalTips" class="text-xl font-extrabold text-emerald-400">0 ₽</p>
                         <p id="reportTipsSplit" class="text-[10px] text-slate-400">Нал: 0 ₽ • Б/н: 0 ₽</p>
                     </div>
-                    <div class="glass-panel p-4 rounded-3xl space-y-1">
+                    <div class="glass-panel p-4 rounded-3xl space-y-1 col-span-2">
                         <p class="text-[10px] text-slate-400 uppercase font-bold">Средний доход</p>
                         <p id="reportAvgShiftIncome" class="text-xl font-extrabold text-amber-400">0 ₽</p>
                         <p id="reportApgShiftNote" class="text-[10px] text-slate-400">За 1 рабочую смену</p>
@@ -571,7 +680,7 @@
                 </div>
 
                 <button onclick="copyMonthlyReportToClipboard()" class="w-full bg-slate-100 hover:bg-white text-slate-950 font-extrabold py-4 rounded-2xl text-xs shadow-xl tap-scale flex items-center justify-center space-x-2">
-                    <span>📋</span>
+                    <span><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg></span>
                     <span>Скопировать отчет за месяц</span>
                 </button>
             </div>
@@ -580,27 +689,27 @@
     </main>
 
     <!-- Нижняя панель -->
-    <nav id="bottomNav" class="bg-[#07090b]/90 backdrop-blur-2xl border-t border-slate-800/60 shrink-0 fixed bottom-0 left-0 right-0 z-50 px-3 py-2.5 shadow-2xl">
-        <div class="max-w-md mx-auto glass-panel rounded-[26px] p-1 grid grid-cols-5 gap-1 border border-slate-700/50 shadow-2xl">
-            <button onclick="switchTab('hall')" id="navBtnHall" class="flex flex-col items-center justify-center py-2 rounded-2xl text-slate-950 font-extrabold bg-slate-100 border border-slate-200 transition tap-scale shadow">
-                <span class="text-sm">🗺️</span>
-                <span class="text-[9px] mt-0.5 tracking-tight">Зал</span>
+    <nav id="bottomNav" class="bg-[#09090b]/95 backdrop-blur-2xl border-t border-white/[0.08] shrink-0 fixed bottom-0 left-0 right-0 z-50" style="padding-bottom: max(env(safe-area-inset-bottom, 0px), var(--tg-safe-area-inset-bottom, 0px), 6px);">
+        <div class="max-w-md mx-auto grid grid-cols-5">
+            <button onclick="switchTab('hall')" id="navBtnHall" class="nav-btn tap-scale active text-emerald-400 font-bold">
+                <svg class="ic w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
+                <span class="text-[10px] tracking-tight">Зал</span>
             </button>
-            <button onclick="switchTab('myTables')" id="navBtnMyTables" class="flex flex-col items-center justify-center py-2 rounded-2xl text-slate-400 font-medium hover:bg-slate-800/50 transition tap-scale">
-                <span class="text-sm">🍽️</span>
-                <span class="text-[9px] mt-0.5 tracking-tight">Столы</span>
+            <button onclick="switchTab('myTables')" id="navBtnMyTables" class="nav-btn tap-scale text-slate-500 hover:text-slate-300 font-semibold">
+                <svg class="ic w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>
+                <span class="text-[10px] tracking-tight">Столы</span>
             </button>
-            <button onclick="switchTab('history')" id="navBtnHistory" class="flex flex-col items-center justify-center py-2 rounded-2xl text-slate-400 font-medium hover:bg-slate-800/50 transition tap-scale">
-                <span class="text-sm">📊</span>
-                <span class="text-[9px] mt-0.5 tracking-tight">Смена</span>
+            <button onclick="switchTab('history')" id="navBtnHistory" class="nav-btn tap-scale text-slate-500 hover:text-slate-300 font-semibold">
+                <svg class="ic w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+                <span class="text-[10px] tracking-tight">Смена</span>
             </button>
-            <button onclick="switchTab('stopList')" id="navBtnStopList" class="flex flex-col items-center justify-center py-2 rounded-2xl text-slate-400 font-medium hover:bg-slate-800/50 transition tap-scale">
-                <span class="text-sm">🛑</span>
-                <span class="text-[9px] mt-0.5 tracking-tight">Стоп</span>
+            <button onclick="switchTab('stopList')" id="navBtnStopList" class="nav-btn tap-scale text-slate-500 hover:text-slate-300 font-semibold">
+                <svg class="ic w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg>
+                <span class="text-[10px] tracking-tight">Стоп</span>
             </button>
-            <button onclick="switchTab('profile')" id="navBtnProfile" class="flex flex-col items-center justify-center py-2 rounded-2xl text-slate-400 font-medium hover:bg-slate-800/50 transition tap-scale">
-                <span class="text-sm">👤</span>
-                <span class="text-[9px] mt-0.5 tracking-tight">Профиль</span>
+            <button onclick="switchTab('profile')" id="navBtnProfile" class="nav-btn tap-scale text-slate-500 hover:text-slate-300 font-semibold">
+                <svg class="ic w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <span class="text-[10px] tracking-tight">Профиль</span>
             </button>
         </div>
     </nav>
@@ -609,8 +718,8 @@
     <div id="cardPaymentModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-[110] hidden flex items-center justify-center p-4">
         <div class="glass-panel rounded-[32px] max-w-sm w-full p-6 space-y-4 shadow-2xl border border-emerald-500/30 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-                <h3 class="font-extrabold text-sm text-emerald-400">💳 Продление PRO-доступа</h3>
-                <button onclick="closeCardPaymentModal()" class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs">✕</button>
+                <h3 class="font-extrabold text-sm text-emerald-400"><svg class="ic w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg> Продление PRO-доступа</h3>
+                <button onclick="closeCardPaymentModal()" class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
             </div>
             
             <div class="space-y-2 text-xs text-slate-300">
@@ -629,7 +738,7 @@
                         <div class="text-amber-400 font-bold mt-0.5">1 490 ₽</div>
                     </div>
                     <div onclick="selectTariff(365, 2490, '1 год')" id="tariffCard_365" class="tariff-box glass-element p-3.5 rounded-2xl border border-slate-800 cursor-pointer tap-scale text-center">
-                        <div class="font-extrabold text-slate-100">1 год (Хит 🔥)</div>
+                        <div class="font-extrabold text-slate-100">1 год (Хит <svg class="ic w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>)</div>
                         <div class="text-emerald-400 font-bold mt-0.5">2 490 ₽</div>
                     </div>
                 </div>
@@ -648,18 +757,18 @@
                     <span class="text-[10px] text-slate-400 uppercase font-bold">2. Переведите на карту (Сбер / Т-Банк):</span>
                     <div class="flex items-center space-x-2">
                         <input type="text" id="devCardNumberInput" value="2200 7021 9528 5189" readonly class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-200 outline-none">
-                        <button onclick="copyDevCard()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-xl font-bold tap-scale">📋</button>
+                        <button onclick="copyDevCard()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-xl font-bold tap-scale"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg></button>
                     </div>
                 </div>
             </div>
 
             <div class="space-y-2 pt-1">
                 <button onclick="openCreatorTelegramChat()" class="w-full bg-gradient-to-r from-sky-600 to-blue-600 text-white font-extrabold py-3.5 rounded-2xl text-xs shadow-lg tap-scale flex items-center justify-center space-x-1.5">
-                    <span>📤</span>
+                    <span><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg></span>
                     <span>3. Отправить чек и получить промокод</span>
                 </button>
                 <button onclick="openPromoModal(); closeCardPaymentModal();" class="w-full glass-element hover:bg-slate-800 text-amber-300 font-bold py-2.5 rounded-2xl text-xs tap-scale">
-                    🔑 Ввести полученный промокод
+                    <svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg> Ввести полученный промокод
                 </button>
             </div>
         </div>
@@ -669,8 +778,8 @@
     <div id="promoModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-[120] hidden flex items-center justify-center p-4">
         <div class="glass-panel rounded-[32px] max-w-sm w-full p-6 space-y-4 shadow-2xl border border-amber-500/30 max-h-[92vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-                <h3 class="font-extrabold text-sm text-amber-400">🔑 Активация промокода</h3>
-                <button onclick="closePromoModal()" class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs">✕</button>
+                <h3 class="font-extrabold text-sm text-amber-400"><svg class="ic w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg> Активация промокода</h3>
+                <button onclick="closePromoModal()" class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
             </div>
             <div class="flex justify-between items-center bg-slate-950/80 border border-slate-800 px-3 py-2 rounded-xl text-[11px]">
                 <span class="text-slate-400">Ваш ID: <b id="promoModalUserId" class="text-sky-400 font-mono">...</b></span>
@@ -678,12 +787,12 @@
             </div>
             <p class="text-[11px] text-slate-400">Введите ваш персональный промокод (или <b>TEST</b> для 7 дней):</p>
             <input type="text" id="promoCodeInput" placeholder="Введите код..." onkeydown="if(event.key==='Enter') applyPromoCode()" class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs text-slate-100 outline-none font-bold uppercase tracking-wider">
-            <button onclick="applyPromoCode()" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-extrabold py-3.5 rounded-2xl text-xs shadow-lg tap-scale">✨ Активировать код</button>
+            <button onclick="applyPromoCode()" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-extrabold py-3.5 rounded-2xl text-xs shadow-lg tap-scale"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg> Активировать код</button>
 
             <!-- ПАНЕЛЬ АДМИНА (показывается только админу; права проверяет сервер) -->
             <div id="adminKeygenBox" class="hidden pt-4 border-t border-slate-800 space-y-3 text-xs">
                 <div class="flex items-center justify-between">
-                    <span class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400">🛠 Генератор одноразовых ключей (Админ)</span>
+                    <span class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400"><svg class="ic w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg> Генератор одноразовых ключей (Админ)</span>
                 </div>
                 <p class="text-[10px] text-slate-400">Вставьте ID покупателя из сообщения в Telegram. Ключ сработает только 1 раз и только на его аккаунте. Можно и выдать доступ сразу, без ключа:</p>
                 <input type="text" id="adminTargetUserId" placeholder="ID клиента (напр: 482910452)" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-100 font-mono outline-none">
@@ -709,27 +818,27 @@
             <div class="flex justify-between items-center px-2">
                 <div class="flex items-center space-x-2">
                     <button onclick="toggleViralPrivacyMask()" id="viralPrivacyBtn" class="glass-element px-3 py-1.5 rounded-xl text-[11px] font-bold text-slate-200 border border-slate-700 tap-scale flex items-center space-x-1">
-                        <span>👁️</span>
+                        <span><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></span>
                         <span id="viralPrivacyBtnText">Скрыть суммы ₽</span>
                     </button>
                     <div id="viralHoursStepperBox" class="flex items-center space-x-1 glass-element px-2 py-1 rounded-xl border border-slate-700">
                         <button onclick="stepViralShiftHours(-1)" class="w-5 h-5 rounded bg-slate-800 text-xs font-bold text-slate-300">−</button>
                         <span id="viralHoursControlLabel" class="text-[10px] font-extrabold text-sky-400 px-1">13ч</span>
-                        <button onclick="stepViralShiftHours(1)" class="w-5 h-5 rounded bg-slate-800 text-xs font-bold text-slate-300">＋</button>
+                        <button onclick="stepViralShiftHours(1)" class="w-5 h-5 rounded bg-slate-800 text-xs font-bold text-slate-300"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
                     </div>
                 </div>
-                <button onclick="closeViralShareModal()" class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-300 text-xs font-bold">✕</button>
+                <button onclick="closeViralShareModal()" class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-300 text-xs font-bold"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
             </div>
 
             <div id="viralCardCaptureArea" class="viral-story-card rounded-[36px] p-6 space-y-5 relative overflow-hidden">
                 <div class="flex justify-between items-center text-[10px] font-extrabold uppercase tracking-widest">
-                    <span id="viralCardDate" class="text-slate-400 bg-slate-900/90 px-3 py-1.5 rounded-full border border-slate-800">📅 26 ОКТЯБРЯ</span>
-                    <span class="text-emerald-400 bg-emerald-500/15 px-3 py-1.5 rounded-full border border-emerald-500/30">⚡ ИТОГИ СМЕНЫ</span>
+                    <span id="viralCardDate" class="text-slate-400 bg-slate-900/90 px-3 py-1.5 rounded-full border border-slate-800"><svg class="ic w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg> 26 ОКТЯБРЯ</span>
+                    <span class="text-emerald-400 bg-emerald-500/15 px-3 py-1.5 rounded-full border border-emerald-500/30"><svg class="ic w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> ИТОГИ СМЕНЫ</span>
                 </div>
 
                 <div class="text-center space-y-1 pt-1">
                     <div class="inline-block bg-amber-500/15 border border-amber-500/40 text-amber-300 px-4 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-widest shadow">
-                        <span id="viralCardRankTitle">🏆 СТАТУС: МАШИНА СМЕНЫ</span>
+                        <span id="viralCardRankTitle"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg> СТАТУС: МАШИНА СМЕНЫ</span>
                     </div>
                 </div>
 
@@ -747,22 +856,22 @@
 
                 <div class="grid grid-cols-2 gap-2.5">
                     <div class="viral-inner-box p-3.5 rounded-2xl space-y-1">
-                        <div class="text-[10px] font-bold text-slate-400 uppercase">💸 ЧАЕВЫЕ</div>
+                        <div class="text-[10px] font-bold text-slate-400 uppercase"><svg class="ic w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg> ЧАЕВЫЕ</div>
                         <div id="viralCardTips" class="text-lg font-extrabold text-emerald-400">4 800 ₽</div>
                         <div id="viralCardTipsSplit" class="text-[10px] text-slate-400 font-medium">Нал 1.8к • Б/н 3к</div>
                     </div>
                     <div class="viral-inner-box p-3.5 rounded-2xl space-y-1">
-                        <div class="text-[10px] font-bold text-slate-400 uppercase">⏱ ВРЕМЯ</div>
+                        <div class="text-[10px] font-bold text-slate-400 uppercase"><svg class="ic w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="10" x2="14" y1="2" y2="2"/><line x1="12" x2="15" y1="14" y2="11"/><circle cx="12" cy="14" r="8"/></svg> ВРЕМЯ</div>
                         <div id="viralCardHours" class="text-lg font-extrabold text-sky-400">13 часов</div>
                         <div id="viralCardWage" class="text-[10px] text-slate-400 font-medium">Ставка: 3 640 ₽</div>
                     </div>
                     <div class="viral-inner-box p-3.5 rounded-2xl space-y-1">
-                        <div class="text-[10px] font-bold text-slate-400 uppercase">🍽 ЗАКРЫТО</div>
+                        <div class="text-[10px] font-bold text-slate-400 uppercase"><svg class="ic w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg> ЗАКРЫТО</div>
                         <div id="viralCardTables" class="text-lg font-extrabold text-slate-100">22 счета</div>
                         <div id="viralCardRevenue" class="text-[10px] text-slate-400 font-medium">Касса: 68 500 ₽</div>
                     </div>
                     <div class="viral-inner-box p-3.5 rounded-2xl space-y-1">
-                        <div class="text-[10px] font-bold text-slate-400 uppercase">⚡ В ЧАС</div>
+                        <div class="text-[10px] font-bold text-slate-400 uppercase"><svg class="ic w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> В ЧАС</div>
                         <div id="viralCardHourlyEff" class="text-lg font-extrabold text-amber-400">649 ₽/ч</div>
                         <div id="viralCardAvgTip" class="text-[10px] text-slate-400 font-medium">Сред. чай: 218 ₽</div>
                     </div>
@@ -770,10 +879,10 @@
 
                 <div class="pt-3 border-t border-slate-800/90 flex items-center justify-between">
                     <div class="flex items-center space-x-2.5">
-                        <div class="w-9 h-9 rounded-xl bg-slate-900 border border-slate-700 flex items-center justify-center text-base shadow">⚡</div>
+                        <div class="w-9 h-9 rounded-xl bg-slate-900 border border-slate-700 flex items-center justify-center text-base shadow"><svg class="ic w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
                         <div>
                             <div class="text-[11px] font-extrabold text-slate-100 uppercase tracking-wider">Пульт Официанта PRO</div>
-                            <div class="text-[9px] text-emerald-400 font-bold">Считай чай, столы и ЗП 👉 @pult_waiter_bot</div>
+                            <div class="text-[9px] text-emerald-400 font-bold">Считай чай, столы и ЗП <svg class="ic w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg> @pult_waiter_bot</div>
                         </div>
                     </div>
                     <span class="text-[9px] font-mono font-bold text-slate-500 bg-slate-900 px-2 py-1 rounded-lg border border-slate-800">PRO</span>
@@ -786,10 +895,10 @@
         <div class="glass-panel rounded-[32px] max-w-sm w-full p-6 space-y-4 shadow-2xl border border-slate-700/50 max-h-[90vh] flex flex-col">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
                 <div>
-                    <h3 class="font-extrabold text-sm text-sky-400">🗺 Конструктор зала</h3>
+                    <h3 class="font-extrabold text-sm text-sky-400"><svg class="ic w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" x2="9" y1="3" y2="18"/><line x1="15" x2="15" y1="6" y2="21"/></svg> Конструктор зала</h3>
                     <p class="text-[10px] text-slate-400">Настройте столы и зоны под своё заведение</p>
                 </div>
-                <button onclick="closeHallConstructorModal()" class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs">✕</button>
+                <button onclick="closeHallConstructorModal()" class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
             </div>
 
             <div class="space-y-4 overflow-y-auto flex-1 pr-1 text-xs">
@@ -801,7 +910,7 @@
                     <div class="flex items-center space-x-2">
                         <button onclick="stepStandardTablesCount(-1)" class="w-10 h-10 rounded-xl glass-panel font-extrabold text-base text-slate-200 tap-scale">−</button>
                         <input type="number" id="constructorTablesCountInput" value="15" min="0" max="100" class="flex-1 bg-slate-950 border border-slate-800 rounded-xl py-2.5 text-center font-extrabold text-sm text-slate-100 outline-none">
-                        <button onclick="stepStandardTablesCount(1)" class="w-10 h-10 rounded-xl glass-panel font-extrabold text-base text-slate-200 tap-scale">＋</button>
+                        <button onclick="stepStandardTablesCount(1)" class="w-10 h-10 rounded-xl glass-panel font-extrabold text-base text-slate-200 tap-scale"><svg class="ic w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
                         <button onclick="applyStandardTablesCount()" class="bg-sky-500 hover:bg-sky-400 text-slate-950 font-extrabold px-4 py-2.5 rounded-xl text-xs tap-scale shadow">Задать</button>
                     </div>
                 </div>
@@ -809,9 +918,9 @@
                 <div class="space-y-1.5">
                     <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Готовые шаблоны зала:</span>
                     <div class="grid grid-cols-3 gap-1.5">
-                        <button onclick="applyHallPreset('restaurant')" class="glass-element hover:bg-slate-800 p-2.5 rounded-xl text-[10px] font-bold text-slate-200 tap-scale text-center">🍽 Ресторан<br><span class="text-[9px] text-slate-400 font-normal">15 ст. + Банкет</span></button>
-                        <button onclick="applyHallPreset('bar')" class="glass-element hover:bg-slate-800 p-2.5 rounded-xl text-[10px] font-bold text-sky-300 tap-scale text-center">🍸 Бар<br><span class="text-[9px] text-slate-400 font-normal">Бар 1-8 + 6 ст.</span></button>
-                        <button onclick="applyHallPreset('cafe')" class="glass-element hover:bg-slate-800 p-2.5 rounded-xl text-[10px] font-bold text-amber-300 tap-scale text-center">☕ Кофейня<br><span class="text-[9px] text-slate-400 font-normal">8 ст. + С собой</span></button>
+                        <button onclick="applyHallPreset('restaurant')" class="glass-element hover:bg-slate-800 p-2.5 rounded-xl text-[10px] font-bold text-slate-200 tap-scale text-center"><svg class="ic w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg> Ресторан<br><span class="text-[9px] text-slate-400 font-normal">15 ст. + Банкет</span></button>
+                        <button onclick="applyHallPreset('bar')" class="glass-element hover:bg-slate-800 p-2.5 rounded-xl text-[10px] font-bold text-sky-300 tap-scale text-center"><svg class="ic w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 22h8"/><path d="M12 11v11"/><path d="m19 3-7 8-7-8Z"/></svg> Бар<br><span class="text-[9px] text-slate-400 font-normal">Бар 1-8 + 6 ст.</span></button>
+                        <button onclick="applyHallPreset('cafe')" class="glass-element hover:bg-slate-800 p-2.5 rounded-xl text-[10px] font-bold text-amber-300 tap-scale text-center"><svg class="ic w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2v2"/><path d="M14 2v2"/><path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1"/><path d="M6 2v2"/></svg> Кофейня<br><span class="text-[9px] text-slate-400 font-normal">8 ст. + С собой</span></button>
                     </div>
                 </div>
 
@@ -819,7 +928,7 @@
                     <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Добавить свой стол или зону:</span>
                     <div class="flex space-x-2">
                         <input type="text" id="customTableNameInput" placeholder="Напр: Бар 1, Веранда 2, VIP..." onkeydown="if(event.key==='Enter') addCustomTableFromConstructor()" class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 outline-none">
-                        <button onclick="addCustomTableFromConstructor()" class="bg-emerald-600 text-white font-extrabold px-4 py-2.5 rounded-xl text-xs tap-scale shadow">＋ Добавить</button>
+                        <button onclick="addCustomTableFromConstructor()" class="bg-emerald-600 text-white font-extrabold px-4 py-2.5 rounded-xl text-xs tap-scale shadow"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg> Добавить</button>
                     </div>
                 </div>
 
@@ -838,10 +947,10 @@
 
     <!-- ОСТАЛЬНЫЕ МОДАЛКИ -->
     <div id="finishShiftModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-[80] hidden flex items-center justify-center p-4">
-        <div class="glass-panel rounded-[32px] max-w-sm w-full p-6 space-y-4 shadow-2xl border border-slate-700/50">
+        <div class="glass-panel rounded-[32px] max-w-sm w-full p-6 space-y-4 shadow-2xl border border-slate-700/50 max-h-[92vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-                <h3 id="finishShiftModalTitle" class="font-extrabold text-sm text-emerald-400">🏁 Завершение смены</h3>
-                <button onclick="closeFinishShiftModal()" class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs">✕</button>
+                <h3 id="finishShiftModalTitle" class="font-extrabold text-sm text-emerald-400"><svg class="ic w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></svg> Завершение смены</h3>
+                <button onclick="closeFinishShiftModal()" class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
             </div>
             <div class="space-y-3 text-xs">
                 <div class="flex justify-between items-center">
@@ -863,28 +972,37 @@
                     <label class="text-slate-300 font-bold">Почасовая ставка (₽/час):</label>
                     <input type="number" id="finishShiftRateInput" oninput="recalcFinishShiftPreview()" class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-2.5 text-xs text-slate-100 outline-none font-bold">
                 </div>
+                <div class="space-y-1">
+                    <label class="text-slate-300 font-bold">% от личных продаж:</label>
+                    <input type="number" step="0.1" min="0" max="100" id="finishShiftPercentInput" oninput="recalcFinishShiftPreview()" class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-2.5 text-xs text-slate-100 outline-none font-bold">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-slate-300 font-bold">Личная выручка / Касса за смену (₽):</label>
+                    <input type="number" min="0" id="finishShiftRevenueInput" oninput="recalcFinishShiftPreview()" class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-2.5 text-xs text-slate-100 outline-none font-bold">
+                </div>
                 <div id="pastShiftManualTipsBox" class="space-y-2 pt-1 border-t border-slate-800 hidden">
                     <label class="text-slate-300 font-bold">Чаевые за смену (₽):</label>
                     <div class="grid grid-cols-2 gap-2">
                         <div>
-                            <span class="text-[10px] text-slate-400">💵 Нал:</span>
+                            <span class="text-[10px] text-slate-400"><svg class="ic w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg> Нал:</span>
                             <input type="number" id="pastShiftCashTipsInput" value="0" oninput="recalcFinishShiftPreview()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 outline-none">
                         </div>
                         <div>
-                            <span class="text-[10px] text-slate-400">💳 Безнал:</span>
+                            <span class="text-[10px] text-slate-400"><svg class="ic w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg> Безнал:</span>
                             <input type="number" id="pastShiftCardTipsInput" value="0" oninput="recalcFinishShiftPreview()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 outline-none">
                         </div>
                     </div>
                 </div>
                 <div class="glass-element p-3.5 rounded-2xl border border-slate-800 space-y-1.5">
-                    <div class="flex justify-between text-slate-300"><span>Зарплата:</span><span id="finishPreviewWage" class="font-extrabold text-sky-400">0 ₽</span></div>
+                    <div class="flex justify-between text-slate-300"><span>Зарплата по часам:</span><span id="finishPreviewWage" class="font-extrabold text-sky-400">0 ₽</span></div>
+                    <div class="flex justify-between text-slate-300"><span>% с продаж:</span><span id="finishPreviewCommission" class="commission-accent font-extrabold text-amber-400">0 ₽</span></div>
                     <div class="flex justify-between text-slate-300"><span>Чаевые:</span><span id="finishPreviewTips" class="font-extrabold text-emerald-400">0 ₽</span></div>
                     <div class="flex justify-between text-sm font-extrabold text-slate-100 pt-1.5 border-t border-slate-800">
-                        <span>ИТОГО:</span><span id="finishPreviewTotal" class="text-emerald-400">0 ₽</span>
+                        <span>ИТОГО ЗА СМЕНУ:</span><span id="finishPreviewTotal" class="text-emerald-400">0 ₽</span>
                     </div>
                 </div>
             </div>
-            <button onclick="confirmSaveShiftToArchive()" class="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-extrabold py-3.5 rounded-2xl text-xs shadow-xl tap-scale">💾 Сохранить смену в календарь</button>
+            <button onclick="confirmSaveShiftToArchive()" class="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-extrabold py-3.5 rounded-2xl text-xs shadow-xl tap-scale"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Сохранить смену в календарь</button>
         </div>
     </div>
 
@@ -892,7 +1010,7 @@
         <div class="glass-panel rounded-[32px] max-w-xs w-full p-6 space-y-4 shadow-2xl border border-slate-700/50">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
                 <h3 id="simpleModalTitle" class="font-extrabold text-sm text-slate-100">Настройка</h3>
-                <button onclick="closeSimpleModal()" class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs">✕</button>
+                <button onclick="closeSimpleModal()" class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
             </div>
             <p id="simpleModalDesc" class="text-[11px] text-slate-400"></p>
             <input type="text" id="simpleModalInput" onkeydown="if(event.key==='Enter') confirmSimpleModal()" class="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-2xl px-4 py-3 text-xs text-slate-100 outline-none font-bold">
@@ -904,7 +1022,7 @@
         <div class="glass-panel rounded-[32px] max-w-xs w-full p-6 space-y-4 shadow-2xl border border-slate-700/50">
             <div class="flex justify-between items-center">
                 <h3 id="guestsModalTitle" class="font-extrabold text-sm text-slate-100">Количество гостей</h3>
-                <button onclick="closeGuestsModal()" class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs">✕</button>
+                <button onclick="closeGuestsModal()" class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
             </div>
             <div class="grid grid-cols-4 gap-2">
                 <button onclick="confirmGuestsCount(1)" class="glass-element hover:bg-slate-800 py-3 rounded-2xl font-extrabold text-xs tap-scale">1</button>
@@ -929,26 +1047,26 @@
         <div class="glass-panel rounded-[32px] max-w-sm w-full p-6 space-y-3.5 shadow-2xl border border-slate-700/50 max-h-[92vh] flex flex-col overflow-y-auto">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
                 <h3 id="checkoutModalTitle" class="font-extrabold text-sm text-emerald-400">Расчет стола</h3>
-                <button onclick="closeCheckoutModal()" class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs">✕</button>
+                <button onclick="closeCheckoutModal()" class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
             </div>
             <div class="space-y-1.5">
                 <div class="flex justify-between items-center">
-                    <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">🧾 Счет для закрытия:</span>
-                    <button onclick="openSplitBillModal()" class="text-[10px] glass-element text-sky-400 border border-sky-500/30 px-2.5 py-1 rounded-xl font-extrabold tap-scale">🔗 Объединить</button>
+                    <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider"><svg class="ic w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/></svg> Счет для закрытия:</span>
+                    <button onclick="openSplitBillModal()" class="text-[10px] glass-element text-sky-400 border border-sky-500/30 px-2.5 py-1 rounded-xl font-extrabold tap-scale"><svg class="ic w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> Объединить</button>
                 </div>
                 <div id="checkoutBillsPreview" class="space-y-1.5 max-h-36 overflow-y-auto pr-1 text-xs"></div>
             </div>
             <div class="space-y-1">
                 <label class="text-xs font-bold text-slate-300">Оплата:</label>
                 <div class="grid grid-cols-3 gap-1.5">
-                    <button onclick="setBillPaymentMethod('Нал')" id="payMethodNal" class="bg-emerald-600 text-white py-2 rounded-xl text-xs font-extrabold tap-scale shadow">💵 Нал</button>
-                    <button onclick="setBillPaymentMethod('Карта')" id="payMethodCard" class="glass-element text-slate-300 py-2 rounded-xl text-xs font-extrabold tap-scale">💳 Карта</button>
-                    <button onclick="setBillPaymentMethod('СБП')" id="payMethodSbp" class="glass-element text-slate-300 py-2 rounded-xl text-xs font-extrabold tap-scale">📱 СБП</button>
+                    <button onclick="setBillPaymentMethod('Нал')" id="payMethodNal" class="bg-emerald-600 text-white py-2 rounded-xl text-xs font-extrabold tap-scale shadow"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg> Нал</button>
+                    <button onclick="setBillPaymentMethod('Карта')" id="payMethodCard" class="glass-element text-slate-300 py-2 rounded-xl text-xs font-extrabold tap-scale"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg> Карта</button>
+                    <button onclick="setBillPaymentMethod('СБП')" id="payMethodSbp" class="glass-element text-slate-300 py-2 rounded-xl text-xs font-extrabold tap-scale"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg> СБП</button>
                 </div>
             </div>
             <div id="cashChangeSection" class="glass-element p-3 rounded-2xl border border-slate-800 space-y-2">
                 <div class="flex justify-between items-center text-xs">
-                    <span class="font-bold text-slate-300">💵 Наличные от гостя:</span>
+                    <span class="font-bold text-slate-300"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg> Наличные от гостя:</span>
                     <span id="quickChangeDisplay" class="font-extrabold text-emerald-400">Сдача: 0 ₽</span>
                 </div>
                 <div class="grid grid-cols-4 gap-1.5">
@@ -972,20 +1090,20 @@
             <div class="space-y-1">
                 <label class="text-xs font-bold text-slate-300">Тип чаевых:</label>
                 <div class="grid grid-cols-3 gap-1.5">
-                    <button onclick="setTipType('Нал')" id="tipTypeNal" class="bg-emerald-600 text-white py-2 rounded-xl text-xs font-extrabold tap-scale shadow">💵 Нал</button>
-                    <button onclick="setTipType('Перевод')" id="tipTypeCard" class="glass-element text-slate-300 py-2 rounded-xl text-xs font-extrabold tap-scale">💳 Перевод</button>
-                    <button onclick="setTipType('СБП')" id="tipTypeSbp" class="glass-element text-slate-300 py-2 rounded-xl text-xs font-extrabold tap-scale">📱 СБП</button>
+                    <button onclick="setTipType('Нал')" id="tipTypeNal" class="bg-emerald-600 text-white py-2 rounded-xl text-xs font-extrabold tap-scale shadow"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg> Нал</button>
+                    <button onclick="setTipType('Перевод')" id="tipTypeCard" class="glass-element text-slate-300 py-2 rounded-xl text-xs font-extrabold tap-scale"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg> Перевод</button>
+                    <button onclick="setTipType('СБП')" id="tipTypeSbp" class="glass-element text-slate-300 py-2 rounded-xl text-xs font-extrabold tap-scale"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg> СБП</button>
                 </div>
             </div>
-            <button onclick="confirmBillCheckout()" class="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-extrabold py-3 rounded-2xl text-xs shadow-xl tap-scale">💳 Закрыть счет</button>
+            <button onclick="confirmBillCheckout()" class="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-extrabold py-3 rounded-2xl text-xs shadow-xl tap-scale"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg> Закрыть счет</button>
         </div>
     </div>
 
     <div id="manualTipModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-[80] hidden flex items-center justify-center p-4">
         <div class="glass-panel rounded-[32px] max-w-xs w-full p-6 space-y-4 shadow-2xl border border-slate-700/50">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-                <h3 class="font-extrabold text-sm text-slate-100">＋ Добавить чаевые</h3>
-                <button onclick="closeManualTipModal()" class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs">✕</button>
+                <h3 class="font-extrabold text-sm text-slate-100"><svg class="ic w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg> Добавить чаевые</h3>
+                <button onclick="closeManualTipModal()" class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
             </div>
             <div class="space-y-1">
                 <label class="text-[11px] text-slate-400">Сумма (₽):</label>
@@ -994,23 +1112,23 @@
             <div class="space-y-1">
                 <label class="text-[11px] text-slate-400">Как оставили:</label>
                 <div class="grid grid-cols-2 gap-2">
-                    <button onclick="setManualTipTypeModal('Нал')" id="manualTipModalNal" class="glass-element text-slate-300 py-2.5 rounded-xl text-xs font-extrabold tap-scale">💵 Нал</button>
-                    <button onclick="setManualTipTypeModal('Перевод')" id="manualTipModalCard" class="bg-emerald-600 text-white py-2.5 rounded-xl text-xs font-extrabold tap-scale shadow">💳 Безнал</button>
+                    <button onclick="setManualTipTypeModal('Нал')" id="manualTipModalNal" class="glass-element text-slate-300 py-2.5 rounded-xl text-xs font-extrabold tap-scale"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg> Нал</button>
+                    <button onclick="setManualTipTypeModal('Перевод')" id="manualTipModalCard" class="bg-emerald-600 text-white py-2.5 rounded-xl text-xs font-extrabold tap-scale shadow"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg> Безнал</button>
                 </div>
             </div>
-            <button onclick="confirmManualTipModal()" class="w-full bg-slate-100 text-slate-950 font-extrabold py-3.5 rounded-2xl text-xs tap-scale shadow-lg">💾 Сохранить</button>
+            <button onclick="confirmManualTipModal()" class="w-full bg-slate-100 text-slate-950 font-extrabold py-3.5 rounded-2xl text-xs tap-scale shadow-lg"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Сохранить</button>
         </div>
     </div>
 
     <div id="splitBillModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-[85] hidden flex items-center justify-center p-4">
         <div class="glass-panel rounded-[32px] max-w-sm w-full p-6 space-y-4 shadow-2xl border border-slate-700/50 max-h-[85vh] flex flex-col">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-                <h3 class="font-extrabold text-sm text-slate-100">🧾 Объединение счетов</h3>
-                <button onclick="closeSplitBillModal()" class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs">✕</button>
+                <h3 class="font-extrabold text-sm text-slate-100"><svg class="ic w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/></svg> Объединение счетов</h3>
+                <button onclick="closeSplitBillModal()" class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
             </div>
             <div class="text-[11px] text-slate-400">Распределение гостей по счетам:</div>
             <div id="splitGroupsContainer" class="space-y-3 overflow-y-auto flex-1 pr-1 text-xs"></div>
-            <button onclick="addGroupToSplit()" class="w-full glass-element border-dashed border-slate-600 text-slate-300 font-bold py-2.5 rounded-2xl text-xs tap-scale">＋ Добавить счет</button>
+            <button onclick="addGroupToSplit()" class="w-full glass-element border-dashed border-slate-600 text-slate-300 font-bold py-2.5 rounded-2xl text-xs tap-scale"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg> Добавить счет</button>
             <button onclick="closeSplitBillModal()" class="w-full bg-slate-100 text-slate-950 font-extrabold py-3 rounded-2xl text-xs">Готово</button>
         </div>
     </div>
@@ -1022,7 +1140,7 @@
                     <h3 id="historyModalTableName" class="font-extrabold text-sm text-slate-100">Стол</h3>
                     <p id="historyModalTime" class="text-[10px] text-slate-400">Время</p>
                 </div>
-                <button onclick="closeHistoryDetailModal()" class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs">✕</button>
+                <button onclick="closeHistoryDetailModal()" class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
             </div>
             <div class="space-y-2 overflow-y-auto flex-1 pr-1 text-xs" id="historyModalItemsList"></div>
             <div class="pt-3 border-t border-slate-800 space-y-1.5 text-xs">
@@ -1060,10 +1178,10 @@
         <div class="glass-panel rounded-[28px] max-w-md w-full max-h-[92dvh] overflow-y-auto p-5 space-y-4 border border-emerald-500/30 shadow-2xl">
             <div class="flex items-center justify-between border-b border-slate-800 pb-3">
                 <div>
-                    <h3 class="text-sm font-extrabold text-emerald-400">🤖 ИИ-сканер меню</h3>
+                    <h3 class="text-sm font-extrabold text-emerald-400"><svg class="ic w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg> ИИ-сканер меню</h3>
                     <p class="text-[10px] text-slate-400 mt-1">Загрузи фото меню (можно несколько страниц) или вставь текст вручную</p>
                 </div>
-                <button type="button" onclick="closeAiScannerModal()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-300">✕</button>
+                <button type="button" onclick="closeAiScannerModal()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-300"><svg class="ic w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
             </div>
 
             <label class="block text-xs font-bold text-slate-300">Фотография меню
@@ -1116,22 +1234,22 @@
                     <h3 id="dishTtkViewTitle" class="font-extrabold text-sm text-slate-100 leading-snug break-words"></h3>
                     <div id="dishTtkViewPrice" class="text-[11px] text-slate-400 font-bold mt-0.5"></div>
                 </div>
-                <button type="button" onclick="closeDishTtkView()" aria-label="Закрыть" class="glass-element w-8 h-8 shrink-0 rounded-full text-slate-300 text-sm font-bold tap-scale">✕</button>
+                <button type="button" onclick="closeDishTtkView()" aria-label="Закрыть" class="glass-element w-8 h-8 shrink-0 rounded-full text-slate-300 text-sm font-bold tap-scale"><svg class="ic w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
             </div>
 
             <div class="ttk-slogan-box rounded-2xl p-3.5 border border-amber-500/30 bg-amber-500/10">
-                <div class="ttk-label-amber text-[10px] font-extrabold uppercase tracking-wider text-amber-400 mb-1.5">💬 Как продать гостю (слоган):</div>
+                <div class="ttk-label-amber text-[10px] font-extrabold uppercase tracking-wider text-amber-400 mb-1.5"><svg class="ic w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg> Как продать гостю (слоган):</div>
                 <div id="dishTtkViewSlogan" class="text-sm font-bold text-slate-100 whitespace-pre-line leading-snug break-words" style="white-space: pre-line"></div>
             </div>
 
             <div class="glass-element rounded-2xl p-3.5 border border-slate-800">
-                <div class="ttk-label-emerald text-[10px] font-extrabold uppercase tracking-wider text-emerald-400 mb-1.5">📖 ТТК и состав блюда:</div>
+                <div class="ttk-label-emerald text-[10px] font-extrabold uppercase tracking-wider text-emerald-400 mb-1.5"><svg class="ic w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> ТТК и состав блюда:</div>
                 <div id="dishTtkViewTtk" class="text-xs text-slate-200 whitespace-pre-line leading-relaxed break-words" style="white-space: pre-line"></div>
             </div>
 
             <div class="grid grid-cols-2 gap-2 pt-1">
-                <button type="button" onclick="editDishTtkFromView()" class="glass-element text-slate-200 py-3 rounded-2xl text-xs font-extrabold tap-scale">✏️ Изменить ТТК</button>
-                <button type="button" id="dishTtkViewAddBtn" onclick="addDishFromTtkView()" class="bg-slate-100 text-slate-950 py-3 rounded-2xl text-xs font-extrabold tap-scale shadow-lg">＋ Добавить в заказ</button>
+                <button type="button" onclick="editDishTtkFromView()" class="glass-element text-slate-200 py-3 rounded-2xl text-xs font-extrabold tap-scale"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> Изменить ТТК</button>
+                <button type="button" id="dishTtkViewAddBtn" onclick="addDishFromTtkView()" class="bg-slate-100 text-slate-950 py-3 rounded-2xl text-xs font-extrabold tap-scale shadow-lg"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg> Добавить в заказ</button>
             </div>
         </div>
     </div>
@@ -1144,22 +1262,95 @@
                 <h3 id="dishTtkEditTitle" class="font-extrabold text-sm text-slate-100 leading-snug break-words mt-0.5"></h3>
             </div>
             <div class="space-y-1.5">
-                <label for="dishTtkEditSlogan" class="ttk-label-amber block text-[11px] font-extrabold text-amber-400">🔥 Краткий продающий слоган (как вкусно предложить гостю)</label>
+                <label for="dishTtkEditSlogan" class="ttk-label-amber block text-[11px] font-extrabold text-amber-400"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg> Краткий продающий слоган (как вкусно предложить гостю)</label>
                 <textarea id="dishTtkEditSlogan" rows="2" maxlength="200" placeholder="Например: Сочная вырезка с дымком, хит этой недели" class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs text-slate-100 outline-none resize-none"></textarea>
             </div>
             <div class="space-y-1.5">
-                <label for="dishTtkEditTtk" class="ttk-label-emerald block text-[11px] font-extrabold text-emerald-400">📋 ТТК (состав, граммовки, соусы, аллергены, время подачи)</label>
+                <label for="dishTtkEditTtk" class="ttk-label-emerald block text-[11px] font-extrabold text-emerald-400"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg> ТТК (состав, граммовки, соусы, аллергены, время подачи)</label>
                 <textarea id="dishTtkEditTtk" rows="5" maxlength="1500" placeholder="Состав, граммовка, соус, аллергены, время подачи..." class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs text-slate-100 outline-none resize-none"></textarea>
             </div>
             <div class="grid grid-cols-2 gap-2 pt-1">
                 <button type="button" onclick="closeDishTtkEdit()" class="glass-element text-slate-300 py-3 rounded-2xl text-xs font-bold tap-scale">Отмена</button>
-                <button type="button" onclick="saveDishTtk()" class="bg-emerald-500 text-slate-950 py-3 rounded-2xl text-xs font-extrabold tap-scale shadow-lg">💾 Сохранить</button>
+                <button type="button" onclick="saveDishTtk()" class="bg-emerald-500 text-slate-950 py-3 rounded-2xl text-xs font-extrabold tap-scale shadow-lg"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Сохранить</button>
             </div>
         </div>
     </div>
 
     <!-- СКРИПТЫ -->
     <script>
+        // ================= ВЕКТОРНЫЕ ИКОНКИ (стиль Lucide) =================
+        const ICON_PATHS = {
+        "x": "<path d=\"M18 6 6 18\"/><path d=\"m6 6 12 12\"/>",
+        "plus": "<path d=\"M5 12h14\"/><path d=\"M12 5v14\"/>",
+        "check": "<path d=\"M20 6 9 17l-5-5\"/>",
+        "check-circle": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m9 12 2 2 4-4\"/>",
+        "x-circle": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m15 9-6 6\"/><path d=\"m9 9 6 6\"/>",
+        "ban": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m4.9 4.9 14.2 14.2\"/>",
+        "zap": "<polygon points=\"13 2 3 14 12 14 11 22 21 10 12 10 13 2\"/>",
+        "flame": "<path d=\"M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z\"/>",
+        "pencil": "<path d=\"M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z\"/><path d=\"m15 5 4 4\"/>",
+        "credit-card": "<rect width=\"20\" height=\"14\" x=\"2\" y=\"5\" rx=\"2\"/><line x1=\"2\" x2=\"22\" y1=\"10\" y2=\"10\"/>",
+        "banknote": "<rect width=\"20\" height=\"12\" x=\"2\" y=\"6\" rx=\"2\"/><circle cx=\"12\" cy=\"12\" r=\"2\"/><path d=\"M6 12h.01M18 12h.01\"/>",
+        "clipboard-list": "<rect width=\"8\" height=\"4\" x=\"8\" y=\"2\" rx=\"1\" ry=\"1\"/><path d=\"M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2\"/><path d=\"M12 11h4\"/><path d=\"M12 16h4\"/><path d=\"M8 11h.01\"/><path d=\"M8 16h.01\"/>",
+        "calendar": "<rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\" ry=\"2\"/><line x1=\"16\" x2=\"16\" y1=\"2\" y2=\"6\"/><line x1=\"8\" x2=\"8\" y1=\"2\" y2=\"6\"/><line x1=\"3\" x2=\"21\" y1=\"10\" y2=\"10\"/>",
+        "save": "<path d=\"M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z\"/><polyline points=\"17 21 17 13 7 13 7 21\"/><polyline points=\"7 3 7 8 15 8\"/>",
+        "timer": "<line x1=\"10\" x2=\"14\" y1=\"2\" y2=\"2\"/><line x1=\"12\" x2=\"15\" y1=\"14\" y2=\"11\"/><circle cx=\"12\" cy=\"14\" r=\"8\"/>",
+        "map": "<polygon points=\"3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21\"/><line x1=\"9\" x2=\"9\" y1=\"3\" y2=\"18\"/><line x1=\"15\" x2=\"15\" y1=\"6\" y2=\"21\"/>",
+        "layout-grid": "<rect width=\"7\" height=\"7\" x=\"3\" y=\"3\" rx=\"1\"/><rect width=\"7\" height=\"7\" x=\"14\" y=\"3\" rx=\"1\"/><rect width=\"7\" height=\"7\" x=\"14\" y=\"14\" rx=\"1\"/><rect width=\"7\" height=\"7\" x=\"3\" y=\"14\" rx=\"1\"/>",
+        "eye": "<path d=\"M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/>",
+        "flag": "<path d=\"M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z\"/><line x1=\"4\" x2=\"4\" y1=\"22\" y2=\"15\"/>",
+        "key": "<path d=\"m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4\"/>",
+        "trending-up": "<polyline points=\"22 7 13.5 15.5 8.5 10.5 2 17\"/><polyline points=\"16 7 22 7 22 13\"/>",
+        "bot": "<path d=\"M12 8V4H8\"/><rect width=\"16\" height=\"12\" x=\"4\" y=\"8\" rx=\"2\"/><path d=\"M2 14h2\"/><path d=\"M20 14h2\"/><path d=\"M15 13v2\"/><path d=\"M9 13v2\"/>",
+        "user": "<path d=\"M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2\"/><circle cx=\"12\" cy=\"7\" r=\"4\"/>",
+        "users": "<path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/><path d=\"M22 21v-2a4 4 0 0 0-3-3.87\"/><path d=\"M16 3.13a4 4 0 0 1 0 7.75\"/>",
+        "receipt": "<path d=\"M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z\"/><path d=\"M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8\"/><path d=\"M12 17.5v-11\"/>",
+        "lock": "<rect width=\"18\" height=\"11\" x=\"3\" y=\"11\" rx=\"2\" ry=\"2\"/><path d=\"M7 11V7a5 5 0 0 1 10 0v4\"/>",
+        "sparkles": "<path d=\"m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z\"/><path d=\"M5 3v4\"/><path d=\"M19 17v4\"/><path d=\"M3 5h4\"/><path d=\"M17 19h4\"/>",
+        "search": "<circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"m21 21-4.3-4.3\"/>",
+        "martini": "<path d=\"M8 22h8\"/><path d=\"M12 11v11\"/><path d=\"m19 3-7 8-7-8Z\"/>",
+        "target": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><circle cx=\"12\" cy=\"12\" r=\"6\"/><circle cx=\"12\" cy=\"12\" r=\"2\"/>",
+        "rocket": "<path d=\"M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z\"/><path d=\"m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z\"/><path d=\"M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0\"/><path d=\"M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5\"/>",
+        "briefcase": "<rect width=\"20\" height=\"14\" x=\"2\" y=\"7\" rx=\"2\" ry=\"2\"/><path d=\"M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16\"/>",
+        "sun": "<circle cx=\"12\" cy=\"12\" r=\"4\"/><path d=\"M12 2v2\"/><path d=\"M12 20v2\"/><path d=\"m4.93 4.93 1.41 1.41\"/><path d=\"m17.66 17.66 1.41 1.41\"/><path d=\"M2 12h2\"/><path d=\"M20 12h2\"/><path d=\"m6.34 17.66-1.41 1.41\"/><path d=\"m19.07 4.93-1.41 1.41\"/>",
+        "moon": "<path d=\"M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z\"/>",
+        "bar-chart": "<path d=\"M3 3v18h18\"/><path d=\"M18 17V9\"/><path d=\"M13 17V5\"/><path d=\"M8 17v-3\"/>",
+        "trophy": "<path d=\"M6 9H4.5a2.5 2.5 0 0 1 0-5H6\"/><path d=\"M18 9h1.5a2.5 2.5 0 0 0 0-5H18\"/><path d=\"M4 22h16\"/><path d=\"M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22\"/><path d=\"M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22\"/><path d=\"M18 2H6v7a6 6 0 0 0 12 0V2Z\"/>",
+        "utensils": "<path d=\"M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2\"/><path d=\"M7 2v20\"/><path d=\"M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7\"/>",
+        "arrow-right": "<path d=\"M5 12h14\"/><path d=\"m12 5 7 7-7 7\"/>",
+        "arrow-left": "<path d=\"m12 19-7-7 7-7\"/><path d=\"M19 12H5\"/>",
+        "smartphone": "<rect width=\"14\" height=\"20\" x=\"5\" y=\"2\" rx=\"2\" ry=\"2\"/><path d=\"M12 18h.01\"/>",
+        "crown": "<path d=\"m2 4 3 12h14l3-12-6 4-4-6-4 6-6-4Z\"/><path d=\"M3 20h18\"/>",
+        "refresh-cw": "<path d=\"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8\"/><path d=\"M21 3v5h-5\"/><path d=\"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16\"/><path d=\"M8 16H3v5\"/>",
+        "hourglass": "<path d=\"M5 22h14\"/><path d=\"M5 2h14\"/><path d=\"M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22\"/><path d=\"M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2\"/>",
+        "settings": "<path d=\"M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/>",
+        "alert-triangle": "<path d=\"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3\"/><path d=\"M12 9v4\"/><path d=\"M12 17h.01\"/>",
+        "chevron-left": "<path d=\"m15 18-6-6 6-6\"/>",
+        "chevron-right": "<path d=\"m9 18 6-6-6-6\"/>",
+        "camera": "<path d=\"M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z\"/><circle cx=\"12\" cy=\"13\" r=\"3\"/>",
+        "trash-2": "<path d=\"M3 6h18\"/><path d=\"M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6\"/><path d=\"M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2\"/><line x1=\"10\" x2=\"10\" y1=\"11\" y2=\"17\"/><line x1=\"14\" x2=\"14\" y1=\"11\" y2=\"17\"/>",
+        "wallet": "<path d=\"M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1\"/><path d=\"M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4\"/>",
+        "dot": "<circle cx=\"12\" cy=\"12\" r=\"5\" fill=\"currentColor\" stroke=\"none\"/>",
+        "share": "<path d=\"M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8\"/><polyline points=\"16 6 12 2 8 6\"/><line x1=\"12\" x2=\"12\" y1=\"2\" y2=\"15\"/>",
+        "wrench": "<path d=\"M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z\"/>",
+        "coffee": "<path d=\"M10 2v2\"/><path d=\"M14 2v2\"/><path d=\"M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1\"/><path d=\"M6 2v2\"/>",
+        "link": "<path d=\"M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71\"/><path d=\"M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71\"/>",
+        "message-circle": "<path d=\"M7.9 20A9 9 0 1 0 4 16.1L2 22Z\"/>",
+        "book-open": "<path d=\"M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z\"/><path d=\"M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z\"/>",
+        "gem": "<path d=\"M6 3h12l4 6-10 13L2 9Z\"/><path d=\"M11 3 8 9l4 13 4-13-3-6\"/><path d=\"M2 9h20\"/>",
+        "shield": "<path d=\"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z\"/>"
+};
+
+        function svgIcon(name, cls = "w-4 h-4") {
+            const inner = ICON_PATHS[name] || '';
+            return `<svg class="ic ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${inner}</svg>`;
+        }
+
+        // Курс в старых сохранённых заказах мог быть записан с эмодзи в начале строки: при показе убираем лишние символы.
+        function displayCourse(c) {
+            return String(c == null ? '' : c).replace(/^[^A-Za-zА-Яа-яЁё0-9]+/, '');
+        }
+
         if (window.Telegram && window.Telegram.WebApp) {
             window.Telegram.WebApp.ready();
             window.Telegram.WebApp.expand();
@@ -1196,6 +1387,7 @@
         let closedHistory = [];
         let shiftArchive = [];
         let hourlyRate = 280;
+        let salesPercent = 3; // % от личных продаж (целые и дробные: 2.5, 3)
         let shiftTipGoal = 3000;
         let stopListSet = new Set();
         let aiScannedParsedItems = [];
@@ -1219,7 +1411,7 @@
         let currentBillPaymentMethod = "Нал";
         let manualTipModalType = "Перевод";
         let onlyAttentionFilter = false;
-        let selectedActiveCourse = "⚡ Сразу";
+        let selectedActiveCourse = "Сразу";
         let tableToOpenGuests = null;
         let selectedCheckoutGroup = null;
         let simpleModalCallback = null;
@@ -1230,6 +1422,7 @@
         let isAddingPastShiftMode = false;
 
         let viralDataState = {
+            salesPercent: 3,
             dateLabel: '',
             hours: 13,
             rate: 280,
@@ -1266,11 +1459,11 @@
             const textEl = document.getElementById('themeToggleText');
             if (appTheme === 'light') {
                 document.body.classList.add('light-theme');
-                if (iconEl) iconEl.innerText = '🌙';
+                if (iconEl) iconEl.innerHTML = svgIcon('moon', 'w-4 h-4');
                 if (textEl) textEl.innerText = 'Темная';
             } else {
                 document.body.classList.remove('light-theme');
-                if (iconEl) iconEl.innerText = '☀️';
+                if (iconEl) iconEl.innerHTML = svgIcon('sun', 'w-4 h-4');
                 if (textEl) textEl.innerText = 'Светлая';
             }
         }
@@ -1305,7 +1498,7 @@
                 const tName = el.getAttribute('data-live-timer-table');
                 const t = tables[tName];
                 if (t && t.lastVisited) {
-                    el.innerText = `⏱ ${formatElapsedMMSS(t.lastVisited)}`;
+                    el.innerHTML = `${svgIcon('timer', 'w-3 h-3')} ${formatElapsedMMSS(t.lastVisited)}`;
                     el.className = `text-xs px-3 py-1 rounded-full font-mono font-extrabold border shadow ${getTimerColorClasses(t.lastVisited)}`;
                 }
             });
@@ -1369,13 +1562,13 @@
             if (!btn || !currentTable || !tables[currentTable]) return;
             const t = tables[currentTable];
             const count = (t.items || []).length;
-            btn.innerText = count > 0 ? `✓ Готово (${count})` : `✓ Готово`;
+            btn.innerHTML = svgIcon('check', 'w-4 h-4') + (count > 0 ? ` Готово (${Number(count)})` : ' Готово');
         }
 
         function createEmptyTableObj(guestsCount = 2) {
             const gNames = {};
             for (let i = 1; i <= guestsCount; i++) gNames[i] = `Гость ${i}`;
-            return { items: [], guests: guestsCount, guestNames: gNames, activeGuest: "Гость 1", course: "⚡ Сразу", lastVisited: null, splitGroups: {} };
+            return { items: [], guests: guestsCount, guestNames: gNames, activeGuest: "Гость 1", course: "Сразу", lastVisited: null, splitGroups: {} };
         }
 
         function setCloudIndicator(status, text, errObj = null) {
@@ -1436,6 +1629,11 @@
 
             const rate = Number(localStorage.getItem('fish_pro_hourly_rate'));
             hourlyRate = Number.isFinite(rate) && rate >= 0 ? rate : 280;
+            const savedPercent = localStorage.getItem('fish_pro_sales_percent');
+            if (savedPercent !== null) {
+                const sp = normalizeSalesPercent(savedPercent);
+                salesPercent = Number.isFinite(sp) ? sp : 3;
+            }
             const goal = Number(localStorage.getItem('fish_pro_goal'));
             shiftTipGoal = Number.isFinite(goal) && goal >= 0 ? goal : 3000;
 
@@ -1571,6 +1769,10 @@
                     shiftArchive = Array.isArray(s.shiftArchive) ? s.shiftArchive : [];
                     hourlyRate = s.hourlyRate !== undefined ? s.hourlyRate : 280;
                     shiftTipGoal = s.shiftTipGoal !== undefined ? s.shiftTipGoal : 3000;
+                    if (s.salesPercent !== undefined) {
+                        const sp = normalizeSalesPercent(s.salesPercent);
+                        salesPercent = Number.isFinite(sp) ? sp : 3;
+                    }
                     stopListSet = new Set(Array.isArray(s.stopListSet) ? s.stopListSet : []);
                     if (s.appTheme !== undefined) {
                         appTheme = s.appTheme;
@@ -1603,6 +1805,7 @@
                     localStorage.setItem('fish_pro_stoplist', JSON.stringify([...stopListSet]));
                     localStorage.setItem('fish_pro_goal', String(shiftTipGoal));
                     localStorage.setItem('fish_pro_hourly_rate', String(hourlyRate));
+                    localStorage.setItem('fish_pro_sales_percent', String(salesPercent));
                     localStorage.setItem('fish_pro_theme', appTheme);
 
                     // Статус подписки в облако не отправляется: его знает только сервер.
@@ -1610,7 +1813,7 @@
                         action: 'save',
                         state: {
                             tables, menuItems, closedHistory, shiftArchive,
-                            stopListSet: [...stopListSet], hourlyRate, shiftTipGoal, appTheme
+                            stopListSet: [...stopListSet], hourlyRate, salesPercent, shiftTipGoal, appTheme
                         }
                     }, 30000);
 
@@ -1656,7 +1859,7 @@
                     await apiPost('/api/admin', { action: 'grant', targetId, days: unlimited ? undefined : days, unlimited });
                     resBox.classList.add('hidden');
                     triggerHaptic('success');
-                    alert(`✅ Доступ (${label}) выдан пользователю ${targetId}. Пусть перезайдёт в приложение.`);
+                    alert(`Доступ (${label}) выдан пользователю ${targetId}. Пусть перезайдёт в приложение.`);
                 } else {
                     const r = await apiPost('/api/admin', { action: 'create_code', days: unlimited ? undefined : days, unlimited, targetId });
                     resText.innerText = r.code;
@@ -1666,7 +1869,7 @@
                     alert(`Одноразовый ключ на ${label} для ID ${targetId} (скопирован):\n\n${r.code}\n\nКод показывается один раз: на сервере хранится только его хэш.`);
                 }
             } catch (e) {
-                alert('❌ ' + ((e && e.message) || 'Не удалось выполнить действие.'));
+                alert(((e && e.message) || 'Не удалось выполнить действие.'));
             } finally {
                 promoBusy = false;
             }
@@ -1694,10 +1897,10 @@
         }
 
         function getProHumanStatusText() {
-            if (proUnlimited) return "👑 Безлимит PRO";
+            if (proUnlimited) return "Безлимит PRO";
             const days = getProRemainingDays();
-            if (days > 0) return `🔥 Активен (${days} дн.)`;
-            return "🔒 Истек";
+            if (days > 0) return `Активен (${days} дн.)`;
+            return "Истек";
         }
 
         async function processPromoString(rawCode) {
@@ -1713,16 +1916,16 @@
                 applyProStatus(r.pro, r.isAdmin);
                 triggerHaptic('success');
                 if (r.kind === 'trial') {
-                    alert("🎉 Промокод TEST активирован! Вам открыт полный PRO-доступ на 7 дней.");
+                    alert("Промокод TEST активирован! Вам открыт полный PRO-доступ на 7 дней.");
                 } else if (r.pro && r.pro.unlimited) {
-                    alert("👑 Персональный безлимитный PRO-доступ успешно активирован!");
+                    alert("Персональный безлимитный PRO-доступ успешно активирован!");
                 } else {
                     const until = r.pro && r.pro.expiresAt ? new Date(r.pro.expiresAt).toLocaleDateString('ru-RU') : '';
-                    alert(`🎉 Оплата подтверждена! Подписка PRO активна${until ? ' до ' + until : ''}.`);
+                    alert(`Оплата подтверждена! Подписка PRO активна${until ? ' до ' + until : ''}.`);
                 }
                 return true;
             } catch (e) {
-                alert('❌ ' + ((e && e.message) || 'Не удалось активировать промокод.'));
+                alert(((e && e.message) || 'Не удалось активировать промокод.'));
                 return false;
             } finally {
                 promoBusy = false;
@@ -1848,7 +2051,7 @@
         function formatHumanDateRu(dateKeyStr) {
             const monthsGen = ["ЯНВАРЯ", "ФЕВРАЛЯ", "МАРТА", "АПРЕЛЯ", "МАЯ", "ИЮНЯ", "ИЮЛЯ", "АВГУСТА", "СЕНТЯБРЯ", "ОКТЯБРЯ", "НОЯБРЯ", "ДЕКАБРЯ"];
             const [y, m, d] = dateKeyStr.split('-');
-            return `📅 ${parseInt(d, 10)} ${monthsGen[parseInt(m, 10) - 1]}`;
+            return `${parseInt(d, 10)} ${monthsGen[parseInt(m, 10) - 1]}`;
         }
 
         function openViralShareFromCurrentShift() {
@@ -1860,6 +2063,7 @@
                 dateLabel: formatHumanDateRu(getTodayDateKey()),
                 hours: 13,
                 rate: hourlyRate,
+                salesPercent: salesPercent,
                 cashTips: cashTips,
                 cardTips: cardTips,
                 tablesCount: closedHistory.length,
@@ -1878,12 +2082,13 @@
             const shift = shiftArchive.find(s => s.dateKey === selectedCalendarDateKey);
             if (!shift) return;
 
-            const revenue = (shift.items || []).reduce((s, h) => s + (h.subtotal || 0), 0);
+            const revenue = getShiftRevenue(shift);
 
             viralDataState = {
                 dateLabel: formatHumanDateRu(shift.dateKey),
                 hours: shift.hours || 12,
                 rate: shift.rate || hourlyRate,
+                salesPercent: Number(shift.salesPercent) || 0,
                 cashTips: shift.cashTips || 0,
                 cardTips: shift.cardTips || 0,
                 tablesCount: (shift.items && shift.items.length) ? shift.items.length : (shift.tablesCount || 0),
@@ -1915,22 +2120,24 @@
             const d = viralDataState;
             const wage = Math.round(d.hours * d.rate);
             const totalTips = d.cashTips + d.cardTips;
-            const totalEarned = wage + totalTips;
+            const commission = Math.round((d.revenue || 0) * ((d.salesPercent || 0) / 100));
+            const totalEarned = wage + commission + totalTips;
             const goalPct = shiftTipGoal > 0 ? Math.round((totalTips / shiftTipGoal) * 100) : 100;
             const hourlyEff = d.hours > 0 ? Math.round(totalEarned / d.hours) : 0;
             const avgTip = d.tablesCount > 0 ? Math.round(totalTips / d.tablesCount) : totalTips;
 
-            let rank = "⚡ СТАТУС: УДАРНАЯ СМЕНА";
-            if (goalPct >= 150) rank = "💎 СТАТУС: БОГ СЕРВИСА";
-            else if (d.tablesCount >= 20) rank = "🔥 СТАТУС: РАЗРЫВ ЗАЛА";
-            else if (goalPct >= 100) rank = "🏆 СТАТУС: МАШИНА СМЕНЫ";
-            else if (d.hours >= 13) rank = "🦾 СТАТУС: ЖЕЛЕЗНЫЙ ЧЕЛОВЕК";
+            let rankIcon = 'zap';
+            let rankText = "СТАТУС: УДАРНАЯ СМЕНА";
+            if (goalPct >= 150) { rankIcon = 'gem'; rankText = "СТАТУС: БОГ СЕРВИСА"; }
+            else if (d.tablesCount >= 20) { rankIcon = 'flame'; rankText = "СТАТУС: РАЗРЫВ ЗАЛА"; }
+            else if (goalPct >= 100) { rankIcon = 'trophy'; rankText = "СТАТУС: МАШИНА СМЕНЫ"; }
+            else if (d.hours >= 13) { rankIcon = 'shield'; rankText = "СТАТУС: ЖЕЛЕЗНЫЙ ЧЕЛОВЕК"; }
 
             document.getElementById('viralHoursControlLabel').innerText = `${d.hours}ч`;
             document.getElementById('viralPrivacyBtnText').innerText = d.hideMoney ? "Показать ₽" : "Скрыть суммы ₽";
 
             document.getElementById('viralCardDate').innerText = d.dateLabel;
-            document.getElementById('viralCardRankTitle').innerText = rank;
+            document.getElementById('viralCardRankTitle').innerHTML = svgIcon(rankIcon, 'w-3.5 h-3.5') + ' ' + rankText;
             document.getElementById('viralCardGoalBar').style.width = `${Math.min(goalPct, 100)}%`;
             document.getElementById('viralCardGoalText').innerText = `Цель по чаю: ${goalPct}% выполнена`;
 
@@ -1938,7 +2145,7 @@
             document.getElementById('viralCardTables').innerText = `${d.tablesCount} счетов`;
 
             if (d.hideMoney) {
-                document.getElementById('viralCardTotalEarned').innerText = `🔥 ${goalPct}% ЦЕЛИ`;
+                document.getElementById('viralCardTotalEarned').innerHTML = `${svgIcon('flame', 'w-6 h-6')} ${goalPct}% ЦЕЛИ`;
                 document.getElementById('viralCardTips').innerText = `••• ₽`;
                 document.getElementById('viralCardTipsSplit').innerText = `Скрыто приватностью`;
                 document.getElementById('viralCardWage').innerText = `Ставка: ••• ₽`;
@@ -1949,7 +2156,9 @@
                 document.getElementById('viralCardTotalEarned').innerText = `+ ${totalEarned.toLocaleString('ru-RU')} ₽`;
                 document.getElementById('viralCardTips').innerText = `${totalTips.toLocaleString('ru-RU')} ₽`;
                 document.getElementById('viralCardTipsSplit').innerText = `Нал ${d.cashTips} • Б/н ${d.cardTips}`;
-                document.getElementById('viralCardWage').innerText = `Ставка: ${wage.toLocaleString('ru-RU')} ₽`;
+                document.getElementById('viralCardWage').innerText = commission > 0
+                    ? `Ставка: ${wage.toLocaleString('ru-RU')} ₽ • %: ${commission.toLocaleString('ru-RU')} ₽`
+                    : `Ставка: ${wage.toLocaleString('ru-RU')} ₽`;
                 document.getElementById('viralCardRevenue').innerText = `Касса: ${d.revenue.toLocaleString('ru-RU')} ₽`;
                 document.getElementById('viralCardHourlyEff').innerText = `${hourlyEff.toLocaleString('ru-RU')} ₽/ч`;
                 document.getElementById('viralCardAvgTip').innerText = `Сред. чай: ${avgTip} ₽`;
@@ -2333,7 +2542,7 @@
                 const remove = document.createElement('button');
                 remove.type = 'button';
                 remove.className = 'text-rose-400 font-bold px-2 py-1';
-                remove.textContent = '✕';
+                remove.innerHTML = svgIcon('x', 'w-3.5 h-3.5');
                 remove.setAttribute('aria-label', `Удалить ${item.name}`);
                 remove.addEventListener('click', () => removeScannedItem(idx));
                 actions.append(price, remove);
@@ -2377,7 +2586,7 @@
             saveData();
             triggerHaptic('success');
             closeAiScannerModal();
-            alert(`✅ Добавлено ${additions.length} новых позиций. Повторы пропущены: ${aiScannedParsedItems.length - additions.length}.`);
+            alert(`Добавлено ${additions.length} новых позиций. Повторы пропущены: ${aiScannedParsedItems.length - additions.length}.`);
             renderMenuDirect();
         }
 
@@ -2498,7 +2707,7 @@
             const oldName = keys[idx];
             if (!oldName) return;
 
-            openSimpleModal("✏️ Переименовать", `Новое название для "${oldName}":`, oldName, (newName) => {
+            openSimpleModal("Переименовать", `Новое название для "${oldName}":`, oldName, (newName) => {
                 if (!newName || !newName.trim() || newName.trim() === oldName) return;
                 const trimmed = newName.trim();
                 if (tables[trimmed]) { alert("Такое название уже занято!"); return; }
@@ -2549,8 +2758,8 @@
                         ${hasOrder ? '<span class="text-[9px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-bold">В работе</span>' : ''}
                     </div>
                     <div class="flex items-center space-x-1.5">
-                        <button onclick="renameTableInConstructorByIdx(${idx})" class="w-7 h-7 rounded-lg bg-slate-800 text-slate-300 flex items-center justify-center text-[10px] tap-scale">✏️</button>
-                        <button onclick="deleteTableInConstructorByIdx(${idx})" class="w-7 h-7 rounded-lg bg-rose-500/15 text-rose-400 flex items-center justify-center text-xs font-bold tap-scale">✕</button>
+                        <button onclick="renameTableInConstructorByIdx(${idx})" class="w-7 h-7 rounded-lg bg-slate-800 text-slate-300 flex items-center justify-center text-[10px] tap-scale">${svgIcon('pencil', 'w-3.5 h-3.5')}</button>
+                        <button onclick="deleteTableInConstructorByIdx(${idx})" class="w-7 h-7 rounded-lg bg-rose-500/15 text-rose-400 flex items-center justify-center text-xs font-bold tap-scale">${svgIcon('x', 'w-3.5 h-3.5')}</button>
                     </div>
                 `;
                 list.appendChild(row);
@@ -2622,9 +2831,9 @@
                 const btn = document.getElementById('navBtn' + map[key]);
                 if(btn) {
                     if(key === tabId) {
-                        btn.className = "flex flex-col items-center justify-center py-2 rounded-2xl text-slate-950 font-extrabold bg-slate-100 border border-slate-200 transition tap-scale shadow";
+                        btn.className = "nav-btn tap-scale active text-emerald-400 font-bold";
                     } else {
-                        btn.className = "flex flex-col items-center justify-center py-2 rounded-2xl text-slate-400 font-medium hover:bg-slate-800/50 transition tap-scale";
+                        btn.className = "nav-btn tap-scale text-slate-500 hover:text-slate-300 font-semibold";
                     }
                 }
             });
@@ -2632,10 +2841,12 @@
 
         function openFinishShiftModal() {
             isAddingPastShiftMode = false;
-            document.getElementById('finishShiftModalTitle').innerText = "🏁 Завершение смены";
+            document.getElementById('finishShiftModalTitle').innerHTML = svgIcon('flag', 'w-4 h-4') + ' Завершение смены';
             document.getElementById('finishShiftDateInput').value = getTodayDateKey();
             document.getElementById('finishShiftHoursInput').value = 13;
             document.getElementById('finishShiftRateInput').value = hourlyRate;
+            document.getElementById('finishShiftPercentInput').value = salesPercent;
+            document.getElementById('finishShiftRevenueInput').value = getCurrentShiftRevenue();
             document.getElementById('pastShiftManualTipsBox').classList.add('hidden');
             recalcFinishShiftPreview();
             document.getElementById('finishShiftModal').classList.remove('hidden');
@@ -2643,10 +2854,12 @@
 
         function openAddPastShiftModal() {
             isAddingPastShiftMode = true;
-            document.getElementById('finishShiftModalTitle').innerText = "📅 Добавить смену";
+            document.getElementById('finishShiftModalTitle').innerHTML = svgIcon('calendar', 'w-4 h-4') + ' Добавить смену';
             document.getElementById('finishShiftDateInput').value = selectedCalendarDateKey || getTodayDateKey();
             document.getElementById('finishShiftHoursInput').value = 13;
             document.getElementById('finishShiftRateInput').value = hourlyRate;
+            document.getElementById('finishShiftPercentInput').value = salesPercent;
+            document.getElementById('finishShiftRevenueInput').value = 0;
             document.getElementById('pastShiftCashTipsInput').value = 0;
             document.getElementById('pastShiftCardTipsInput').value = 0;
             document.getElementById('pastShiftManualTipsBox').classList.remove('hidden');
@@ -2667,6 +2880,7 @@
             const hours = Number(document.getElementById('finishShiftHoursInput').value) || 0;
             const rate = Number(document.getElementById('finishShiftRateInput').value) || 0;
             const wage = Math.round(hours * rate);
+            const commission = calcCommission(readFinishShiftRevenue(), readFinishShiftPercent());
 
             let totalTips = 0;
             if (isAddingPastShiftMode) {
@@ -2678,8 +2892,9 @@
             }
 
             document.getElementById('finishPreviewWage').innerText = wage.toLocaleString('ru-RU') + ' ₽';
+            document.getElementById('finishPreviewCommission').innerText = commission.toLocaleString('ru-RU') + ' ₽';
             document.getElementById('finishPreviewTips').innerText = totalTips.toLocaleString('ru-RU') + ' ₽';
-            document.getElementById('finishPreviewTotal').innerText = (wage + totalTips).toLocaleString('ru-RU') + ' ₽';
+            document.getElementById('finishPreviewTotal').innerText = (wage + commission + totalTips).toLocaleString('ru-RU') + ' ₽';
         }
 
         function confirmSaveShiftToArchive() {
@@ -2692,7 +2907,17 @@
                 return;
             }
 
+            const percentRaw = String(document.getElementById('finishShiftPercentInput').value).trim();
+            const percent = percentRaw === '' ? 0 : normalizeSalesPercent(percentRaw);
+            if (!Number.isFinite(percent)) {
+                alert("Процент от продаж должен быть числом от 0 до 100!");
+                return;
+            }
+            const revenue = Math.round(readFinishShiftRevenue());
+            const commission = calcCommission(revenue, percent);
+
             hourlyRate = rate;
+            salesPercent = percent;
             const wage = Math.round(hours * rate);
 
             let cashTips = 0;
@@ -2709,7 +2934,7 @@
             }
 
             const totalTips = cashTips + cardTips;
-            const totalEarned = wage + totalTips;
+            const totalEarned = wage + commission + totalTips;
 
             const existingIdx = shiftArchive.findIndex(s => s.dateKey === dateKey);
             const shiftRecord = {
@@ -2718,6 +2943,9 @@
                 hours: hours,
                 rate: rate,
                 wage: wage,
+                salesPercent: percent,
+                revenue: revenue,
+                commission: commission,
                 cashTips: cashTips,
                 cardTips: cardTips,
                 totalTips: totalTips,
@@ -2743,8 +2971,66 @@
             openViralShareFromArchiveDay();
         }
 
+        // ================= % ОТ ЛИЧНЫХ ПРОДАЖ: ХЕЛПЕРЫ =================
+
+        // Разбор числа из поля ввода: «2,5», «2.5», « 3 % ». Пустая строка = NaN (а не 0).
+        function parsePercentInput(raw) {
+            const str = String(raw == null ? '' : raw).replace(/[\s\u00a0%]/g, '').replace(',', '.');
+            if (str === '') return NaN;
+            return Number(str);
+        }
+
+        // Допустимый процент: число от 0 до 100 (до сотых). Иначе NaN.
+        function normalizeSalesPercent(raw) {
+            const n = parsePercentInput(raw);
+            if (!Number.isFinite(n) || n < 0 || n > 100) return NaN;
+            return Math.round(n * 100) / 100;
+        }
+
+        function formatPercent(p) {
+            const n = Number(p);
+            return (Number.isFinite(n) ? n : 0).toLocaleString('ru-RU', { maximumFractionDigits: 2 }) + '%';
+        }
+
+        function calcCommission(revenue, percent) {
+            return Math.round((Number(revenue) || 0) * ((Number(percent) || 0) / 100));
+        }
+
+        function getCurrentShiftRevenue() {
+            return closedHistory.reduce((s, h) => s + (h.subtotal || 0), 0);
+        }
+
+        // Выручка смены из архива: сохранённая касса, а для старых смен — сумма чеков.
+        function getShiftRevenue(shift) {
+            if (shift && Number.isFinite(shift.revenue)) return shift.revenue;
+            return ((shift && shift.items) || []).reduce((s, h) => s + (h.subtotal || 0), 0);
+        }
+
+        function readFinishShiftPercent() {
+            const n = parsePercentInput(document.getElementById('finishShiftPercentInput').value);
+            return Number.isFinite(n) ? Math.min(100, Math.max(0, n)) : 0;
+        }
+
+        function readFinishShiftRevenue() {
+            return Math.max(0, Number(document.getElementById('finishShiftRevenueInput').value) || 0);
+        }
+
+        function openSalesPercentModal() {
+            openSimpleModal("% от личных продаж", "Ваш процент от кассы (от 0 до 100). Можно дробное через точку или запятую, например 2,5:", String(salesPercent).replace('.', ','), (val) => {
+                const p = normalizeSalesPercent(val);
+                if (!Number.isFinite(p)) {
+                    alert("Введите число от 0 до 100, например 3 или 2,5.");
+                    return;
+                }
+                salesPercent = p;
+                saveData();
+                renderProfileAll();
+                renderStats();
+            }, String(salesPercent));
+        }
+
         function openRateModal() {
-            openSimpleModal("💼 Почасовая ставка", "Введите ставку в рублях за 1 час:", "", (val) => {
+            openSimpleModal("Почасовая ставка", "Введите ставку в рублях за 1 час:", "", (val) => {
                 const num = Number(val);
                 if (num && num > 0) {
                     hourlyRate = num;
@@ -2785,6 +3071,7 @@
         function renderProfileAll() {
             document.getElementById('profileHourlyRateDisplay').innerText = `${hourlyRate} ₽/ч`;
             document.getElementById('currentRateInfoBadge').innerText = `${hourlyRate} ₽/ч`;
+            document.getElementById('profileSalesPercentDisplay').innerText = formatPercent(salesPercent);
             document.getElementById('profileTablesCountInfo').innerText = `${Object.keys(tables).length} позиций`;
 
             const year = profileDate.getFullYear();
@@ -2873,7 +3160,7 @@
             }
 
             const shift = shiftArchive.find(s => s.dateKey === selectedCalendarDateKey);
-            titleEl.innerText = `📅 Дата: ${formatDateKeyToRu(selectedCalendarDateKey)}`;
+            titleEl.innerHTML = `${svgIcon('calendar', 'w-4 h-4')} Дата: ${escapeHtml(formatDateKeyToRu(selectedCalendarDateKey))}`;
 
             if (!shift) {
                 subEl.innerText = "Выходной день";
@@ -2882,12 +3169,15 @@
                 return;
             }
 
-            subEl.innerText = `Смена • Ставка ${shift.rate} ₽/ч`;
+            const dayPercent = Number(shift.salesPercent) || 0;
+            subEl.innerText = `Смена • Ставка ${shift.rate} ₽/ч` + (dayPercent > 0 ? ` • ${formatPercent(dayPercent)} с продаж` : '');
             contentEl.classList.remove('hidden');
             actionsEl.classList.remove('hidden');
 
             document.getElementById('dayArchiveWage').innerText = `${shift.wage.toLocaleString('ru-RU')} ₽`;
-            document.getElementById('dayArchiveHours').innerText = `${shift.hours} ч`;
+            document.getElementById('dayArchiveHours').innerText = `за ${shift.hours} ч`;
+            document.getElementById('dayArchiveCommission').innerText = `${(shift.commission || 0).toLocaleString('ru-RU')} ₽`;
+            document.getElementById('dayArchiveCommissionNote').innerText = `от кассы ${getShiftRevenue(shift).toLocaleString('ru-RU')} ₽`;
             document.getElementById('dayArchiveTips').innerText = `${shift.totalTips.toLocaleString('ru-RU')} ₽`;
             document.getElementById('dayArchiveTipsSplit').innerText = `Нал ${shift.cashTips} / Бн ${shift.cardTips}`;
             document.getElementById('dayArchiveTotal').innerText = `${shift.totalEarned.toLocaleString('ru-RU')} ₽`;
@@ -2931,39 +3221,58 @@
             showBillHistoryModalObject(shift.items[itemIndex]);
         }
 
-        function renderMonthlyReport(monthShifts) {
+        // Общие итоги месяца: один расчёт для экрана отчёта и для текста «Скопировать».
+        function computeMonthStats(monthShifts) {
             const shiftsCount = monthShifts.length;
             const totalHours = monthShifts.reduce((s, sh) => s + (sh.hours || 0), 0);
             const totalWage = monthShifts.reduce((s, sh) => s + (sh.wage || 0), 0);
+            const totalCommission = monthShifts.reduce((s, sh) => s + (sh.commission || 0), 0);
             const totalCashTips = monthShifts.reduce((s, sh) => s + (sh.cashTips || 0), 0);
             const totalCardTips = monthShifts.reduce((s, sh) => s + (sh.cardTips || 0), 0);
             const totalTips = totalCashTips + totalCardTips;
-            const totalIncome = totalWage + totalTips;
+            const totalIncome = totalWage + totalCommission + totalTips;
 
             let totalBills = 0;
             let totalRevenue = 0;
             monthShifts.forEach(sh => {
-                const items = sh.items || [];
-                totalBills += items.length;
-                totalRevenue += items.reduce((acc, it) => acc + (it.subtotal || 0), 0);
+                totalBills += (sh.items || []).length;
+                totalRevenue += getShiftRevenue(sh);
             });
+
+            return { shiftsCount, totalHours, totalWage, totalCommission, totalCashTips, totalCardTips, totalTips, totalIncome, totalBills, totalRevenue };
+        }
+
+        function renderMonthlyReport(monthShifts) {
+            const st = computeMonthStats(monthShifts);
+            const { shiftsCount, totalHours, totalWage, totalCommission, totalCashTips, totalCardTips, totalTips, totalIncome, totalBills, totalRevenue } = st;
 
             const avgIncome = shiftsCount > 0 ? Math.round(totalIncome / shiftsCount) : 0;
             const avgHours = shiftsCount > 0 ? (totalHours / shiftsCount).toFixed(1) : 0;
-            const wagePct = totalIncome > 0 ? Math.round((totalWage / totalIncome) * 100) : 50;
-            const tipsPct = totalIncome > 0 ? (100 - wagePct) : 50;
+
+            let wagePct = 50;
+            let commissionPct = 0;
+            let tipsPct = 50;
+            if (totalIncome > 0) {
+                wagePct = Math.round((totalWage / totalIncome) * 100);
+                commissionPct = Math.round((totalCommission / totalIncome) * 100);
+                tipsPct = Math.max(0, 100 - wagePct - commissionPct);
+            }
 
             document.getElementById('reportTotalIncome').innerText = `${totalIncome.toLocaleString('ru-RU')} ₽`;
             document.getElementById('reportShiftsCountBadge').innerText = `${shiftsCount} смен`;
             document.getElementById('reportWageBar').style.width = `${wagePct}%`;
+            document.getElementById('reportCommissionBar').style.width = `${commissionPct}%`;
             document.getElementById('reportTipsBar').style.width = `${tipsPct}%`;
             document.getElementById('reportWagePercent').innerText = `${wagePct}%`;
+            document.getElementById('reportCommissionPercent').innerText = `${commissionPct}%`;
             document.getElementById('reportTipsPercent').innerText = `${tipsPct}%`;
 
             document.getElementById('reportTotalHours').innerText = `${totalHours} ч`;
             document.getElementById('reportAvgHours').innerText = `В среднем ${avgHours} ч`;
             document.getElementById('reportTotalWage').innerText = `${totalWage.toLocaleString('ru-RU')} ₽`;
             document.getElementById('reportRateNote').innerText = `Ставка ${hourlyRate} ₽/ч`;
+            document.getElementById('reportTotalCommission').innerText = `${totalCommission.toLocaleString('ru-RU')} ₽`;
+            document.getElementById('reportCommissionNote').innerText = `С кассы ${totalRevenue.toLocaleString('ru-RU')} ₽`;
             document.getElementById('reportTotalTips').innerText = `${totalTips.toLocaleString('ru-RU')} ₽`;
             document.getElementById('reportTipsSplit').innerText = `Нал: ${totalCashTips} • Бн: ${totalCardTips}`;
             document.getElementById('reportAvgShiftIncome').innerText = `${avgIncome.toLocaleString('ru-RU')} ₽`;
@@ -2977,16 +3286,9 @@
             const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
             const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
             const monthShifts = shiftArchive.filter(s => (s.dateKey || '').startsWith(monthPrefix));
+            const st = computeMonthStats(monthShifts);
 
-            const shiftsCount = monthShifts.length;
-            const totalHours = monthShifts.reduce((s, sh) => s + (sh.hours || 0), 0);
-            const totalWage = monthShifts.reduce((s, sh) => s + (sh.wage || 0), 0);
-            const totalCashTips = monthShifts.reduce((s, sh) => s + (sh.cashTips || 0), 0);
-            const totalCardTips = monthShifts.reduce((s, sh) => s + (sh.cardTips || 0), 0);
-            const totalTips = totalCashTips + totalCardTips;
-            const totalIncome = totalWage + totalTips;
-
-            const reportText = `📊 ОТЧЕТ: ${monthNames[month]} ${year}\nСмен: ${shiftsCount} | Часов: ${totalHours}ч\nДоход: ${totalIncome.toLocaleString('ru-RU')} ₽ (Чай: ${totalTips} ₽)\n👉 @pult_waiter_bot`;
+            const reportText = `ОТЧЕТ: ${monthNames[month]} ${year}\nСмен: ${st.shiftsCount} | Часов: ${st.totalHours}ч\nДоход: ${st.totalIncome.toLocaleString('ru-RU')} ₽ (Ставка: ${st.totalWage.toLocaleString('ru-RU')} ₽ • % с продаж: ${st.totalCommission.toLocaleString('ru-RU')} ₽ • Чай: ${st.totalTips} ₽)\nВыручка: ${st.totalRevenue.toLocaleString('ru-RU')} ₽ • % с продаж: ${st.totalCommission.toLocaleString('ru-RU')} ₽\n@pult_waiter_bot`;
 
             navigator.clipboard.writeText(reportText).then(() => alert("Отчет за месяц скопирован в буфер обмена!"));
         }
@@ -3002,19 +3304,19 @@
 
             const msgEl = document.getElementById('tipGoalMessage');
             if(percent >= 100) {
-                msgEl.innerText = "🔥 Цель выполнена! Ты просто машина смены!";
+                msgEl.innerHTML = svgIcon('flame', 'w-3.5 h-3.5') + ' Цель выполнена! Ты просто машина смены!';
                 msgEl.className = "text-[11px] text-emerald-400 font-bold text-center";
             } else if(percent >= 50) {
-                msgEl.innerText = "💪 Экватор пройден, продолжай в том же духе!";
+                msgEl.innerHTML = svgIcon('trending-up', 'w-3.5 h-3.5') + ' Экватор пройден, продолжай в том же духе!';
                 msgEl.className = "text-[11px] text-slate-200 font-medium text-center";
             } else {
-                msgEl.innerText = "🚀 Отличное начало смены, догоняем цель!";
+                msgEl.innerHTML = svgIcon('rocket', 'w-3.5 h-3.5') + ' Отличное начало смены, догоняем цель!';
                 msgEl.className = "text-[11px] text-slate-300 font-medium text-center italic";
             }
         }
 
         function openEditGoalModal() {
-            openSimpleModal("🎯 Цель", "Сумма чаевых за смену (₽):", "", (val) => {
+            openSimpleModal("Цель", "Сумма чаевых за смену (₽):", "", (val) => {
                 const num = Number(val);
                 if(num && num > 0) {
                     shiftTipGoal = num;
@@ -3037,7 +3339,7 @@
                 const hasTtk = !!(item.ttk && String(item.ttk).trim());
                 const hasSheet = hasSlogan || hasTtk;
                 const sheetNote = hasSheet
-                    ? `<div class="ttk-note text-[9px] font-bold text-amber-400 mt-0.5">${hasSlogan ? '🔥 слоган' : ''}${hasSlogan && hasTtk ? ' · ' : ''}${hasTtk ? '📋 ТТК' : ''} заполнено</div>`
+                    ? `<div class="ttk-note text-[9px] font-bold text-amber-400 mt-0.5">${hasSlogan ? svgIcon('flame', 'w-3 h-3') + ' слоган' : ''}${hasSlogan && hasTtk ? ' · ' : ''}${hasTtk ? svgIcon('clipboard-list', 'w-3 h-3') + ' ТТК' : ''} заполнено</div>`
                     : '';
                 const div = document.createElement('div');
                 div.className = `flex justify-between items-center p-3 rounded-2xl border ${isStopped ? 'bg-rose-500/10 border-rose-500/30' : 'glass-panel border-slate-800'}`;
@@ -3048,9 +3350,9 @@
                         ${sheetNote}
                     </div>
                     <div class="flex items-center gap-2 shrink-0">
-                        <button onclick="openDishTtkEdit(${idx})" class="px-3 py-2 rounded-xl text-[11px] font-extrabold tap-scale ${hasSheet ? 'ttk-btn-on text-amber-400 border border-amber-500/40 bg-amber-500/10' : 'glass-element text-slate-400'}">📋 ТТК</button>
+                        <button onclick="openDishTtkEdit(${idx})" class="px-3 py-2 rounded-xl text-[11px] font-extrabold tap-scale ${hasSheet ? 'ttk-btn-on text-amber-400 border border-amber-500/40 bg-amber-500/10' : 'glass-element text-slate-400'}">${svgIcon('clipboard-list', 'w-3.5 h-3.5')} ТТК</button>
                     <button onclick="toggleStopItemByIdx(${idx})" class="px-3.5 py-2 rounded-xl text-xs font-extrabold tap-scale shadow ${isStopped ? 'bg-rose-600 text-white' : 'glass-panel text-slate-300'}">
-                        ${isStopped ? '❌ В стопе' : '✅ Активно'}
+                        ${isStopped ? svgIcon('x-circle', 'w-3.5 h-3.5') + ' В стопе' : svgIcon('check-circle', 'w-3.5 h-3.5') + ' Активно'}
                     </button>
                     </div>
                 `;
@@ -3105,7 +3407,7 @@
             const stopped = stopListSet.has(item.name);
             const canAdd = !!currentTable && !!tables[currentTable] && !stopped;
             addBtn.disabled = !canAdd;
-            addBtn.textContent = stopped ? '🛑 Блюдо в стопе' : '＋ Добавить в заказ';
+            addBtn.innerHTML = stopped ? svgIcon('ban', 'w-3.5 h-3.5') + ' Блюдо в стопе' : svgIcon('plus', 'w-3.5 h-3.5') + ' Добавить в заказ';
             addBtn.classList.toggle('opacity-50', !canAdd);
             addBtn.classList.toggle('cursor-not-allowed', !canAdd);
 
@@ -3164,44 +3466,56 @@
 
         // ================= ЗАЛ, СТОЛЫ И КАРТОЧКА ЗАКАЗА =================
 
+        // Статус стола для виджета: free / ok (<5 мин) / warn (5–10 мин) / alert (≥10 мин, нужно внимание)
+        function getTableWidgetStatus(t, hasOrder) {
+            if (!hasOrder) return { key: 'free', mins: null };
+            if (!t.lastVisited) return { key: 'ok', mins: null };
+            const mins = Math.floor((Date.now() - t.lastVisited) / 60000);
+            if (mins >= 10) return { key: 'alert', mins };
+            if (mins >= 5) return { key: 'warn', mins };
+            return { key: 'ok', mins };
+        }
+
         function renderTables() {
             const grid = document.getElementById('tablesGrid');
             grid.innerHTML = '';
             let attentionCount = 0;
 
             const keys = Object.keys(tables);
-            document.getElementById('hallHeaderTitle').innerText = `🗺 Зал (${keys.length} поз.)`;
+            document.getElementById('hallHeaderTitle').innerHTML = `${svgIcon('map', 'w-4 h-4')} Зал (${keys.length} поз.)`;
+
+            const DOT_CLASSES = {
+                free: 'bg-slate-700',
+                ok: 'bg-emerald-400 shadow-[0_0_8px_#34d399]',
+                warn: 'bg-amber-400 shadow-[0_0_8px_#fbbf24]',
+                alert: 'bg-rose-500 animate-pulse shadow-[0_0_10px_#f43f5e]'
+            };
 
             for(let name of keys) {
                 const t = tables[name];
                 const hasOrder = t.items && t.items.length > 0;
-                let timerDisplay = "";
-                let timerColor = "glass-panel text-slate-300";
-                
-                if (hasOrder && t.lastVisited) {
-                    const diffMin = Math.floor((Date.now() - t.lastVisited) / 60000);
-                    timerDisplay = `${diffMin}м`;
-                    if(diffMin >= 5 && diffMin < 10) timerColor = "bg-amber-500/10 border-amber-500/30 text-amber-300";
-                    else if(diffMin >= 10) { timerColor = "bg-rose-500/20 border-rose-500/40 text-rose-300 animate-pulse"; attentionCount++; }
-                } else {
-                    timerDisplay = "Свободен";
-                }
+                const status = getTableWidgetStatus(t, hasOrder);
+                if (status.key === 'alert') attentionCount++;
 
                 if(onlyAttentionFilter && (!t.lastVisited || Math.floor((Date.now() - t.lastVisited) / 60000) < 10)) continue;
 
                 const totalSum = (t.items || []).reduce((s, i) => s + i.price, 0);
+                const timeText = hasOrder && t.lastVisited && status.mins !== null ? `${status.mins}м` : '';
 
                 const btn = document.createElement('button');
-                btn.className = `tap-scale p-3.5 rounded-[28px] border text-left flex flex-col justify-between h-24 ${currentTable === name ? 'ring-2 ring-slate-300 border-slate-500 ' + timerColor : timerColor}`;
+                btn.className = `tbl-widget tbl-${status.key} ${currentTable === name ? 'tbl-selected' : ''} tap-scale rounded-2xl p-3.5 h-24 flex flex-col justify-between relative overflow-hidden transition-all`;
                 btn.onclick = () => handleTableClick(name);
                 btn.innerHTML = `
                     <div class="flex justify-between items-center w-full">
-                        <span class="font-extrabold text-xs truncate pr-1">${escapeHtml(name)}</span>
-                        <span class="text-[10px] font-mono opacity-80 shrink-0">${hasOrder && t.lastVisited ? timerDisplay : ''}</span>
+                        <span class="font-bold text-xs truncate pr-1">${escapeHtml(name)}</span>
+                        <span class="flex items-center gap-1.5 shrink-0">
+                            ${timeText ? `<span class="text-[10px] font-semibold tabular-nums opacity-80">${timeText}</span>` : ''}
+                            <span class="w-2 h-2 rounded-full ${DOT_CLASSES[status.key]}"></span>
+                        </span>
                     </div>
                     <div>
-                        <div class="text-[10px] opacity-60 font-medium">${t.guests} гост.</div>
-                        <div class="font-extrabold text-xs ${hasOrder ? 'text-slate-100' : 'opacity-30'}">${hasOrder ? totalSum + ' ₽' : 'Свободен'}</div>
+                        <div class="flex items-center gap-1 text-[10px] font-medium opacity-70">${svgIcon('users', 'w-3 h-3')} ${t.guests}</div>
+                        <div class="font-extrabold tabular-nums ${hasOrder ? 'text-sm' : 'text-xs opacity-50'}">${hasOrder ? totalSum.toLocaleString('ru-RU') + ' ₽' : 'Свободен'}</div>
                     </div>
                 `;
                 grid.appendChild(btn);
@@ -3317,7 +3631,7 @@
 
                 let gBtn = document.createElement('button');
                 gBtn.className = `px-3 py-1.5 rounded-xl text-xs font-bold tap-scale flex items-center space-x-1 ${t.activeGuest === gLabel ? 'bg-slate-100 text-slate-950 shadow' : 'glass-element text-slate-300'}`;
-                gBtn.innerHTML = `<span>👤 ${escapeHtml(gLabel)}</span> <span onclick="event.stopPropagation(); renameGuest(${i})" class="text-[10px] opacity-75 ml-1 px-1 hover:opacity-100">✏️</span>`;
+                gBtn.innerHTML = `<span>${svgIcon('user', 'w-3 h-3')} ${escapeHtml(gLabel)}</span> <span onclick="event.stopPropagation(); renameGuest(${i})" class="text-[10px] opacity-75 ml-1 px-1 hover:opacity-100">${svgIcon('pencil', 'w-3 h-3')}</span>`;
                 gBtn.onclick = (function(nameLabel) { return () => { t.activeGuest = nameLabel; renderTableCard(); }; })(gLabel);
                 
                 guestsContainer.appendChild(gBtn);
@@ -3338,15 +3652,15 @@
                         <div>
                             <div class="font-extrabold text-slate-100 text-xs tracking-wide">${escapeHtml(item.name)}</div>
                             <div class="text-[10px] text-slate-400 mt-0.5 flex items-center space-x-1.5 flex-wrap">
-                                <span class="text-slate-300 font-bold">${escapeHtml(item.course)}</span> • 
+                                <span class="text-slate-300 font-bold">${escapeHtml(displayCourse(item.course))}</span> • 
                                 <span class="text-emerald-400 font-semibold">${escapeHtml(item.guest)}</span>
                                 <span class="text-rose-300 font-medium">${item.modifier ? '(' + escapeHtml(item.modifier) + ')' : ''}</span>
-                                <button onclick="editItemModifier(${idx})" class="text-slate-300 hover:text-white ml-1">✏️</button>
+                                <button onclick="editItemModifier(${idx})" class="text-slate-300 hover:text-white ml-1">${svgIcon('pencil', 'w-3.5 h-3.5')}</button>
                             </div>
                         </div>
                         <div class="flex items-center space-x-3">
                             <span class="font-extrabold text-slate-100 text-xs">${item.price} ₽</span>
-                            <button onclick="removeItem(${idx})" class="w-6 h-6 rounded-full bg-rose-500/10 text-rose-400 font-bold flex items-center justify-center">✕</button>
+                            <button onclick="removeItem(${idx})" class="w-6 h-6 rounded-full bg-rose-500/10 text-rose-400 font-bold flex items-center justify-center">${svgIcon('x', 'w-3 h-3')}</button>
                         </div>
                     `;
                     itemsContainer.appendChild(div);
@@ -3469,7 +3783,7 @@
         function renameGuest(index) {
             const t = tables[currentTable];
             const oldName = t.guestNames[index] || `Гость ${index}`;
-            openSimpleModal("👤 Примета или имя гостя", "Например: Бородач, Девушка в очках, Папа:", "", (newName) => {
+            openSimpleModal("Примета или имя гостя", "Например: Бородач, Девушка в очках, Папа:", "", (newName) => {
                 if(newName && newName.trim() !== "") {
                     const trimmed = newName.trim();
                     if(t.activeGuest === oldName) t.activeGuest = trimmed;
@@ -3491,7 +3805,7 @@
             const t = tables[currentTable];
             const item = t.items[idx];
             if (!item) return;
-            openSimpleModal("✏️ Пометка к блюду", `Комментарий для "${item.name}":`, item.modifier || "", (newMod) => {
+            openSimpleModal("Пометка к блюду", `Комментарий для "${item.name}":`, item.modifier || "", (newMod) => {
                 if(newMod !== null) {
                     item.modifier = newMod.trim();
                     saveData();
@@ -3503,9 +3817,9 @@
         function setCourseActive(courseName) {
             selectedActiveCourse = courseName;
             const ind = document.getElementById('compactCourseIndicator');
-            if (ind) ind.innerText = `Курс: ${courseName}`;
-            ['⚡ Сразу', '1к', '2к', '3к'].forEach(c => {
-                let key = c === '⚡ Сразу' ? 'Сразу' : c;
+            if (ind) ind.innerText = `Курс: ${displayCourse(courseName)}`;
+            ['Сразу', '1к', '2к', '3к'].forEach(c => {
+                let key = c;
                 const btn = document.getElementById('courseBtn_' + key);
                 if(btn) {
                     if(courseName.includes(key === 'Сразу' ? 'Сразу' : key[0])) {
@@ -3531,7 +3845,7 @@
             }
 
             if (menuItems.length === 0) {
-                list.innerHTML = `<div class="text-center py-6 text-slate-400 text-xs">Меню пустое. Загрузите своё меню через <b onclick="openAiScannerModal()" class="text-emerald-400 underline cursor-pointer">🤖 ИИ-сканер</b>!</div>`;
+                list.innerHTML = `<div class="text-center py-6 text-slate-400 text-xs">Меню пустое. Загрузите своё меню через <b onclick="openAiScannerModal()" class="text-emerald-400 underline cursor-pointer">${svgIcon('bot', 'w-3.5 h-3.5')} ИИ-сканер</b>!</div>`;
                 return;
             }
 
@@ -3548,7 +3862,7 @@
                     <div class="pr-2 flex-1">
                         <div class="font-bold text-xs ${isStopped ? 'text-rose-300 line-through' : 'text-slate-200'}">${escapeHtml(item.name)}</div>
                         <div class="text-[10px] ${isStopped ? 'text-rose-400 font-extrabold' : 'text-slate-300 font-extrabold'} mt-0.5">
-                            ${isStopped ? '🛑 В СТОПЕ' : item.price + ' ₽'}
+                            ${isStopped ? svgIcon('ban', 'w-3 h-3') + ' В СТОПЕ' : item.price + ' ₽'}
                         </div>
                     </div>
                     <div class="flex items-center gap-2 shrink-0">
@@ -3593,7 +3907,7 @@
 
             if (btnEl) {
                 const orig = btnEl.innerText;
-                btnEl.innerText = "✓ ОК";
+                btnEl.innerHTML = svgIcon('check', 'w-3.5 h-3.5') + ' ОК';
                 btnEl.classList.add('bg-emerald-400');
                 setTimeout(() => {
                     btnEl.innerText = orig;
@@ -3707,18 +4021,18 @@
                     <div class="flex justify-between items-center">
                         <div class="flex items-center space-x-2.5">
                             <span class="font-extrabold text-sm text-slate-100">${escapeHtml(name)}</span>
-                            <span data-live-timer-table="${escapeHtml(name)}" class="text-xs px-3 py-1 rounded-full font-mono font-extrabold border shadow ${timerColors}">⏱ ${timerText}</span>
+                            <span data-live-timer-table="${escapeHtml(name)}" class="text-xs px-3 py-1 rounded-full font-mono font-extrabold border shadow ${timerColors}">${svgIcon('timer', 'w-3 h-3')} ${timerText}</span>
                         </div>
                         <span class="font-extrabold text-sm text-emerald-400">${total} ₽</span>
                     </div>
                     <div class="text-xs text-slate-400">Позиций: ${t.items.length} • Гостей: ${t.guests}</div>
                     <div class="grid grid-cols-2 gap-2 pt-0.5">
                         <button onclick="openTableFromMyTablesByIdx(${idx})" class="bg-slate-100 hover:bg-white text-slate-950 py-3 rounded-2xl text-xs font-extrabold tap-scale shadow flex items-center justify-center space-x-1">
-                            <span>✏️</span>
+                            <span>${svgIcon('pencil', 'w-4 h-4')}</span>
                             <span>Открыть заказ</span>
                         </button>
                         <button onclick="resetTableTimerFromMyTablesByIdx(${idx})" class="bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-2xl text-xs font-extrabold tap-scale shadow-lg flex items-center justify-center space-x-1">
-                            <span>👁️</span>
+                            <span>${svgIcon('eye', 'w-4 h-4')}</span>
                             <span>У стола</span>
                         </button>
                     </div>
@@ -3789,7 +4103,7 @@
                 div.onclick = () => { selectedCheckoutGroup = groupName; renderCheckoutBillsPreview(); };
                 div.innerHTML = `
                     <div class="flex justify-between items-center font-extrabold text-slate-200 text-xs">
-                        <span>🧾 ${escapeHtml(groupName)} <span class="text-[10px] text-slate-400 font-normal">(${escapeHtml(groupGuests.join(', ')) || 'нет'})</span></span>
+                        <span>${svgIcon('receipt', 'w-3.5 h-3.5')} ${escapeHtml(groupName)} <span class="text-[10px] text-slate-400 font-normal">(${escapeHtml(groupGuests.join(', ')) || 'нет'})</span></span>
                         <span class="text-emerald-400">${groupSum} ₽</span>
                     </div>
                     <div class="text-[10px] text-slate-400 truncate mt-0.5">${escapeHtml(itemsListText)}</div>
@@ -3929,6 +4243,8 @@
             document.getElementById('statsCardTips').innerText = cardTips + ' ₽';
             document.getElementById('statsTotalTables').innerText = closedHistory.length;
             document.getElementById('currentRateInfoBadge').innerText = `${hourlyRate} ₽/ч`;
+            document.getElementById('currentSalesPercentBadge').innerText = formatPercent(salesPercent);
+            document.getElementById('currentCommissionBadge').innerText = `+${calcCommission(getCurrentShiftRevenue(), salesPercent).toLocaleString('ru-RU')} ₽`;
 
             const container = document.getElementById('closedTablesHistory');
             container.innerHTML = '';
@@ -3977,7 +4293,7 @@
                     row.innerHTML = `
                         <div>
                             <div class="text-slate-200 font-bold">${escapeHtml(item.name)}</div>
-                            <div class="text-[10px] text-slate-400"><span class="text-slate-300">${escapeHtml(item.course)}</span> • <span class="text-emerald-400">${escapeHtml(item.guest)}</span> ${item.modifier ? '('+escapeHtml(item.modifier)+')' : ''}</div>
+                            <div class="text-[10px] text-slate-400"><span class="text-slate-300">${escapeHtml(displayCourse(item.course))}</span> • <span class="text-emerald-400">${escapeHtml(item.guest)}</span> ${item.modifier ? '('+escapeHtml(item.modifier)+')' : ''}</div>
                         </div>
                         <span class="font-bold text-slate-200">${item.price} ₽</span>
                     `;
