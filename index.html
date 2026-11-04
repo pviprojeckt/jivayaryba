@@ -483,10 +483,14 @@
         <!-- ВКЛАДКА 4: Стоп-лист -->
         <div id="tabStopList" class="tab-content space-y-4 hidden">
             <div class="flex justify-between items-center px-1">
-                <h2 class="text-xs font-bold uppercase tracking-widest text-rose-400"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg> Стоп-лист</h2>
+                <h2 class="text-xs font-bold uppercase tracking-widest text-rose-400"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg> Стоп-лист и меню</h2>
                 <span id="stopListCountBadge" class="text-[10px] glass-element text-rose-400 px-3 py-1 rounded-full font-bold">0 в стопе</span>
             </div>
             <div class="glass-panel rounded-3xl p-3.5 space-y-3">
+                <div class="grid grid-cols-2 gap-2">
+                    <button type="button" onclick="openDishEditModal(null)" class="bg-slate-100 hover:bg-white text-slate-950 py-2.5 rounded-2xl text-xs font-extrabold tap-scale shadow-lg flex items-center justify-center gap-1.5"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg> Добавить блюдо</button>
+                    <button type="button" onclick="openAiScannerModal()" class="glass-element text-slate-200 py-2.5 rounded-2xl text-xs font-bold tap-scale flex items-center justify-center gap-1.5"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg> ИИ-сканер меню</button>
+                </div>
                 <div class="relative"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"><svg class="ic w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></span><input type="text" id="stopListSearch" placeholder="Найти блюдо или напиток в стоп-лист..." oninput="renderStopList()" class="w-full bg-slate-950/80 border border-slate-800 rounded-2xl pl-9 pr-4 py-3 text-xs text-slate-100 outline-none"></div>
                 <div id="stopListContainer" class="space-y-2 max-h-[60vh] overflow-y-auto pr-1"></div>
             </div>
@@ -1276,6 +1280,52 @@
         </div>
     </div>
 
+    <!-- МОДАЛКА: ДОБАВИТЬ / ИЗМЕНИТЬ БЛЮДО В МЕНЮ -->
+    <div id="dishEditModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-[93] hidden flex items-center justify-center p-4">
+        <div class="glass-panel rounded-[32px] max-w-sm w-full p-5 space-y-3.5 shadow-2xl border border-slate-700/50 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center">
+                <h3 id="dishEditModalTitle" class="font-extrabold text-sm text-slate-100">Новое блюдо</h3>
+                <button type="button" onclick="closeDishEditModal()" aria-label="Закрыть" class="glass-element w-8 h-8 shrink-0 rounded-full text-slate-300 text-sm font-bold tap-scale"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+            </div>
+            <div class="space-y-1.5">
+                <label for="dishEditName" class="block text-[11px] font-bold text-slate-300">Название</label>
+                <input id="dishEditName" type="text" maxlength="80" autocomplete="off" placeholder="Например: Борщ с говядиной" onkeydown="if (event.key === 'Enter') saveDishEdit()" class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs text-slate-100 outline-none font-bold">
+            </div>
+            <div class="space-y-1.5">
+                <label for="dishEditPrice" class="block text-[11px] font-bold text-slate-300">Цена (₽)</label>
+                <input id="dishEditPrice" type="text" inputmode="decimal" autocomplete="off" placeholder="450" onkeydown="if (event.key === 'Enter') saveDishEdit()" class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs text-slate-100 outline-none font-bold">
+            </div>
+            <div class="space-y-1.5">
+                <div class="text-[11px] font-bold text-slate-300">Категория</div>
+                <div id="dishEditCats" class="flex flex-wrap gap-1.5"></div>
+            </div>
+            <label class="glass-element rounded-2xl p-3 flex items-start gap-2.5 cursor-pointer">
+                <input id="dishEditWeight" type="checkbox" class="mt-0.5 accent-emerald-500">
+                <span class="text-[11px] text-slate-300 leading-snug"><b class="text-slate-100">Весовое блюдо.</b> Цена указана за 100 г, при заказе приложение спросит граммовку.</span>
+            </label>
+            <div id="dishEditError" class="hidden text-[11px] font-bold text-rose-400"></div>
+            <div class="grid grid-cols-2 gap-2 pt-1">
+                <button type="button" onclick="closeDishEditModal()" class="glass-element text-slate-300 py-3 rounded-2xl text-xs font-bold tap-scale">Отмена</button>
+                <button type="button" onclick="saveDishEdit()" class="bg-emerald-500 text-slate-950 py-3 rounded-2xl text-xs font-extrabold tap-scale shadow-lg"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- МОДАЛКА: УДАЛИТЬ БЛЮДО ИЗ МЕНЮ НАСОВСЕМ -->
+    <div id="dishDeleteModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-[94] hidden flex items-center justify-center p-4">
+        <div class="glass-panel rounded-[32px] max-w-sm w-full p-5 space-y-3.5 shadow-2xl border border-rose-500/30">
+            <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 shrink-0 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400"><svg class="ic w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg></div>
+                <h3 class="font-extrabold text-sm text-slate-100">Удалить блюдо из меню?</h3>
+            </div>
+            <div class="text-xs text-slate-300 leading-relaxed"><b id="dishDeleteName" class="text-slate-100 break-words"></b> будет удалено насовсем вместе со слоганом и ТТК. Уже открытые заказы не изменятся. Отменить удаление нельзя.</div>
+            <div class="grid grid-cols-2 gap-2 pt-1">
+                <button type="button" onclick="closeDishDeleteConfirm()" class="glass-element text-slate-300 py-3 rounded-2xl text-xs font-bold tap-scale">Отмена</button>
+                <button type="button" onclick="confirmDishDelete()" class="bg-rose-600 text-white py-3 rounded-2xl text-xs font-extrabold tap-scale shadow-lg"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg> Удалить</button>
+            </div>
+        </div>
+    </div>
+
     <!-- СКРИПТЫ -->
     <script>
         // ================= ВЕКТОРНЫЕ ИКОНКИ (стиль Lucide) =================
@@ -1738,6 +1788,50 @@
             }
         }
 
+        // ================= СЖАТИЕ ДАННЫХ ПРИ СИНХРОНИЗАЦИИ =================
+        // Архив смен растёт каждый день, а у запроса к серверу есть лимит размера. Большое состояние сжимаем gzip.
+
+        const GZ_SUPPORTED = typeof CompressionStream !== 'undefined' && typeof DecompressionStream !== 'undefined'
+            && typeof Blob !== 'undefined' && typeof Response !== 'undefined' && !!(Blob.prototype && Blob.prototype.stream);
+        const GZ_MIN_CHARS = 50000;      // маленькие данные отправляем как раньше
+        let gzSyncDisabled = false;      // включается, если сервер ещё старой версии и сжатие не понимает
+
+        async function gzipToBase64(text) {
+            const stream = new Blob([text]).stream().pipeThrough(new CompressionStream('gzip'));
+            const bytes = new Uint8Array(await new Response(stream).arrayBuffer());
+            let bin = '';
+            for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+            return btoa(bin);
+        }
+
+        async function gunzipFromBase64(b64) {
+            const bin = atob(b64);
+            const bytes = new Uint8Array(bin.length);
+            for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+            const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+            return await new Response(stream).text();
+        }
+
+        async function sendStateToCloud(statePayload) {
+            const json = JSON.stringify(statePayload);
+            if (GZ_SUPPORTED && !gzSyncDisabled && json.length > GZ_MIN_CHARS) {
+                try {
+                    await apiPost('/api/state', { action: 'save', stateGz: await gzipToBase64(json) }, 40000);
+                    return;
+                } catch (e) {
+                    if (!(e && e.status === 400)) throw e;
+                    gzSyncDisabled = true; // старый сервер: дальше шлём без сжатия
+                }
+            }
+            await apiPost('/api/state', { action: 'save', state: statePayload }, 40000);
+        }
+
+        async function loadStateFromCloud() {
+            const resp = await apiPost('/api/state', { action: 'load', gz: GZ_SUPPORTED }, 40000);
+            if (resp && typeof resp.stateGz === 'string') return JSON.parse(await gunzipFromBase64(resp.stateGz));
+            return resp ? resp.state : null;
+        }
+
         async function initCloudData() {
             try {
                 const tgUser = window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe
@@ -1759,8 +1853,7 @@
             await refreshProStatus();
 
             try {
-                const resp = await apiPost('/api/state', { action: 'load' });
-                const s = resp && resp.state;
+                const s = await loadStateFromCloud();
 
                 if (s) {
                     if (s.tables && typeof s.tables === 'object' && !Array.isArray(s.tables)) tables = s.tables;
@@ -1809,13 +1902,10 @@
                     localStorage.setItem('fish_pro_theme', appTheme);
 
                     // Статус подписки в облако не отправляется: его знает только сервер.
-                    await apiPost('/api/state', {
-                        action: 'save',
-                        state: {
-                            tables, menuItems, closedHistory, shiftArchive,
-                            stopListSet: [...stopListSet], hourlyRate, salesPercent, shiftTipGoal, appTheme
-                        }
-                    }, 30000);
+                    await sendStateToCloud({
+                        tables, menuItems, closedHistory, shiftArchive,
+                        stopListSet: [...stopListSet], hourlyRate, salesPercent, shiftTipGoal, appTheme
+                    });
 
                     setCloudIndicator('ok', 'Облако ОК');
                     return true;
@@ -2773,6 +2863,13 @@
             return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         }
 
+        // Смена, закрытая ночью (до 6:00), относится к предыдущему дню.
+        function getShiftBusinessDateKey() {
+            const d = new Date();
+            if (d.getHours() < 6) d.setDate(d.getDate() - 1);
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
+
         function formatDateKeyToRu(dateKey) {
             if (!dateKey) return '';
             const [y, m, d] = dateKey.split('-');
@@ -2842,7 +2939,7 @@
         function openFinishShiftModal() {
             isAddingPastShiftMode = false;
             document.getElementById('finishShiftModalTitle').innerHTML = svgIcon('flag', 'w-4 h-4') + ' Завершение смены';
-            document.getElementById('finishShiftDateInput').value = getTodayDateKey();
+            document.getElementById('finishShiftDateInput').value = getShiftBusinessDateKey();
             document.getElementById('finishShiftHoursInput').value = 13;
             document.getElementById('finishShiftRateInput').value = hourlyRate;
             document.getElementById('finishShiftPercentInput').value = salesPercent;
@@ -2915,6 +3012,12 @@
             }
             const revenue = Math.round(readFinishShiftRevenue());
             const commission = calcCommission(revenue, percent);
+
+            // Смена за эту дату уже есть: молча затирать её нельзя.
+            if (shiftArchive.some(s => s.dateKey === dateKey) &&
+                !confirm(`За ${formatDateKeyToRu(dateKey)} уже сохранена смена. Заменить её новой? Старые данные за этот день будут потеряны.`)) {
+                return;
+            }
 
             hourlyRate = rate;
             salesPercent = percent;
@@ -3342,18 +3445,22 @@
                     ? `<div class="ttk-note text-[9px] font-bold text-amber-400 mt-0.5">${hasSlogan ? svgIcon('flame', 'w-3 h-3') + ' слоган' : ''}${hasSlogan && hasTtk ? ' · ' : ''}${hasTtk ? svgIcon('clipboard-list', 'w-3 h-3') + ' ТТК' : ''} заполнено</div>`
                     : '';
                 const div = document.createElement('div');
-                div.className = `flex justify-between items-center p-3 rounded-2xl border ${isStopped ? 'bg-rose-500/10 border-rose-500/30' : 'glass-panel border-slate-800'}`;
+                div.className = `p-3 rounded-2xl border space-y-2.5 ${isStopped ? 'bg-rose-500/10 border-rose-500/30' : 'glass-panel border-slate-800'}`;
                 div.innerHTML = `
-                    <div class="pr-2 min-w-0 flex-1">
-                        <div class="font-bold text-xs ${isStopped ? 'text-rose-300 line-through' : 'text-slate-200'}">${escapeHtml(item.name)}</div>
-                        <div class="text-[10px] text-slate-400">${item.price} ₽</div>
-                        ${sheetNote}
+                    <div class="flex justify-between items-center gap-2">
+                        <div class="pr-1 min-w-0 flex-1">
+                            <div class="font-bold text-xs break-words ${isStopped ? 'text-rose-300 line-through' : 'text-slate-200'}">${escapeHtml(item.name)}</div>
+                            <div class="text-[10px] text-slate-400">${item.price} ₽${item.isHosper ? ' / 100 г' : ''}</div>
+                            ${sheetNote}
+                        </div>
+                        <button onclick="toggleStopItemByIdx(${idx})" class="px-3.5 py-2 rounded-xl text-xs font-extrabold tap-scale shadow shrink-0 ${isStopped ? 'bg-rose-600 text-white' : 'glass-panel text-slate-300'}">
+                            ${isStopped ? svgIcon('x-circle', 'w-3.5 h-3.5') + ' В стопе' : svgIcon('check-circle', 'w-3.5 h-3.5') + ' Активно'}
+                        </button>
                     </div>
-                    <div class="flex items-center gap-2 shrink-0">
-                        <button onclick="openDishTtkEdit(${idx})" class="px-3 py-2 rounded-xl text-[11px] font-extrabold tap-scale ${hasSheet ? 'ttk-btn-on text-amber-400 border border-amber-500/40 bg-amber-500/10' : 'glass-element text-slate-400'}">${svgIcon('clipboard-list', 'w-3.5 h-3.5')} ТТК</button>
-                    <button onclick="toggleStopItemByIdx(${idx})" class="px-3.5 py-2 rounded-xl text-xs font-extrabold tap-scale shadow ${isStopped ? 'bg-rose-600 text-white' : 'glass-panel text-slate-300'}">
-                        ${isStopped ? svgIcon('x-circle', 'w-3.5 h-3.5') + ' В стопе' : svgIcon('check-circle', 'w-3.5 h-3.5') + ' Активно'}
-                    </button>
+                    <div class="flex items-center gap-1.5">
+                        <button onclick="openDishTtkEdit(${idx})" class="flex-1 py-2 rounded-xl text-[11px] font-extrabold tap-scale ${hasSheet ? 'ttk-btn-on text-amber-400 border border-amber-500/40 bg-amber-500/10' : 'glass-element text-slate-400'}">${svgIcon('clipboard-list', 'w-3.5 h-3.5')} ТТК</button>
+                        <button onclick="openDishEditModal(${idx})" class="flex-1 py-2 rounded-xl text-[11px] font-bold tap-scale glass-element text-slate-300">${svgIcon('pencil', 'w-3.5 h-3.5')} Изменить</button>
+                        <button onclick="openDishDeleteConfirm(${idx})" aria-label="Удалить блюдо из меню" class="w-10 py-2 flex items-center justify-center rounded-xl tap-scale text-rose-400 border border-rose-500/30 bg-rose-500/10">${svgIcon('trash-2', 'w-3.5 h-3.5')}</button>
                     </div>
                 `;
                 container.appendChild(div);
@@ -3366,6 +3473,126 @@
             triggerHaptic('open');
             if(stopListSet.has(item.name)) stopListSet.delete(item.name);
             else stopListSet.add(item.name);
+            saveData();
+            renderStopList();
+            renderMenuDirect();
+        }
+
+        // ================= МЕНЮ: ДОБАВИТЬ, ИЗМЕНИТЬ, УДАЛИТЬ ВРУЧНУЮ =================
+
+        const MENU_CATEGORIES = ["Закуски", "Салаты", "Супы", "Горячее", "Пицца", "Десерты", "Бар"];
+        let dishEditIdx = null;      // null = новое блюдо, число = индекс изменяемого блюда в menuItems
+        let dishEditCat = "Горячее";
+        let dishDeleteIdx = null;
+
+        function renderDishEditCats() {
+            const box = document.getElementById('dishEditCats');
+            box.innerHTML = '';
+            MENU_CATEGORIES.forEach(cat => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.textContent = cat;
+                btn.onclick = () => setDishEditCat(cat);
+                btn.className = cat === dishEditCat
+                    ? 'bg-slate-100 text-slate-950 px-3 py-1.5 rounded-xl text-xs font-extrabold tap-scale shadow'
+                    : 'glass-element text-slate-300 px-3 py-1.5 rounded-xl text-xs font-medium tap-scale';
+                box.appendChild(btn);
+            });
+        }
+
+        function setDishEditCat(cat) {
+            dishEditCat = cat;
+            renderDishEditCats();
+        }
+
+        function showDishEditError(message) {
+            const el = document.getElementById('dishEditError');
+            el.textContent = message || '';
+            el.classList.toggle('hidden', !message);
+        }
+
+        function openDishEditModal(idx, prefillName) {
+            const isEdit = idx !== null && idx !== undefined;
+            const item = isEdit ? menuItems[idx] : null;
+            if (isEdit && !item) return;
+            triggerHaptic('open');
+            dishEditIdx = isEdit ? idx : null;
+            document.getElementById('dishEditModalTitle').textContent = isEdit ? 'Изменить блюдо' : 'Новое блюдо';
+            document.getElementById('dishEditName').value = isEdit ? item.name : (prefillName || '');
+            document.getElementById('dishEditPrice').value = isEdit ? String(item.price) : '';
+            document.getElementById('dishEditWeight').checked = !!(isEdit && item.isHosper);
+            if (isEdit && MENU_CATEGORIES.includes(item.cat)) dishEditCat = item.cat;
+            else dishEditCat = MENU_CATEGORIES.includes(currentCat) ? currentCat : "Горячее";
+            renderDishEditCats();
+            showDishEditError('');
+            document.getElementById('dishEditModal').classList.remove('hidden');
+        }
+
+        function closeDishEditModal() {
+            document.getElementById('dishEditModal').classList.add('hidden');
+            dishEditIdx = null;
+        }
+
+        function saveDishEdit() {
+            const name = document.getElementById('dishEditName').value.replace(/\s+/g, ' ').trim();
+            const price = Math.round(parseMenuPrice(document.getElementById('dishEditPrice').value));
+            const weighted = document.getElementById('dishEditWeight').checked;
+
+            if (!name) { showDishEditError('Введите название блюда.'); return; }
+            if (!Number.isFinite(price) || price < 1 || price > 50000) { showDishEditError('Введите цену от 1 до 50 000 ₽.'); return; }
+
+            const lowered = name.toLocaleLowerCase('ru-RU');
+            const clash = menuItems.some((m, i) => i !== dishEditIdx && String(m.name).toLocaleLowerCase('ru-RU') === lowered);
+            if (clash) { showDishEditError('Блюдо с таким названием уже есть в меню. Найдите его в списке и измените цену через «Изменить».'); return; }
+
+            if (dishEditIdx !== null) {
+                const item = menuItems[dishEditIdx];
+                if (!item) { closeDishEditModal(); return; }
+                const oldName = item.name;
+                item.name = name;
+                item.price = price;
+                item.cat = dishEditCat;
+                if (weighted) item.isHosper = true; else delete item.isHosper;
+                // Стоп-лист хранится по названию: при переименовании переносим отметку.
+                if (oldName !== name && stopListSet.has(oldName)) {
+                    stopListSet.delete(oldName);
+                    stopListSet.add(name);
+                }
+            } else {
+                const fresh = { name, price, cat: dishEditCat };
+                if (weighted) fresh.isHosper = true;
+                menuItems.unshift(fresh);
+            }
+
+            triggerHaptic('success');
+            saveData();
+            renderStopList();
+            renderMenuDirect();
+            closeDishEditModal();
+        }
+
+        function openDishDeleteConfirm(idx) {
+            const item = menuItems[idx];
+            if (!item) return;
+            triggerHaptic('open');
+            dishDeleteIdx = idx;
+            document.getElementById('dishDeleteName').textContent = item.name;
+            document.getElementById('dishDeleteModal').classList.remove('hidden');
+        }
+
+        function closeDishDeleteConfirm() {
+            document.getElementById('dishDeleteModal').classList.add('hidden');
+            dishDeleteIdx = null;
+        }
+
+        function confirmDishDelete() {
+            const item = menuItems[dishDeleteIdx];
+            if (!item) { closeDishDeleteConfirm(); return; }
+            menuItems.splice(dishDeleteIdx, 1);
+            // Отметку стопа убираем, только если блюд с таким названием больше нет.
+            if (!menuItems.some(m => m.name === item.name)) stopListSet.delete(item.name);
+            triggerHaptic('success');
+            closeDishDeleteConfirm();
             saveData();
             renderStopList();
             renderMenuDirect();
@@ -3845,7 +4072,7 @@
             }
 
             if (menuItems.length === 0) {
-                list.innerHTML = `<div class="text-center py-6 text-slate-400 text-xs">Меню пустое. Загрузите своё меню через <b onclick="openAiScannerModal()" class="text-emerald-400 underline cursor-pointer">${svgIcon('bot', 'w-3.5 h-3.5')} ИИ-сканер</b>!</div>`;
+                list.innerHTML = `<div class="text-center py-6 text-slate-400 text-xs space-y-3"><div>Меню пустое.</div><div class="flex justify-center gap-2"><button type="button" onclick="openDishEditModal(null)" class="bg-slate-100 text-slate-950 px-3.5 py-2 rounded-xl font-extrabold tap-scale inline-flex items-center gap-1.5">${svgIcon('plus', 'w-3.5 h-3.5')} Добавить вручную</button><button type="button" onclick="openAiScannerModal()" class="glass-element text-slate-200 px-3.5 py-2 rounded-xl font-bold tap-scale inline-flex items-center gap-1.5">${svgIcon('bot', 'w-3.5 h-3.5')} ИИ-сканер</button></div></div>`;
                 return;
             }
 
@@ -3862,7 +4089,7 @@
                     <div class="pr-2 flex-1">
                         <div class="font-bold text-xs ${isStopped ? 'text-rose-300 line-through' : 'text-slate-200'}">${escapeHtml(item.name)}</div>
                         <div class="text-[10px] ${isStopped ? 'text-rose-400 font-extrabold' : 'text-slate-300 font-extrabold'} mt-0.5">
-                            ${isStopped ? svgIcon('ban', 'w-3 h-3') + ' В СТОПЕ' : item.price + ' ₽'}
+                            ${isStopped ? svgIcon('ban', 'w-3 h-3') + ' В СТОПЕ' : item.price + ' ₽' + (item.isHosper ? ' / 100 г' : '')}
                         </div>
                     </div>
                     <div class="flex items-center gap-2 shrink-0">
@@ -3874,6 +4101,20 @@
                 `;
                 list.appendChild(div);
             });
+
+            if (list.children.length === 0) {
+                const box = document.createElement('div');
+                box.className = 'text-center py-5 text-slate-400 text-xs space-y-2.5';
+                const msg = document.createElement('div');
+                msg.textContent = search.length > 0 ? `Ничего не найдено по запросу «${rawSearch.trim()}».` : 'В этой категории пока пусто.';
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'bg-slate-100 text-slate-950 px-4 py-2 rounded-xl text-xs font-extrabold tap-scale inline-flex items-center gap-1.5';
+                btn.innerHTML = svgIcon('plus', 'w-3.5 h-3.5') + (search.length > 0 ? ' Добавить в меню' : ' Добавить блюдо');
+                btn.onclick = () => openDishEditModal(null, search.length > 0 ? rawSearch.trim() : '');
+                box.append(msg, btn);
+                list.appendChild(box);
+            }
         }
 
         function filterCat(cat) {
