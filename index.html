@@ -245,9 +245,9 @@
             </div>
 
             <div class="pt-2 border-t border-slate-800/80 space-y-2">
-                <button onclick="openCardPaymentModal()" class="w-full glass-element hover:bg-slate-800 text-emerald-400 border border-emerald-500/30 font-extrabold py-3.5 rounded-2xl text-xs tap-scale flex items-center justify-center space-x-1.5 shadow">
-                    <span><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg></span>
-                    <span>Купить PRO (Перевод на карту)</span>
+                <button onclick="openProPaymentModal()" class="w-full glass-element hover:bg-slate-800 text-emerald-400 border border-emerald-500/30 font-extrabold py-3.5 rounded-2xl text-xs tap-scale flex items-center justify-center space-x-1.5 shadow">
+                    <span><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg></span>
+                    <span>Купить PRO</span>
                 </button>
             </div>
         </div>
@@ -288,7 +288,7 @@
                     <div class="text-[11px] font-bold text-slate-200" id="expiringProSubtitle">Осталось менее 3 дней</div>
                 </div>
             </div>
-            <button onclick="openCardPaymentModal()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-3 py-2 rounded-xl text-xs font-extrabold tap-scale shadow">
+            <button onclick="openProPaymentModal()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-3 py-2 rounded-xl text-xs font-extrabold tap-scale shadow">
                 Продлить
             </button>
         </div>
@@ -516,7 +516,7 @@
                         <span id="themeToggleText" class="text-[10px]">Светлая</span>
                     </button>
                     <button onclick="openPromoModal()" class="glass-element hover:bg-slate-800 text-slate-300 px-2.5 py-2 rounded-xl text-xs font-bold tap-scale" title="Промокод"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg></button>
-                    <button onclick="openCardPaymentModal()" class="bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2.5 py-2 rounded-xl text-[11px] font-extrabold tap-scale shadow" title="Купить PRO"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg> PRO</button>
+                    <button onclick="openProPaymentModal()" class="bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2.5 py-2 rounded-xl text-[11px] font-extrabold tap-scale shadow" title="Купить PRO"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg> PRO</button>
                     <button onclick="openAddPastShiftModal()" class="bg-slate-100 hover:bg-white text-slate-950 px-2.5 py-2 rounded-xl text-[11px] font-extrabold tap-scale shadow">
                         <svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg> Смена
                     </button>
@@ -718,16 +718,16 @@
         </div>
     </nav>
 
-    <!-- МОДАЛКА ПЕРЕВОДА НА КАРТУ И АКТИВАЦИИ -->
-    <div id="cardPaymentModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-[110] hidden flex items-center justify-center p-4">
+    <!-- МОДАЛКА ЗАЯВКИ НА PRO И АКТИВАЦИИ -->
+    <div id="proPaymentModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-[110] hidden flex items-center justify-center p-4">
         <div class="glass-panel rounded-[32px] max-w-sm w-full p-6 space-y-4 shadow-2xl border border-emerald-500/30 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-                <h3 class="font-extrabold text-sm text-emerald-400"><svg class="ic w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg> Продление PRO-доступа</h3>
-                <button onclick="closeCardPaymentModal()" class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+                <h3 class="font-extrabold text-sm text-emerald-400"><svg class="ic w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg> Подписка PRO</h3>
+                <button onclick="closeProPaymentModal()" class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
             </div>
             
             <div class="space-y-2 text-xs text-slate-300">
-                <p class="font-bold text-slate-100">1. Выберите период подписки:</p>
+                <p class="font-bold text-slate-100">Выберите срок подписки:</p>
                 <div class="grid grid-cols-2 gap-2">
                     <div onclick="selectTariff(30, 290, '1 месяц')" id="tariffCard_30" class="tariff-box glass-element p-3 rounded-2xl border border-emerald-500 bg-emerald-500/15 cursor-pointer tap-scale text-center shadow">
                         <div class="font-extrabold text-slate-100">1 месяц</div>
@@ -750,28 +750,22 @@
 
             <div class="glass-element p-3.5 rounded-2xl border border-slate-800 space-y-2.5 text-xs">
                 <div class="flex justify-between items-center">
-                    <span class="text-slate-400">К оплате:</span>
+                    <span class="text-slate-400">Стоимость:</span>
                     <span id="paymentModalPriceVal" class="font-extrabold text-emerald-400 text-sm">290 ₽</span>
                 </div>
                 <div class="flex justify-between items-center text-[11px]">
                     <span class="text-slate-400">Ваш ID для активации:</span>
                     <span id="paymentModalUserId" class="font-mono font-bold text-sky-400">...</span>
                 </div>
-                <div class="space-y-1 pt-1 border-t border-slate-800">
-                    <span class="text-[10px] text-slate-400 uppercase font-bold">2. Переведите на карту (Сбер / Т-Банк):</span>
-                    <div class="flex items-center space-x-2">
-                        <input type="text" id="devCardNumberInput" value="2200 7021 9528 5189" readonly class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-200 outline-none">
-                        <button onclick="copyDevCard()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-xl font-bold tap-scale"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg></button>
-                    </div>
-                </div>
             </div>
 
             <div class="space-y-2 pt-1">
+                <p class="text-[11px] text-slate-400 leading-relaxed">Откроется чат в Telegram с готовой заявкой. Отправьте сообщение — я подскажу способ оплаты и помогу активировать PRO.</p>
                 <button onclick="openCreatorTelegramChat()" class="w-full bg-gradient-to-r from-sky-600 to-blue-600 text-white font-extrabold py-3.5 rounded-2xl text-xs shadow-lg tap-scale flex items-center justify-center space-x-1.5">
                     <span><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg></span>
-                    <span>3. Отправить чек и получить промокод</span>
+                    <span>Оплатить PRO</span>
                 </button>
-                <button onclick="openPromoModal(); closeCardPaymentModal();" class="w-full glass-element hover:bg-slate-800 text-amber-300 font-bold py-2.5 rounded-2xl text-xs tap-scale">
+                <button onclick="openPromoModal(); closeProPaymentModal();" class="w-full glass-element hover:bg-slate-800 text-amber-300 font-bold py-2.5 rounded-2xl text-xs tap-scale">
                     <svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg> Ввести полученный промокод
                 </button>
             </div>
@@ -1255,6 +1249,26 @@
                 <button type="button" onclick="editDishTtkFromView()" class="glass-element text-slate-200 py-3 rounded-2xl text-xs font-extrabold tap-scale"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> Изменить ТТК</button>
                 <button type="button" id="dishTtkViewAddBtn" onclick="addDishFromTtkView()" class="bg-slate-100 text-slate-950 py-3 rounded-2xl text-xs font-extrabold tap-scale shadow-lg"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg> Добавить в заказ</button>
             </div>
+        </div>
+    </div>
+
+    <!-- МОДАЛКА: ФОТО БЛЮДА -->
+    <div id="dishPhotoModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-[91] hidden flex items-center justify-center p-4" onclick="if (event.target === this) closeDishPhoto()">
+        <div class="glass-panel rounded-[32px] max-w-sm w-full p-5 space-y-3.5 shadow-2xl border border-slate-700/50 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-start gap-2">
+                <div class="min-w-0">
+                    <div class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400">Фото блюда</div>
+                    <h3 id="dishPhotoTitle" class="font-extrabold text-sm text-slate-100 leading-snug break-words mt-0.5"></h3>
+                </div>
+                <button type="button" onclick="closeDishPhoto()" aria-label="Закрыть" class="glass-element w-8 h-8 shrink-0 rounded-full text-slate-300 text-sm font-bold tap-scale"><svg class="ic w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+            </div>
+            <div id="dishPhotoPlaceholder" class="glass-element rounded-2xl aspect-square flex items-center justify-center text-center text-xs text-slate-400 px-5">Фото пока нет. Добавьте снимок блюда.</div>
+            <img id="dishPhotoImage" class="hidden w-full max-h-[55vh] object-contain rounded-2xl bg-slate-950" alt="Фото блюда">
+            <div id="dishPhotoError" class="hidden text-[11px] font-bold text-rose-400"></div>
+            <input id="dishPhotoInput" type="file" accept="image/jpeg,image/png,image/webp" class="hidden" onchange="uploadDishPhoto(this.files && this.files[0])">
+            <button id="dishPhotoUploadBtn" type="button" onclick="document.getElementById('dishPhotoInput').click()" class="w-full bg-emerald-500 text-slate-950 font-extrabold py-3 rounded-2xl text-xs tap-scale">Загрузить фото</button>
+            <button id="dishPhotoSyncBtn" type="button" onclick="retryDishPhotoSync()" class="hidden w-full glass-element text-amber-400 font-bold py-2.5 rounded-2xl text-xs tap-scale">Повторить синхронизацию</button>
+            <button id="dishPhotoRestoreBtn" type="button" onclick="restorePreviousDishPhoto()" class="hidden w-full glass-element text-slate-300 font-bold py-2.5 rounded-2xl text-xs tap-scale">Вернуть предыдущее фото</button>
         </div>
     </div>
 
@@ -2053,14 +2067,14 @@
             }
         }
 
-        function openCardPaymentModal() {
+        function openProPaymentModal() {
             document.getElementById('paymentModalUserId').innerText = userId;
             selectTariff(30, 290, '1 месяц');
-            document.getElementById('cardPaymentModal').classList.remove('hidden');
+            document.getElementById('proPaymentModal').classList.remove('hidden');
         }
 
-        function closeCardPaymentModal() {
-            document.getElementById('cardPaymentModal').classList.add('hidden');
+        function closeProPaymentModal() {
+            document.getElementById('proPaymentModal').classList.add('hidden');
         }
 
         function selectTariff(days, price, title) {
@@ -2081,15 +2095,9 @@
             });
         }
 
-        function copyDevCard() {
-            const input = document.getElementById('devCardNumberInput');
-            navigator.clipboard.writeText(input.value.replace(/\s+/g, ''));
-            triggerHaptic('open');
-            alert("Номер карты скопирован в буфер обмена!");
-        }
-
         function openCreatorTelegramChat() {
-            const msg = encodeURIComponent(`Привет! Оплатил подписку "${selectedTariffTitle}" (${selectedTariffPrice} ₽) на ${selectedTariffDays} дн. для Пульта Официанта PRO.\nМой ID: ${userId}\nВот чек/скриншот оплаты:`);
+            const buyerId = /^\d{1,15}$/.test(String(userId)) ? `\nМой Telegram ID: ${userId}.` : '';
+            const msg = encodeURIComponent(`Здравствуйте! Хочу купить подписку PRO на ${selectedTariffTitle} (${selectedTariffPrice.toLocaleString('ru-RU')} ₽).${buyerId}\nПодскажите, пожалуйста, как оплатить.`);
             const url = `https://t.me/${CREATOR_TG_USERNAME}?text=${msg}`;
             if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openTelegramLink) {
                 window.Telegram.WebApp.openTelegramLink(url);
@@ -2112,7 +2120,7 @@
                     subEl.innerText = proStatusError || "Секунду, проверяю вашу подписку.";
                 } else if (trialUsed) {
                     titleEl.innerText = "Период доступа истек";
-                    subEl.innerText = "Ваш доступ завершен. Оформите подписку переводом на карту и введите полученный одноразовый ключ:";
+                    subEl.innerText = "Ваш доступ завершен. Выберите срок подписки и нажмите «Оплатить PRO». После подтверждения оплаты введите полученный код:";
                 } else {
                     titleEl.innerText = "Доступ к Пульту PRO";
                     subEl.innerHTML = "Введите промокод (или <b>TEST</b> для 7 дней бесплатного доступа), либо оформите подписку";
@@ -3459,6 +3467,7 @@
                     </div>
                     <div class="flex items-center gap-1.5">
                         <button onclick="openDishTtkEdit(${idx})" class="flex-1 py-2 rounded-xl text-[11px] font-extrabold tap-scale ${hasSheet ? 'ttk-btn-on text-amber-400 border border-amber-500/40 bg-amber-500/10' : 'glass-element text-slate-400'}">${svgIcon('clipboard-list', 'w-3.5 h-3.5')} ТТК</button>
+                        <button onclick="openDishPhoto(${idx})" class="flex-1 py-2 rounded-xl text-[11px] font-extrabold tap-scale ${item.photoId ? 'text-emerald-400 border border-emerald-500/40 bg-emerald-500/10' : 'glass-element text-slate-400'}">${svgIcon('camera', 'w-3.5 h-3.5')} Фото</button>
                         <button onclick="openDishEditModal(${idx})" class="flex-1 py-2 rounded-xl text-[11px] font-bold tap-scale glass-element text-slate-300">${svgIcon('pencil', 'w-3.5 h-3.5')} Изменить</button>
                         <button onclick="openDishDeleteConfirm(${idx})" aria-label="Удалить блюдо из меню" class="w-10 py-2 flex items-center justify-center rounded-xl tap-scale text-rose-400 border border-rose-500/30 bg-rose-500/10">${svgIcon('trash-2', 'w-3.5 h-3.5')}</button>
                     </div>
@@ -3596,6 +3605,189 @@
             saveData();
             renderStopList();
             renderMenuDirect();
+        }
+
+        // ================= ФОТО БЛЮДА =================
+
+        let dishPhotoIdx = null;
+        let dishPhotoBusy = false;
+        let dishPhotoRequest = 0;
+        let dishPhotoNeedsSync = false;
+
+        function setDishPhotoSyncPending(pending) {
+            dishPhotoNeedsSync = pending;
+            document.getElementById('dishPhotoSyncBtn').classList.toggle('hidden', !pending);
+        }
+
+        function showDishPhotoError(message) {
+            const box = document.getElementById('dishPhotoError');
+            box.textContent = message || '';
+            box.classList.toggle('hidden', !message);
+        }
+
+        function setDishPhotoBusy(busy) {
+            dishPhotoBusy = busy;
+            const button = document.getElementById('dishPhotoUploadBtn');
+            button.disabled = busy;
+            button.textContent = busy ? 'Загружаем фото…' : 'Загрузить фото';
+            button.classList.toggle('opacity-50', busy);
+        }
+
+        async function renderDishPhoto() {
+            const item = menuItems[dishPhotoIdx];
+            if (!item) return;
+            const request = ++dishPhotoRequest;
+            const image = document.getElementById('dishPhotoImage');
+            const placeholder = document.getElementById('dishPhotoPlaceholder');
+            const restore = document.getElementById('dishPhotoRestoreBtn');
+            image.classList.add('hidden');
+            image.removeAttribute('src');
+            placeholder.classList.remove('hidden');
+            placeholder.textContent = item.photoId ? 'Загружаем фото…' : 'Фото пока нет. Добавьте снимок блюда.';
+            restore.classList.toggle('hidden', !Array.isArray(item.photoHistory) || !item.photoHistory.length);
+            if (!item.photoId) return;
+            try {
+                const result = await apiPost('/api/dish-photo', { action: 'view', photoId: item.photoId });
+                if (request !== dishPhotoRequest || dishPhotoIdx === null) return;
+                image.onload = () => {
+                    if (request !== dishPhotoRequest) return;
+                    placeholder.classList.add('hidden');
+                    image.classList.remove('hidden');
+                };
+                image.onerror = () => {
+                    if (request !== dishPhotoRequest) return;
+                    placeholder.textContent = 'Не удалось открыть фото. Попробуйте ещё раз.';
+                };
+                image.alt = 'Фото блюда «' + item.name + '»';
+                image.src = result.url;
+            } catch (error) {
+                if (request !== dishPhotoRequest) return;
+                placeholder.textContent = 'Не удалось открыть фото.';
+                showDishPhotoError(error.message);
+            }
+        }
+
+        function openDishPhoto(idx) {
+            const item = menuItems[idx];
+            if (!item) return;
+            triggerHaptic('open');
+            dishPhotoIdx = idx;
+            document.getElementById('dishPhotoTitle').textContent = item.name;
+            showDishPhotoError('');
+            document.getElementById('dishPhotoModal').classList.remove('hidden');
+            renderDishPhoto();
+        }
+
+        function closeDishPhoto() {
+            if (dishPhotoBusy) return;
+            if (dishPhotoNeedsSync) alert('Фото пока сохранено только локально в меню. Перед выходом из приложения повторите синхронизацию.');
+            ++dishPhotoRequest;
+            document.getElementById('dishPhotoModal').classList.add('hidden');
+            document.getElementById('dishPhotoInput').value = '';
+            dishPhotoIdx = null;
+        }
+
+        function prepareDishPhoto(file) {
+            return new Promise((resolve, reject) => {
+                if (!file || !/^image\/(jpeg|png|webp)$/i.test(file.type)) {
+                    reject(new Error('Поддерживаются фото JPG, PNG и WEBP.'));
+                    return;
+                }
+                if (file.size > 12 * 1024 * 1024) {
+                    reject(new Error('Исходное фото должно быть меньше 12 МБ.'));
+                    return;
+                }
+                const image = new Image();
+                const url = URL.createObjectURL(file);
+                image.onload = () => {
+                    try {
+                        for (const maxDim of [1280, 960, 720]) {
+                            const scale = Math.min(1, maxDim / Math.max(image.width, image.height));
+                            const canvas = document.createElement('canvas');
+                            canvas.width = Math.max(1, Math.round(image.width * scale));
+                            canvas.height = Math.max(1, Math.round(image.height * scale));
+                            const context = canvas.getContext('2d');
+                            if (!context) throw new Error('Браузер не смог обработать фото.');
+                            context.fillStyle = '#fff';
+                            context.fillRect(0, 0, canvas.width, canvas.height);
+                            context.drawImage(image, 0, 0, canvas.width, canvas.height);
+                            for (const quality of [0.82, 0.68, 0.54, 0.42]) {
+                                const base64 = canvas.toDataURL('image/jpeg', quality).split(',')[1];
+                                if (base64 && base64.length <= 930000) {
+                                    URL.revokeObjectURL(url);
+                                    resolve(base64);
+                                    return;
+                                }
+                            }
+                        }
+                        throw new Error('Фото не удалось сжать до 700 КБ. Попробуйте другое.');
+                    } catch (error) {
+                        URL.revokeObjectURL(url);
+                        reject(error);
+                    }
+                };
+                image.onerror = () => {
+                    URL.revokeObjectURL(url);
+                    reject(new Error('Не удалось открыть фото. Попробуйте другой файл.'));
+                };
+                image.src = url;
+            });
+        }
+
+        async function uploadDishPhoto(file) {
+            if (!file || dishPhotoBusy) return;
+            const item = menuItems[dishPhotoIdx];
+            if (!item) return;
+            showDishPhotoError('');
+            setDishPhotoBusy(true);
+            try {
+                const image = await prepareDishPhoto(file);
+                const result = await apiPost('/api/dish-photo', { action: 'upload', image }, 40000);
+                if (item.photoId) {
+                    if (!Array.isArray(item.photoHistory)) item.photoHistory = [];
+                    item.photoHistory.unshift(item.photoId);
+                }
+                item.photoId = result.photoId;
+                const synced = await saveData();
+                renderStopList();
+                renderMenuDirect();
+                await renderDishPhoto();
+                setDishPhotoSyncPending(!synced);
+                if (!synced) showDishPhotoError('Фото загружено, но меню не синхронизировалось. Проверьте интернет и нажмите «Повторить синхронизацию».');
+                triggerHaptic('success');
+            } catch (error) {
+                showDishPhotoError(error.message);
+            } finally {
+                document.getElementById('dishPhotoInput').value = '';
+                setDishPhotoBusy(false);
+            }
+        }
+
+        async function restorePreviousDishPhoto() {
+            const item = menuItems[dishPhotoIdx];
+            if (!item || dishPhotoBusy || !Array.isArray(item.photoHistory) || !item.photoHistory.length) return;
+            const previous = item.photoHistory.shift();
+            if (item.photoId) item.photoHistory.push(item.photoId);
+            item.photoId = previous;
+            showDishPhotoError('');
+            const synced = await saveData();
+            renderStopList();
+            renderMenuDirect();
+            await renderDishPhoto();
+            setDishPhotoSyncPending(!synced);
+            if (!synced) showDishPhotoError('Не удалось синхронизировать меню. Проверьте интернет и повторите.');
+        }
+
+        async function retryDishPhotoSync() {
+            if (dishPhotoBusy || !dishPhotoNeedsSync) return;
+            setDishPhotoBusy(true);
+            try {
+                const synced = await saveData();
+                setDishPhotoSyncPending(!synced);
+                showDishPhotoError(synced ? '' : 'Меню пока не синхронизировалось. Проверьте интернет и повторите.');
+            } finally {
+                setDishPhotoBusy(false);
+            }
         }
 
         // ================= ШПАРГАЛКА ОФИЦИАНТА: ТТК И ПРОДАЮЩИЙ СЛОГАН =================
@@ -4094,6 +4286,7 @@
                     </div>
                     <div class="flex items-center gap-2 shrink-0">
                         <button type="button" onclick="openDishTtkView(${idx})" aria-label="Шпаргалка по блюду" class="w-9 h-9 flex items-center justify-center rounded-xl text-lg font-black leading-none tap-scale ${hasSheet ? 'ttk-btn-on bg-amber-500/15 text-amber-400 border border-amber-500/30' : 'glass-element text-slate-400'}">*</button>
+                        <button type="button" onclick="openDishPhoto(${idx})" aria-label="Фото блюда" class="w-9 h-9 flex items-center justify-center rounded-xl tap-scale ${item.photoId ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'glass-element text-slate-400'}">${svgIcon('camera', 'w-4 h-4')}</button>
                     <button ${isStopped ? 'disabled' : ''} onclick="orderMenuItemByIdx(${idx}, this)" class="${isStopped ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : 'bg-slate-100 hover:bg-white text-slate-950 shadow-lg'} font-extrabold px-3.5 py-2 rounded-xl text-xs tap-scale shrink-0">
                         ${isStopped ? 'Стоп' : '+ Добавить'}
                     </button>
