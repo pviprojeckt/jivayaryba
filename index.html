@@ -365,16 +365,7 @@
                             </button>
                         </div>
 
-                        <div id="menuCategories" class="flex space-x-1.5 overflow-x-auto pb-1 text-xs">
-                            <button onclick="filterCat('all')" class="cat-tab bg-slate-100 text-slate-950 px-3 py-1.5 rounded-xl font-extrabold whitespace-nowrap shadow">Все</button>
-                            <button onclick="filterCat('Закуски')" class="cat-tab glass-element text-slate-300 px-3 py-1.5 rounded-xl whitespace-nowrap font-medium">Закуски</button>
-                            <button onclick="filterCat('Салаты')" class="cat-tab glass-element text-slate-300 px-3 py-1.5 rounded-xl whitespace-nowrap font-medium">Салаты</button>
-                            <button onclick="filterCat('Супы')" class="cat-tab glass-element text-slate-300 px-3 py-1.5 rounded-xl whitespace-nowrap font-medium">Супы</button>
-                            <button onclick="filterCat('Горячее')" class="cat-tab glass-element text-slate-300 px-3 py-1.5 rounded-xl whitespace-nowrap font-medium">Горячее</button>
-                            <button onclick="filterCat('Пицца')" class="cat-tab glass-element text-slate-300 px-3 py-1.5 rounded-xl whitespace-nowrap font-medium">Пицца</button>
-                            <button onclick="filterCat('Десерты')" class="cat-tab glass-element text-slate-300 px-3 py-1.5 rounded-xl whitespace-nowrap font-medium">Десерты</button>
-                            <button onclick="filterCat('Бар')" class="cat-tab glass-element text-sky-400 border border-sky-500/30 px-3 py-1.5 rounded-xl whitespace-nowrap font-bold"><svg class="ic w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 22h8"/><path d="M12 11v11"/><path d="m19 3-7 8-7-8Z"/></svg> Бар</button>
-                        </div>
+                        <div id="menuCategories" class="flex space-x-1.5 overflow-x-auto pb-1 text-xs"></div>
 
                         <div id="directMenuList" class="space-y-1.5 max-h-56 overflow-y-auto pr-1"></div>
                     </div>
@@ -501,6 +492,7 @@
                     <button type="button" onclick="openAiScannerModal()" class="glass-element text-slate-200 py-2.5 rounded-2xl text-xs font-bold tap-scale flex items-center justify-center gap-1.5"><svg class="ic w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg> ИИ-сканер меню</button>
                 </div>
                 <div class="relative"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"><svg class="ic w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></span><input type="text" id="stopListSearch" placeholder="Найти блюдо или напиток в стоп-лист..." oninput="renderStopList()" class="w-full bg-slate-950/80 border border-slate-800 rounded-2xl pl-9 pr-4 py-3 text-xs text-slate-100 outline-none"></div>
+                <button type="button" onclick="openCategoryModal()" class="w-full glass-element text-emerald-400 py-2.5 rounded-2xl text-xs font-extrabold tap-scale">+ Категория</button>
                 <div id="stopListContainer" class="space-y-2 max-h-[60vh] overflow-y-auto pr-1"></div>
             </div>
         </div>
@@ -1312,6 +1304,19 @@
     </div>
 
     <!-- МОДАЛКА: ДОБАВИТЬ / ИЗМЕНИТЬ БЛЮДО В МЕНЮ -->
+    <div id="categoryModal" role="dialog" aria-modal="true" aria-labelledby="categoryModalTitle" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-[94] hidden flex items-center justify-center p-4">
+        <form onsubmit="event.preventDefault(); saveCategory()" class="glass-panel rounded-[32px] max-w-sm w-full p-5 space-y-3.5 shadow-2xl border border-slate-700/50">
+            <h3 id="categoryModalTitle" class="font-extrabold text-sm text-slate-100">Новая категория</h3>
+            <label for="categoryName" class="block text-[11px] font-bold text-slate-300">Название</label>
+            <input id="categoryName" type="text" maxlength="40" autocomplete="off" placeholder="Например: Авторские коктейли" aria-describedby="categoryError" class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs text-slate-100 outline-none font-bold">
+            <p id="categoryError" role="alert" class="hidden text-[11px] font-bold text-rose-400"></p>
+            <div class="grid grid-cols-2 gap-2">
+                <button type="button" onclick="closeCategoryModal()" class="glass-element text-slate-300 py-3 rounded-2xl text-xs font-bold tap-scale">Отмена</button>
+                <button type="submit" class="bg-emerald-500 text-slate-950 py-3 rounded-2xl text-xs font-extrabold tap-scale">Добавить</button>
+            </div>
+        </form>
+    </div>
+
     <div id="dishEditModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-[93] hidden flex items-center justify-center p-4">
         <div class="glass-panel rounded-[32px] max-w-sm w-full p-5 space-y-3.5 shadow-2xl border border-slate-700/50 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center">
@@ -1327,8 +1332,11 @@
                 <input id="dishEditPrice" type="text" inputmode="decimal" autocomplete="off" placeholder="450" onkeydown="if (event.key === 'Enter') saveDishEdit()" class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs text-slate-100 outline-none font-bold">
             </div>
             <div class="space-y-1.5">
-                <div class="text-[11px] font-bold text-slate-300">Категория</div>
-                <div id="dishEditCats" class="flex flex-wrap gap-1.5"></div>
+                <div class="flex items-center justify-between gap-2">
+                    <div class="text-[11px] font-bold text-slate-300">Категория</div>
+                    <button type="button" onclick="openCategoryModal(true)" class="glass-element text-emerald-400 px-3 py-1.5 rounded-xl text-xs font-extrabold tap-scale">+ Категория</button>
+                </div>
+                <div id="dishEditCats" class="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto"></div>
             </div>
             <label class="glass-element rounded-2xl p-3 flex items-start gap-2.5 cursor-pointer">
                 <input id="dishEditWeight" type="checkbox" class="mt-0.5 accent-emerald-500">
@@ -1474,6 +1482,7 @@
         let tables = {};
         let currentTable = "Стол 1";
         let currentCat = "all";
+        let customCategories = [];
         let pendingHosperItem = null;
         let closedHistory = [];
         let shiftArchive = [];
@@ -1483,6 +1492,7 @@
         let stopListSet = new Set();
         let hallViewMode = 'grid';
         let isMapEditMode = false;
+        let mapSwipeLock = null;
         let stockToastTimer = null;
         let homeScreenStatus = 'unsupported';
         let homeScreenBusy = false;
@@ -1763,6 +1773,7 @@
 
         function captureAppState() {
             return JSON.parse(JSON.stringify({ tables, menuItems, closedHistory, shiftArchive,
+                ...(customCategories.length ? { customCategories } : {}),
                 stopListSet: [...stopListSet], hourlyRate, salesPercent, shiftTipGoal, appTheme, hallViewMode }));
         }
 
@@ -1793,6 +1804,7 @@
             }
             if (s.tables && typeof s.tables === 'object' && !Array.isArray(s.tables)) tables = s.tables;
             if (Array.isArray(s.menuItems)) menuItems = s.menuItems;
+            customCategories = Array.isArray(s.customCategories) ? s.customCategories.filter(isMenuCategory) : [];
             closedHistory = Array.isArray(s.closedHistory) ? s.closedHistory : [];
             shiftArchive = Array.isArray(s.shiftArchive) ? s.shiftArchive : [];
             hourlyRate = Number.isFinite(s.hourlyRate) && s.hourlyRate >= 0 ? s.hourlyRate : 280;
@@ -2879,6 +2891,7 @@
         }
 
         function openHallConstructorModal() {
+            setMapEditMode(false);
             document.getElementById('constructorTablesCountInput').value = getStandardTablesCount();
             document.getElementById('customTableNameInput').value = '';
             renderHallConstructorList();
@@ -3165,6 +3178,7 @@
         }
 
         function switchTab(tabId) {
+            setMapEditMode(false);
             if (isMenuSearchActive) exitMenuSearchMode();
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             if(tabId === 'hall') {
@@ -3829,11 +3843,65 @@
         let dishEditIdx = null;      // null = новое блюдо, число = индекс изменяемого блюда в menuItems
         let dishEditCat = "Горячее";
         let dishDeleteIdx = null;
+        let categoryForDish = false;
+
+        function isMenuCategory(name) {
+            return typeof name === 'string' && !!name.trim() && name !== 'all';
+        }
+
+        function getMenuCategories() {
+            const usedCategories = menuItems.map(item => item.cat).filter(isMenuCategory);
+            return [...new Set([...MENU_CATEGORIES, ...customCategories, ...usedCategories])];
+        }
+
+        function categoryKey(name) {
+            return name.normalize('NFC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('ru-RU');
+        }
+
+        function showCategoryError(message) {
+            const error = document.getElementById('categoryError');
+            error.textContent = message;
+            error.classList.toggle('hidden', !message);
+        }
+
+        function openCategoryModal(forDish = false) {
+            categoryForDish = forDish;
+            const input = document.getElementById('categoryName');
+            input.value = '';
+            showCategoryError('');
+            document.getElementById('categoryModal').classList.remove('hidden');
+            input.focus();
+        }
+
+        function closeCategoryModal() {
+            document.getElementById('categoryName').blur();
+            document.getElementById('categoryModal').classList.add('hidden');
+            categoryForDish = false;
+        }
+
+        function saveCategory() {
+            const name = document.getElementById('categoryName').value.normalize('NFC').trim().replace(/\s+/g, ' ');
+            if (!name || name.length > 40) {
+                showCategoryError('Введите название от 1 до 40 символов.');
+                return;
+            }
+            const key = categoryKey(name);
+            if (key === 'all' || key === 'все' || getMenuCategories().some(cat => categoryKey(cat) === key)) {
+                showCategoryError('Категория с таким названием уже есть.');
+                return;
+            }
+            customCategories.push(name);
+            if (categoryForDish) setDishEditCat(name);
+            closeCategoryModal();
+            renderMenuCategories();
+            saveData();
+            triggerHaptic('success');
+        }
 
         function renderDishEditCats() {
             const box = document.getElementById('dishEditCats');
             box.innerHTML = '';
-            MENU_CATEGORIES.forEach(cat => {
+            getMenuCategories().forEach(cat => {
                 const btn = document.createElement('button');
                 btn.type = 'button';
                 btn.textContent = cat;
@@ -3866,8 +3934,8 @@
             document.getElementById('dishEditName').value = isEdit ? item.name : (prefillName || '');
             document.getElementById('dishEditPrice').value = isEdit ? String(item.price) : '';
             document.getElementById('dishEditWeight').checked = !!(isEdit && item.isHosper);
-            if (isEdit && MENU_CATEGORIES.includes(item.cat)) dishEditCat = item.cat;
-            else dishEditCat = MENU_CATEGORIES.includes(currentCat) ? currentCat : "Горячее";
+            if (isEdit && isMenuCategory(item.cat)) dishEditCat = item.cat;
+            else dishEditCat = getMenuCategories().includes(currentCat) ? currentCat : "Горячее";
             renderDishEditCats();
             showDishEditError('');
             document.getElementById('dishEditModal').classList.remove('hidden');
@@ -4231,10 +4299,26 @@
             return { key: 'ok', mins };
         }
 
+        function setMapEditMode(editing) {
+            if (isMapEditMode === editing) return;
+            isMapEditMode = editing;
+            if (!editing) {
+                const lockedApp = mapSwipeLock;
+                mapSwipeLock = null;
+                if (lockedApp) lockedApp.enableVerticalSwipes();
+                return;
+            }
+            const tg = window.Telegram?.WebApp;
+            if (!tg || tg.isVersionAtLeast?.('7.7') === false || tg.isVerticalSwipesEnabled === false
+                || typeof tg.disableVerticalSwipes !== 'function' || typeof tg.enableVerticalSwipes !== 'function') return;
+            tg.disableVerticalSwipes();
+            mapSwipeLock = tg;
+        }
+
         function setHallViewMode(mode) {
             if (mode !== 'grid' && mode !== 'map') return;
             hallViewMode = mode;
-            isMapEditMode = false;
+            setMapEditMode(false);
             if (mode === 'map') ensureTableMapCoords();
             triggerHaptic('open');
             saveData();
@@ -4243,7 +4327,7 @@
 
         function toggleMapEditMode() {
             if (hallViewMode !== 'map') return;
-            isMapEditMode = !isMapEditMode;
+            setMapEditMode(!isMapEditMode);
             triggerHaptic('open');
             if (!isMapEditMode) saveData();
             renderTables();
@@ -4253,7 +4337,7 @@
             closeHallConstructorModal();
             switchTab('hall');
             setHallViewMode('map');
-            isMapEditMode = true;
+            setMapEditMode(true);
             renderTables();
         }
 
@@ -4324,6 +4408,7 @@
                 };
                 widget.addEventListener('pointerup', finishDrag);
                 widget.addEventListener('pointercancel', finishDrag);
+                widget.addEventListener('lostpointercapture', finishDrag);
                 canvas.appendChild(widget);
             });
         }
@@ -4445,10 +4530,12 @@
         }
 
         function selectTable(name) {
+            setMapEditMode(false);
             currentTable = name;
             document.getElementById('activeTableCard').classList.remove('hidden');
             document.getElementById('currentTableName').innerText = name;
             renderTableCard();
+            renderMenuCategories();
             renderMenuDirect();
             renderTables();
         }
@@ -4800,17 +4887,36 @@
             }
         }
 
+        function renderMenuCategories() {
+            const box = document.getElementById('menuCategories');
+            const categories = ['all', ...getMenuCategories()];
+            if (!categories.includes(currentCat)) currentCat = 'all';
+            box.innerHTML = '';
+            categories.forEach(cat => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.value = cat;
+                if (cat === 'Бар') btn.innerHTML = svgIcon('martini') + ' Бар';
+                else btn.textContent = cat === 'all' ? 'Все' : cat;
+                btn.onclick = () => filterCat(cat);
+                box.appendChild(btn);
+            });
+            updateMenuCategoryButtons();
+        }
+
+        function updateMenuCategoryButtons() {
+            for (const button of document.getElementById('menuCategories').children) {
+                const active = button.value === currentCat;
+                button.setAttribute('aria-pressed', String(active));
+                const color = button.value === 'Бар' ? 'text-sky-400 border border-sky-500/30' : 'text-slate-300';
+                button.className = 'cat-tab shrink-0 px-3 py-1.5 rounded-xl whitespace-nowrap text-xs ' +
+                    (active ? 'bg-slate-100 text-slate-950 font-extrabold shadow' : 'glass-element font-medium ' + color);
+            }
+        }
+
         function filterCat(cat) {
             currentCat = cat;
-            document.querySelectorAll('#menuCategories button').forEach(b => {
-                if(b.innerText.includes(cat) || (cat === 'all' && b.innerText === 'Все')) {
-                    b.className = "cat-tab bg-slate-100 text-slate-950 px-3 py-1.5 rounded-xl font-extrabold whitespace-nowrap text-xs shadow";
-                } else if(cat === 'Бар' && b.innerText.includes('Бар')) {
-                    b.className = "cat-tab bg-slate-100 text-slate-950 px-3 py-1.5 rounded-xl font-extrabold whitespace-nowrap text-xs shadow";
-                } else {
-                    b.className = "cat-tab glass-element text-slate-300 px-3 py-1.5 rounded-xl whitespace-nowrap text-xs font-medium";
-                }
-            });
+            updateMenuCategoryButtons();
             renderMenuDirect();
         }
 
