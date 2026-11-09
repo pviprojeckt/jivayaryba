@@ -307,7 +307,15 @@
                         </button>
                     </div>
                 </div>
+                <div class="flex items-center justify-between gap-2 px-1">
+                    <div id="hallViewSwitch" class="glass-element rounded-2xl p-1 flex gap-1" role="group" aria-label="Вид зала">
+                        <button id="hallGridModeBtn" type="button" onclick="setHallViewMode('grid')" class="px-3 py-2 rounded-xl text-[11px] font-extrabold tap-scale">Сетка</button>
+                        <button id="hallMapModeBtn" type="button" onclick="setHallViewMode('map')" class="px-3 py-2 rounded-xl text-[11px] font-extrabold tap-scale">Карта 2D</button>
+                    </div>
+                    <button id="mapEditModeBtn" type="button" onclick="toggleMapEditMode()" class="hidden px-3 py-2 rounded-xl text-[11px] font-extrabold tap-scale border border-sky-500/30 text-sky-300"></button>
+                </div>
                 <div id="tablesGrid" class="grid grid-cols-3 gap-3"></div>
+                <div id="hallMapCanvasContainer" class="hidden relative w-full min-h-[64vh] rounded-[28px] glass-panel border border-white/10 overflow-hidden select-none" style="background-image: radial-gradient(rgba(148,163,184,0.18) 1px, transparent 1px); background-size: 20px 20px;"></div>
             </div>
 
             <!-- КАРТОЧКА АКТИВНОГО СТОЛА -->
@@ -384,6 +392,7 @@
                         <span class="font-bold text-slate-400 uppercase tracking-wide">Сумма заказа:</span>
                         <span id="currentTableTotal" class="font-extrabold text-slate-100 text-sm">0 ₽</span>
                     </div>
+                    <div id="servedProgress" class="hidden flex items-center justify-between gap-2 px-1 text-[10px] font-bold text-slate-400"></div>
                     
                     <div id="currentTableItems" class="space-y-1.5 max-h-[38vh] overflow-y-auto pr-1 text-xs">
                         <p class="text-slate-500 italic text-center py-3">Стол пустой</p>
@@ -937,6 +946,7 @@
                     </div>
                     <div id="constructorTablesList" class="space-y-1.5 max-h-48 overflow-y-auto pr-1"></div>
                 </div>
+                <button type="button" onclick="openMapFromConstructor()" class="w-full glass-element border border-sky-500/30 text-sky-300 py-3 rounded-2xl text-xs font-extrabold tap-scale">Схема зала 2D</button>
             </div>
 
             <button onclick="closeHallConstructorModal()" class="w-full bg-slate-100 text-slate-950 font-extrabold py-3.5 rounded-2xl text-xs tap-scale shadow-lg">Готово</button>
@@ -1340,6 +1350,8 @@
         </div>
     </div>
 
+    <div id="stockToast" role="status" aria-live="polite" class="hidden fixed top-5 left-4 right-4 z-[120] max-w-md mx-auto glass-panel border border-amber-500/40 rounded-2xl px-4 py-3 text-xs font-bold text-amber-200 shadow-2xl flex items-start gap-2"></div>
+
     <!-- СКРИПТЫ -->
     <script>
         // ================= ВЕКТОРНЫЕ ИКОНКИ (стиль Lucide) =================
@@ -1402,7 +1414,9 @@
         "message-circle": "<path d=\"M7.9 20A9 9 0 1 0 4 16.1L2 22Z\"/>",
         "book-open": "<path d=\"M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z\"/><path d=\"M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z\"/>",
         "gem": "<path d=\"M6 3h12l4 6-10 13L2 9Z\"/><path d=\"M11 3 8 9l4 13 4-13-3-6\"/><path d=\"M2 9h20\"/>",
-        "shield": "<path d=\"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z\"/>"
+        "shield": "<path d=\"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z\"/>",
+        "package": "<path d=\"m12 2 9 5-9 5-9-5 9-5Z\"/><path d=\"M3 7v10l9 5 9-5V7\"/><path d=\"M12 12v10\"/>",
+        "move": "<path d=\"M5 9 2 12l3 3\"/><path d=\"m9 5 3-3 3 3\"/><path d=\"m15 19-3 3-3-3\"/><path d=\"m19 9 3 3-3 3\"/><path d=\"M2 12h20\"/><path d=\"M12 2v20\"/>"
 };
 
         function svgIcon(name, cls = "w-4 h-4") {
@@ -1436,12 +1450,12 @@
         let appTheme = 'dark'; // 'dark' или 'light'
 
         let menuItems = [
-            { name: "Фирменный бургер", price: 790, cat: "Горячее" },
-            { name: "Цезарь с курицей", price: 690, cat: "Салаты" },
-            { name: "Картофель фри", price: 290, cat: "Закуски" },
-            { name: "Лимонад Маракуйя", price: 390, cat: "Бар" },
-            { name: "Капучино", price: 290, cat: "Бар" },
-            { name: "Апероль Спритц", price: 690, cat: "Бар" }
+            { name: "Фирменный бургер", price: 790, cat: "Горячее", stock: null },
+            { name: "Цезарь с курицей", price: 690, cat: "Салаты", stock: null },
+            { name: "Картофель фри", price: 290, cat: "Закуски", stock: null },
+            { name: "Лимонад Маракуйя", price: 390, cat: "Бар", stock: null },
+            { name: "Капучино", price: 290, cat: "Бар", stock: null },
+            { name: "Апероль Спритц", price: 690, cat: "Бар", stock: null }
         ];
 
         let tables = {};
@@ -1454,6 +1468,9 @@
         let salesPercent = 3; // % от личных продаж (целые и дробные: 2.5, 3)
         let shiftTipGoal = 3000;
         let stopListSet = new Set();
+        let hallViewMode = 'grid';
+        let isMapEditMode = false;
+        let stockToastTimer = null;
         let aiScannedParsedItems = [];
         let isMenuSearchActive = false;
 
@@ -1635,6 +1652,56 @@
             return { items: [], guests: guestsCount, guestNames: gNames, activeGuest: "Гость 1", course: "Сразу", lastVisited: null, splitGroups: {} };
         }
 
+        function getItemStock(item) {
+            return item && Number.isSafeInteger(item.stock) && item.stock >= 0 ? item.stock : null;
+        }
+
+        function ensureStockItemId(item) {
+            if (!item.stockId) {
+                item.stockId = window.crypto && window.crypto.randomUUID
+                    ? window.crypto.randomUUID()
+                    : `stock-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+            }
+            return item.stockId;
+        }
+
+        function normalizeMenuStock() {
+            menuItems.forEach(item => {
+                if (getItemStock(item) === null) item.stock = null;
+                else ensureStockItemId(item);
+                if (item.stock === 0) stopListSet.add(item.name);
+            });
+        }
+
+        function ensureTableMapCoords() {
+            const names = Object.keys(tables);
+            const rows = Math.max(1, Math.ceil(names.length / 3));
+            const used = [];
+            let changed = false;
+            const valid = t => Number.isFinite(t.x) && Number.isFinite(t.y)
+                && t.x >= 2 && t.x <= 70 && t.y >= 2 && t.y <= 82;
+            names.forEach(name => { if (valid(tables[name])) used.push([tables[name].x, tables[name].y]); });
+            names.forEach(name => {
+                const t = tables[name];
+                if (valid(t)) return;
+                let slot = null;
+                for (let row = 0; row < rows && !slot; row++) {
+                    const y = Math.min(82, Math.round((2 + row * (80 / rows)) / 2) * 2);
+                    for (const x of [2, 36, 70]) {
+                        if (!used.some(([ux, uy]) => Math.abs(ux - x) < 22 && Math.abs(uy - y) < Math.min(6, 40 / rows))) {
+                            slot = [x, y];
+                            break;
+                        }
+                    }
+                }
+                if (!slot) slot = [2 + (used.length % 3) * 34, Math.min(82, 2 + Math.floor(used.length / 3) * (80 / rows))];
+                [t.x, t.y] = slot;
+                used.push(slot);
+                changed = true;
+            });
+            return changed;
+        }
+
         function setCloudIndicator(status, text, errObj = null) {
             const dot = document.getElementById('cloudStatusIndicator');
             const lbl = document.getElementById('cloudStatusText');
@@ -1703,6 +1770,8 @@
 
             const stopList = readJSON('fish_pro_stoplist', []);
             stopListSet = new Set(Array.isArray(stopList) ? stopList : []);
+            normalizeMenuStock();
+            hallViewMode = localStorage.getItem('fish_pro_hall_view_mode') === 'map' ? 'map' : 'grid';
             appTheme = localStorage.getItem('fish_pro_theme') === 'light' ? 'light' : 'dark';
         }
 
@@ -1881,6 +1950,9 @@
                         salesPercent = Number.isFinite(sp) ? sp : 3;
                     }
                     stopListSet = new Set(Array.isArray(s.stopListSet) ? s.stopListSet : []);
+                    normalizeMenuStock();
+                    hallViewMode = s.hallViewMode === 'map' ? 'map' : 'grid';
+                    localStorage.setItem('fish_pro_hall_view_mode', hallViewMode);
                     if (s.appTheme !== undefined) {
                         appTheme = s.appTheme;
                         applyAppThemeUI();
@@ -1904,6 +1976,7 @@
         async function saveData() {
             const persistSnapshot = async () => {
                 try {
+                    ensureTableMapCoords();
                     // Локальная копия сохраняется первой, чтобы работа не терялась при проблемах сети.
                     localStorage.setItem('fish_pro_tables', JSON.stringify(tables));
                     localStorage.setItem('fish_pro_menu', JSON.stringify(menuItems));
@@ -1914,11 +1987,12 @@
                     localStorage.setItem('fish_pro_hourly_rate', String(hourlyRate));
                     localStorage.setItem('fish_pro_sales_percent', String(salesPercent));
                     localStorage.setItem('fish_pro_theme', appTheme);
+                    localStorage.setItem('fish_pro_hall_view_mode', hallViewMode);
 
                     // Статус подписки в облако не отправляется: его знает только сервер.
                     await sendStateToCloud({
                         tables, menuItems, closedHistory, shiftArchive,
-                        stopListSet: [...stopListSet], hourlyRate, salesPercent, shiftTipGoal, appTheme
+                        stopListSet: [...stopListSet], hourlyRate, salesPercent, shiftTipGoal, appTheme, hallViewMode
                     });
 
                     setCloudIndicator('ok', 'Облако ОК');
@@ -2680,7 +2754,7 @@
                 return;
             }
 
-            menuItems = [...additions, ...menuItems];
+            menuItems = [...additions.map(item => ({ ...item, stock: null })), ...menuItems];
             saveData();
             triggerHaptic('success');
             closeAiScannerModal();
@@ -2890,6 +2964,7 @@
             const inp = document.getElementById('simpleModalInput');
             inp.value = defaultValue !== undefined && defaultValue !== null ? defaultValue : '';
             inp.placeholder = placeholderText || 'Введите значение...';
+            inp.inputMode = 'text';
             simpleModalCallback = callback;
             document.getElementById('simpleInputModal').classList.remove('hidden');
             setTimeout(() => inp.focus(), 60);
@@ -3445,7 +3520,8 @@
 
             menuItems.forEach((item, idx) => {
                 if (!item.name.toLowerCase().includes(search)) return;
-                const isStopped = stopListSet.has(item.name);
+                const stock = getItemStock(item);
+                const isStopped = stopListSet.has(item.name) || stock === 0;
                 const hasSlogan = !!(item.slogan && String(item.slogan).trim());
                 const hasTtk = !!(item.ttk && String(item.ttk).trim());
                 const hasSheet = hasSlogan || hasTtk;
@@ -3465,6 +3541,15 @@
                             ${isStopped ? svgIcon('x-circle', 'w-3.5 h-3.5') + ' В стопе' : svgIcon('check-circle', 'w-3.5 h-3.5') + ' Активно'}
                         </button>
                     </div>
+                    <div class="flex items-center gap-1.5 flex-wrap text-[10px]">
+                        ${stock === null
+                            ? `<button type="button" onclick="openStockModal(${idx})" class="glass-element px-2.5 py-1.5 rounded-xl font-bold text-amber-300 tap-scale">${svgIcon('package', 'w-3.5 h-3.5')} Остаток без лимита</button>`
+                            : `<span class="font-extrabold px-2.5 py-1.5 rounded-xl ${stock === 0 ? 'bg-rose-500/15 text-rose-300' : 'bg-amber-500/15 text-amber-300'}">Остаток: ${stock} шт.</span>
+                               <button type="button" onclick="stepItemStock(${idx}, -1)" aria-label="Уменьшить остаток" class="glass-element w-8 h-8 rounded-xl font-extrabold tap-scale">−</button>
+                               <button type="button" onclick="stepItemStock(${idx}, 1)" aria-label="Увеличить остаток" class="glass-element w-8 h-8 rounded-xl font-extrabold tap-scale">${svgIcon('plus', 'w-3.5 h-3.5')}</button>
+                               <button type="button" onclick="openStockModal(${idx})" class="glass-element px-2 py-1.5 rounded-xl font-bold tap-scale">Изменить</button>
+                               <button type="button" onclick="clearItemStock(${idx})" class="text-slate-400 px-2 py-1.5 rounded-xl font-bold tap-scale">Убрать лимит</button>`}
+                    </div>
                     <div class="flex items-center gap-1.5">
                         <button onclick="openDishTtkEdit(${idx})" class="flex-1 py-2 rounded-xl text-[11px] font-extrabold tap-scale ${hasSheet ? 'ttk-btn-on text-amber-400 border border-amber-500/40 bg-amber-500/10' : 'glass-element text-slate-400'}">${svgIcon('clipboard-list', 'w-3.5 h-3.5')} ТТК</button>
                         <button onclick="openDishPhoto(${idx})" class="flex-1 py-2 rounded-xl text-[11px] font-extrabold tap-scale ${item.photoId ? 'text-emerald-400 border border-emerald-500/40 bg-emerald-500/10' : 'glass-element text-slate-400'}">${svgIcon('camera', 'w-3.5 h-3.5')} Фото</button>
@@ -3479,12 +3564,73 @@
         function toggleStopItemByIdx(idx) {
             const item = menuItems[idx];
             if (!item) return;
+            if (getItemStock(item) === 0 && stopListSet.has(item.name)) {
+                showStockToast('Остаток равен 0. Увеличьте его, чтобы убрать блюдо из стоп-листа.');
+                return;
+            }
             triggerHaptic('open');
             if(stopListSet.has(item.name)) stopListSet.delete(item.name);
             else stopListSet.add(item.name);
             saveData();
             renderStopList();
             renderMenuDirect();
+        }
+
+        function showStockToast(message) {
+            const toast = document.getElementById('stockToast');
+            if (!toast) return;
+            toast.innerHTML = svgIcon('alert-triangle', 'w-4 h-4 shrink-0 mt-0.5') + '<span></span>';
+            toast.querySelector('span').textContent = message;
+            toast.classList.remove('hidden');
+            clearTimeout(stockToastTimer);
+            stockToastTimer = setTimeout(() => toast.classList.add('hidden'), 4200);
+        }
+
+        function setItemStock(idx, value) {
+            const item = menuItems[idx];
+            if (!item || !Number.isSafeInteger(value) || value < 0) return false;
+            const previous = getItemStock(item);
+            ensureStockItemId(item);
+            item.stock = value;
+            if (value === 0) stopListSet.add(item.name);
+            else if (previous === 0) stopListSet.delete(item.name);
+            triggerHaptic('open');
+            saveData();
+            renderStopList();
+            renderMenuDirect();
+            return true;
+        }
+
+        function stepItemStock(idx, delta) {
+            const stock = getItemStock(menuItems[idx]);
+            if (stock === null) return;
+            setItemStock(idx, Math.max(0, stock + delta));
+        }
+
+        function clearItemStock(idx) {
+            const item = menuItems[idx];
+            if (!item) return;
+            if (getItemStock(item) === 0) stopListSet.delete(item.name);
+            item.stock = null;
+            triggerHaptic('open');
+            saveData();
+            renderStopList();
+            renderMenuDirect();
+        }
+
+        function openStockModal(idx) {
+            const item = menuItems[idx];
+            if (!item) return;
+            openSimpleModal('Остаток блюда', `Сколько порций осталось у «${item.name}»? Введите целое число от 0.`, getItemStock(item), value => {
+                const trimmed = String(value).trim();
+                const amount = Number(trimmed);
+                if (!/^\d+$/.test(trimmed) || !Number.isSafeInteger(amount) || amount < 0) {
+                    alert('Введите целое число от 0.');
+                    return;
+                }
+                setItemStock(idx, amount);
+            }, 'Например, 5');
+            document.getElementById('simpleModalInput').inputMode = 'numeric';
         }
 
         // ================= МЕНЮ: ДОБАВИТЬ, ИЗМЕНИТЬ, УДАЛИТЬ ВРУЧНУЮ =================
@@ -3568,7 +3714,7 @@
                     stopListSet.add(name);
                 }
             } else {
-                const fresh = { name, price, cat: dishEditCat };
+                const fresh = { name, price, cat: dishEditCat, stock: null };
                 if (weighted) fresh.isHosper = true;
                 menuItems.unshift(fresh);
             }
@@ -3823,7 +3969,7 @@
             ttkEl.classList.toggle('italic', !ttk);
 
             const addBtn = document.getElementById('dishTtkViewAddBtn');
-            const stopped = stopListSet.has(item.name);
+            const stopped = stopListSet.has(item.name) || getItemStock(item) === 0;
             const canAdd = !!currentTable && !!tables[currentTable] && !stopped;
             addBtn.disabled = !canAdd;
             addBtn.innerHTML = stopped ? svgIcon('ban', 'w-3.5 h-3.5') + ' Блюдо в стопе' : svgIcon('plus', 'w-3.5 h-3.5') + ' Добавить в заказ';
@@ -3847,7 +3993,7 @@
         function addDishFromTtkView() {
             const idx = dishTtkViewIdx;
             const item = menuItems[idx];
-            if (!item || !currentTable || !tables[currentTable] || stopListSet.has(item.name)) return;
+            if (!item || !currentTable || !tables[currentTable] || stopListSet.has(item.name) || getItemStock(item) === 0) return;
             closeDishTtkView();
             orderMenuItemByIdx(idx, null); // то же поведение, что у кнопки «+ Добавить» (включая выбор веса для весовых блюд)
         }
@@ -3895,6 +4041,103 @@
             return { key: 'ok', mins };
         }
 
+        function setHallViewMode(mode) {
+            if (mode !== 'grid' && mode !== 'map') return;
+            hallViewMode = mode;
+            isMapEditMode = false;
+            if (mode === 'map') ensureTableMapCoords();
+            triggerHaptic('open');
+            saveData();
+            renderTables();
+        }
+
+        function toggleMapEditMode() {
+            if (hallViewMode !== 'map') return;
+            isMapEditMode = !isMapEditMode;
+            triggerHaptic('open');
+            if (!isMapEditMode) saveData();
+            renderTables();
+        }
+
+        function openMapFromConstructor() {
+            closeHallConstructorModal();
+            switchTab('hall');
+            setHallViewMode('map');
+            isMapEditMode = true;
+            renderTables();
+        }
+
+        function renderHallMap(keys, dotClasses) {
+            const canvas = document.getElementById('hallMapCanvasContainer');
+            canvas.innerHTML = '';
+            ensureTableMapCoords();
+            const rows = Math.max(1, Math.ceil(keys.length / 3));
+            canvas.style.height = `${Math.max(Math.round(window.innerHeight * 0.64), Math.round(rows * 110))}px`;
+            canvas.style.touchAction = isMapEditMode ? 'none' : 'auto';
+
+            keys.forEach(name => {
+                const t = tables[name];
+                const hasOrder = t.items && t.items.length > 0;
+                const status = getTableWidgetStatus(t, hasOrder);
+                if (onlyAttentionFilter && (!t.lastVisited || Math.floor((Date.now() - t.lastVisited) / 60000) < 10)) return;
+                const totalSum = (t.items || []).reduce((sum, item) => sum + item.price, 0);
+                const widget = document.createElement('button');
+                widget.type = 'button';
+                widget.className = `tbl-widget tbl-${status.key} ${currentTable === name ? 'tbl-selected' : ''} absolute rounded-2xl p-2 flex flex-col justify-between text-left transition-colors ${isMapEditMode ? 'ring-1 ring-sky-400/60 cursor-grab' : 'tap-scale'}`;
+                widget.style.left = `${t.x}%`;
+                widget.style.top = `${t.y}%`;
+                widget.style.width = '28%';
+                widget.style.height = '72px';
+                widget.style.touchAction = isMapEditMode ? 'none' : 'auto';
+                widget.setAttribute('aria-label', `${name}, ${hasOrder ? `${totalSum} рублей` : 'свободен'}${isMapEditMode ? ', перетащите для расстановки' : ''}`);
+                widget.innerHTML = `<span class="flex justify-between items-center w-full gap-1 min-w-0"><span class="font-extrabold text-[10px] truncate">${escapeHtml(name)}</span><span class="w-2 h-2 rounded-full shrink-0 ${dotClasses[status.key]}"></span></span>
+                    <span class="text-[9px] opacity-75">${svgIcon('users', 'w-3 h-3')} ${t.guests} гост. ${isMapEditMode ? svgIcon('move', 'w-3 h-3 text-sky-300') : ''}</span>
+                    <span class="font-extrabold text-[10px] truncate">${hasOrder ? totalSum.toLocaleString('ru-RU') + ' ₽' : 'Свободен'}</span>`;
+                widget.onclick = () => { if (!isMapEditMode) handleTableClick(name); };
+                widget.onkeydown = event => {
+                    if (!isMapEditMode || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return;
+                    event.preventDefault();
+                    const step = event.shiftKey ? 10 : 2;
+                    t.x = Math.max(2, Math.min(70, t.x + (event.key === 'ArrowLeft' ? -step : event.key === 'ArrowRight' ? step : 0)));
+                    t.y = Math.max(2, Math.min(82, t.y + (event.key === 'ArrowUp' ? -step : event.key === 'ArrowDown' ? step : 0)));
+                    widget.style.left = `${t.x}%`;
+                    widget.style.top = `${t.y}%`;
+                    saveData();
+                };
+                let drag = null;
+                widget.addEventListener('pointerdown', event => {
+                    if (!isMapEditMode) return;
+                    event.preventDefault();
+                    const rect = widget.getBoundingClientRect();
+                    drag = { pointerId: event.pointerId, offsetX: event.clientX - rect.left, offsetY: event.clientY - rect.top, moved: false };
+                    widget.setPointerCapture(event.pointerId);
+                });
+                widget.addEventListener('pointermove', event => {
+                    if (!drag || drag.pointerId !== event.pointerId) return;
+                    event.preventDefault();
+                    const rect = canvas.getBoundingClientRect();
+                    const x = Math.round(((event.clientX - rect.left - drag.offsetX) / rect.width * 100) / 2) * 2;
+                    const y = Math.round(((event.clientY - rect.top - drag.offsetY) / rect.height * 100) / 2) * 2;
+                    const nextX = Math.max(2, Math.min(70, x));
+                    const nextY = Math.max(2, Math.min(82, y));
+                    if (nextX === t.x && nextY === t.y) return;
+                    t.x = nextX;
+                    t.y = nextY;
+                    widget.style.left = `${nextX}%`;
+                    widget.style.top = `${nextY}%`;
+                    drag.moved = true;
+                });
+                const finishDrag = event => {
+                    if (!drag || drag.pointerId !== event.pointerId) return;
+                    if (drag.moved) saveData();
+                    drag = null;
+                };
+                widget.addEventListener('pointerup', finishDrag);
+                widget.addEventListener('pointercancel', finishDrag);
+                canvas.appendChild(widget);
+            });
+        }
+
         function renderTables() {
             const grid = document.getElementById('tablesGrid');
             grid.innerHTML = '';
@@ -3902,6 +4145,19 @@
 
             const keys = Object.keys(tables);
             document.getElementById('hallHeaderTitle').innerHTML = `${svgIcon('map', 'w-4 h-4')} Зал (${keys.length} поз.)`;
+            const isMap = hallViewMode === 'map';
+            grid.classList.toggle('hidden', isMap);
+            document.getElementById('hallMapCanvasContainer').classList.toggle('hidden', !isMap);
+            const editButton = document.getElementById('mapEditModeBtn');
+            editButton.classList.toggle('hidden', !isMap);
+            editButton.className = `${isMap ? '' : 'hidden '}px-3 py-2 rounded-xl text-[11px] font-extrabold tap-scale border ${isMapEditMode ? 'bg-emerald-500 text-slate-950 border-emerald-400' : 'border-sky-500/30 text-sky-300 glass-element'}`;
+            editButton.innerHTML = isMapEditMode ? `${svgIcon('check', 'w-3.5 h-3.5')} Сохранить схему` : `${svgIcon('pencil', 'w-3.5 h-3.5')} Расставить столы`;
+            for (const [mode, id, icon, label] of [['grid', 'hallGridModeBtn', 'layout-grid', 'Сетка'], ['map', 'hallMapModeBtn', 'map', 'Карта 2D']]) {
+                const button = document.getElementById(id);
+                button.className = `px-3 py-2 rounded-xl text-[11px] font-extrabold tap-scale ${hallViewMode === mode ? 'bg-slate-100 text-slate-950 shadow' : 'text-slate-400'}`;
+                button.innerHTML = `${svgIcon(icon, 'w-3.5 h-3.5')} ${label}`;
+                button.setAttribute('aria-pressed', String(hallViewMode === mode));
+            }
 
             const DOT_CLASSES = {
                 free: 'bg-slate-700',
@@ -3939,6 +4195,7 @@
                 `;
                 grid.appendChild(btn);
             }
+            if (isMap) renderHallMap(keys, DOT_CLASSES);
             document.getElementById('attentionCount').innerText = attentionCount;
         }
 
@@ -4057,19 +4314,26 @@
             }
 
             const itemsContainer = document.getElementById('currentTableItems');
+            const servedProgress = document.getElementById('servedProgress');
             itemsContainer.innerHTML = '';
             let total = 0;
 
             if(!t.items || t.items.length === 0) {
+                servedProgress.classList.add('hidden');
                 itemsContainer.innerHTML = '<p class="text-slate-500 italic text-center py-3 text-xs">Стол пустой</p>';
             } else {
+                const servedCount = t.items.filter(item => item.served === true).length;
+                servedProgress.classList.remove('hidden');
+                servedProgress.innerHTML = `<span>Подано блюд: ${servedCount} из ${t.items.length}</span>${servedCount < t.items.length ? `<button type="button" onclick="markAllItemsServed()" class="text-emerald-400 font-extrabold tap-scale">${svgIcon('check', 'w-3 h-3')} Отметить все</button>` : `<span class="text-emerald-400">${svgIcon('check-circle', 'w-3 h-3')} Всё подано</span>`}`;
                 t.items.forEach((item, idx) => {
                     total += item.price;
+                    const served = item.served === true;
                     const div = document.createElement('div');
-                    div.className = "flex justify-between items-center glass-element px-3.5 py-2.5 rounded-2xl text-xs border border-slate-800/80";
+                    div.className = `flex justify-between items-center gap-2 glass-element px-2.5 py-2.5 rounded-2xl text-xs border border-slate-800/80 ${served ? 'opacity-60' : ''}`;
                     div.innerHTML = `
-                        <div>
-                            <div class="font-extrabold text-slate-100 text-xs tracking-wide">${escapeHtml(item.name)}</div>
+                        <button type="button" onclick="toggleItemServed(currentTable, ${idx})" aria-label="${served ? 'Отменить подачу' : 'Отметить поданным'}: ${escapeHtml(item.name)}" aria-pressed="${served}" class="w-8 h-8 shrink-0 rounded-full flex items-center justify-center border tap-scale ${served ? 'bg-emerald-500 text-slate-950 border-emerald-400' : 'border-slate-600 text-slate-400 bg-slate-900/70'}">${svgIcon('check', 'w-4 h-4')}</button>
+                        <div class="min-w-0 flex-1">
+                            <div class="font-extrabold text-xs tracking-wide break-words ${served ? 'line-through text-slate-500' : 'text-slate-100'}">${escapeHtml(item.name)}</div>
                             <div class="text-[10px] text-slate-400 mt-0.5 flex items-center space-x-1.5 flex-wrap">
                                 <span class="text-slate-300 font-bold">${escapeHtml(displayCourse(item.course))}</span> • 
                                 <span class="text-emerald-400 font-semibold">${escapeHtml(item.guest)}</span>
@@ -4077,7 +4341,7 @@
                                 <button onclick="editItemModifier(${idx})" class="text-slate-300 hover:text-white ml-1">${svgIcon('pencil', 'w-3.5 h-3.5')}</button>
                             </div>
                         </div>
-                        <div class="flex items-center space-x-3">
+                        <div class="flex items-center space-x-2 shrink-0">
                             <span class="font-extrabold text-slate-100 text-xs">${item.price} ₽</span>
                             <button onclick="removeItem(${idx})" class="w-6 h-6 rounded-full bg-rose-500/10 text-rose-400 font-bold flex items-center justify-center">${svgIcon('x', 'w-3 h-3')}</button>
                         </div>
@@ -4087,6 +4351,32 @@
             }
             document.getElementById('currentTableTotal').innerText = total + ' ₽';
             updateSearchExitBtnLabel();
+        }
+
+        function toggleItemServed(tableName, itemIdx) {
+            const t = tables[tableName];
+            const item = t && t.items && t.items[itemIdx];
+            if (!item) return;
+            item.served = item.served !== true;
+            triggerHaptic('dish');
+            saveData();
+            if (currentTable === tableName) renderTableCard();
+            renderMyTables();
+        }
+
+        function toggleItemServedByTableIdx(tableIdx, itemIdx) {
+            const tableName = Object.keys(tables)[tableIdx];
+            if (tableName) toggleItemServed(tableName, itemIdx);
+        }
+
+        function markAllItemsServed() {
+            const t = tables[currentTable];
+            if (!t || !t.items || !t.items.length) return;
+            t.items.forEach(item => { item.served = true; });
+            triggerHaptic('dish');
+            saveData();
+            renderTableCard();
+            renderMyTables();
         }
 
         // ================= МЕНЮ, ПОКУПКИ, СПЛИТ-СЧЕТА И РАСЧЕТ =================
@@ -4273,7 +4563,8 @@
                 const matchSearch = item.name.toLowerCase().includes(search);
                 if (search.length > 0 ? !matchSearch : !matchCat) return;
 
-                const isStopped = stopListSet.has(item.name);
+                const stock = getItemStock(item);
+                const isStopped = stopListSet.has(item.name) || stock === 0;
                 const hasSheet = dishHasCheatSheet(item);
                 const div = document.createElement('div');
                 div.className = `flex justify-between items-center px-3.5 py-2.5 rounded-2xl border transition ${isStopped ? 'bg-rose-500/5 border-rose-500/20 opacity-50' : 'glass-element border-slate-800 hover:border-slate-600'}`;
@@ -4283,6 +4574,7 @@
                         <div class="text-[10px] ${isStopped ? 'text-rose-400 font-extrabold' : 'text-slate-300 font-extrabold'} mt-0.5">
                             ${isStopped ? svgIcon('ban', 'w-3 h-3') + ' В СТОПЕ' : item.price + ' ₽' + (item.isHosper ? ' / 100 г' : '')}
                         </div>
+                        ${stock !== null && stock > 0 ? `<div class="inline-flex mt-1 px-2 py-0.5 rounded-lg bg-amber-500/15 text-amber-300 text-[9px] font-extrabold">Осталось: ${stock} шт.</div>` : ''}
                     </div>
                     <div class="flex items-center gap-2 shrink-0">
                         <button type="button" onclick="openDishTtkView(${idx})" aria-label="Шпаргалка по блюду" class="w-9 h-9 flex items-center justify-center rounded-xl text-lg font-black leading-none tap-scale ${hasSheet ? 'ttk-btn-on bg-amber-500/15 text-amber-400 border border-amber-500/30' : 'glass-element text-slate-400'}">*</button>
@@ -4326,36 +4618,40 @@
 
         function orderMenuItemByIdx(idx, btnEl) {
             const item = menuItems[idx];
-            if(!item || !currentTable || stopListSet.has(item.name)) return;
+            if(!item || !currentTable || stopListSet.has(item.name) || getItemStock(item) === 0) return;
             
             if(item.isHosper) {
-                pendingHosperItem = { name: item.name, price: item.price };
+                pendingHosperItem = { name: item.name, price: item.price, stockId: item.stockId || null };
                 document.getElementById('hosperItemTitle').innerText = item.name;
                 document.getElementById('customWeightInput').value = '';
                 document.getElementById('hospersModal').classList.remove('hidden');
                 return;
             }
 
-            triggerHaptic('dish');
-            addItemToTableDirect(item.name, item.price, null);
-
-            if (btnEl) {
-                const orig = btnEl.innerText;
-                btnEl.innerHTML = svgIcon('check', 'w-3.5 h-3.5') + ' ОК';
-                btnEl.classList.add('bg-emerald-400');
-                setTimeout(() => {
-                    btnEl.innerText = orig;
-                    btnEl.classList.remove('bg-emerald-400');
-                }, 400);
+            if (addItemToTableDirect(item.name, item.price, null, item.stockId || null)) {
+                triggerHaptic('dish');
+                const liveButton = document.querySelector
+                    ? document.querySelector(`#directMenuList button[onclick="orderMenuItemByIdx(${idx}, this)"]`)
+                    : null;
+                if (liveButton && !liveButton.disabled) {
+                    const original = liveButton.innerHTML;
+                    liveButton.innerHTML = svgIcon('check', 'w-3.5 h-3.5') + ' ОК';
+                    liveButton.classList.add('bg-emerald-400');
+                    setTimeout(() => {
+                        if (liveButton.isConnected) liveButton.innerHTML = original;
+                        liveButton.classList.remove('bg-emerald-400');
+                    }, 400);
+                }
             }
         }
 
         function selectHosperWeight(weight) {
             if(!pendingHosperItem || !currentTable) return;
-            triggerHaptic('dish');
             const finalPrice = Math.round((pendingHosperItem.price * weight) / 100);
-            addItemToTableDirect(`${pendingHosperItem.name} (${weight}г)`, finalPrice, null);
-            closeHosperModal();
+            if (addItemToTableDirect(`${pendingHosperItem.name} (${weight}г)`, finalPrice, null, pendingHosperItem.stockId)) {
+                triggerHaptic('dish');
+                closeHosperModal();
+            }
         }
 
         function submitCustomWeight() {
@@ -4369,27 +4665,64 @@
             pendingHosperItem = null;
         }
 
-        function addItemToTableDirect(name, price, modifier) {
+        function addItemToTableDirect(name, price, modifier, stockMenuId = null) {
             const t = tables[currentTable];
+            if (!t) return false;
+            const menuItem = stockMenuId ? menuItems.find(item => item.stockId === stockMenuId) : null;
+            const stock = getItemStock(menuItem);
+            if (stock === 0) {
+                stopListSet.add(menuItem.name);
+                showStockToast(`«${menuItem.name}» уже закончился. Позиция в стоп-листе.`);
+                renderMenuDirect();
+                renderStopList();
+                return false;
+            }
+            if (menuItem && stopListSet.has(menuItem.name)) {
+                showStockToast(`«${menuItem.name}» находится в стоп-листе.`);
+                return false;
+            }
             if (!t.lastVisited) {
                 t.lastVisited = Date.now();
             }
-            t.items.push({ name, price, modifier, guest: t.activeGuest || "Гость 1", course: selectedActiveCourse });
+            const orderItem = { name, price, modifier, guest: t.activeGuest || "Гость 1", course: selectedActiveCourse, served: false };
+            if (stock !== null) {
+                menuItem.stock = stock - 1;
+                orderItem.stockDebitedMenuId = menuItem.stockId;
+                if (menuItem.stock === 0) {
+                    stopListSet.add(menuItem.name);
+                    showStockToast(`Вы забрали последнюю порцию «${menuItem.name}». Позиция переведена в стоп-лист.`);
+                }
+            }
+            t.items.push(orderItem);
             saveData();
             renderTableCard();
             renderTables();
+            renderMenuDirect();
+            renderStopList();
+            return true;
         }
 
         function removeItem(idx) {
             if(!currentTable || !tables[currentTable]) return;
             triggerHaptic('open');
-            tables[currentTable].items.splice(idx, 1);
+            const [removed] = tables[currentTable].items.splice(idx, 1);
+            if (!removed) return;
+            const menuItem = removed.stockDebitedMenuId
+                ? menuItems.find(item => item.stockId === removed.stockDebitedMenuId)
+                : null;
+            const stock = getItemStock(menuItem);
+            if (stock !== null) {
+                menuItem.stock = stock + 1;
+                if (stock === 0) stopListSet.delete(menuItem.name);
+            }
             if (tables[currentTable].items.length === 0) {
                 tables[currentTable].lastVisited = null;
             }
             saveData();
             renderTableCard();
             renderTables();
+            renderMenuDirect();
+            renderStopList();
         }
 
         function saveTableToWork() {
@@ -4446,6 +4779,7 @@
                 if (!t.lastVisited) t.lastVisited = Date.now();
 
                 const total = t.items.reduce((s, i) => s + i.price, 0);
+                const servedCount = t.items.filter(item => item.served === true).length;
                 const timerText = formatElapsedMMSS(t.lastVisited);
                 const timerColors = getTimerColorClasses(t.lastVisited);
 
@@ -4460,6 +4794,16 @@
                         <span class="font-extrabold text-sm text-emerald-400">${total} ₽</span>
                     </div>
                     <div class="text-xs text-slate-400">Позиций: ${t.items.length} • Гостей: ${t.guests}</div>
+                    <div class="inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-[10px] font-extrabold ${servedCount === t.items.length ? 'bg-emerald-500/15 text-emerald-400' : 'bg-amber-500/15 text-amber-300'}">${servedCount === t.items.length ? svgIcon('check-circle', 'w-3 h-3') + ' Всё подано' : `Подано: ${servedCount}/${t.items.length}`}</div>
+                    <div class="max-h-40 overflow-y-auto space-y-1.5 pr-1" aria-label="Подача блюд стола">
+                        ${t.items.map((item, itemIdx) => {
+                            const served = item.served === true;
+                            return `<div class="flex items-center gap-2 rounded-xl glass-element px-2 py-1.5 ${served ? 'opacity-60' : ''}">
+                                <button type="button" onclick="toggleItemServedByTableIdx(${idx}, ${itemIdx})" aria-label="${served ? 'Отменить подачу' : 'Отметить поданным'}: ${escapeHtml(item.name)}" aria-pressed="${served}" class="w-8 h-8 shrink-0 rounded-full border flex items-center justify-center tap-scale ${served ? 'bg-emerald-500 text-slate-950 border-emerald-400' : 'border-slate-600 text-slate-400 bg-slate-900/70'}">${svgIcon('check', 'w-4 h-4')}</button>
+                                <span class="min-w-0 text-[11px] font-bold break-words ${served ? 'line-through text-slate-500' : 'text-slate-200'}">${escapeHtml(item.name)}</span>
+                            </div>`;
+                        }).join('')}
+                    </div>
                     <div class="grid grid-cols-2 gap-2 pt-0.5">
                         <button onclick="openTableFromMyTablesByIdx(${idx})" class="bg-slate-100 hover:bg-white text-slate-950 py-3 rounded-2xl text-xs font-extrabold tap-scale shadow flex items-center justify-center space-x-1">
                             <span>${svgIcon('pencil', 'w-4 h-4')}</span>
@@ -4795,7 +5139,7 @@
         }
 
         setInterval(tickAllLiveTimers, 1000);
-        setInterval(() => { renderTables(); updateProStatusUI(); }, 30000);
+        setInterval(() => { if (!isMapEditMode) renderTables(); updateProStatusUI(); }, 30000);
         setInterval(() => { if (!document.hidden && proStatusLoaded) refreshProStatus(); }, 10 * 60 * 1000);
         document.addEventListener('visibilitychange', () => { if (!document.hidden && proStatusLoaded) refreshProStatus(); });
         
