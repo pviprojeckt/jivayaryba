@@ -25,6 +25,7 @@ function cleanEnv(v) {
 }
 
 function cfg() {
+  const maxAge = Number(process.env.INITDATA_MAX_AGE_SEC);
   return {
     botToken: cleanEnv(process.env.TELEGRAM_BOT_TOKEN),
     supabaseUrl: (process.env.SUPABASE_URL || DEFAULT_SUPABASE_URL).replace(/\/+$/, ''),
@@ -36,7 +37,7 @@ function cfg() {
         .filter((s) => /^\d{1,15}$/.test(s))
     ),
     pepper: process.env.CODE_PEPPER || '',
-    initDataMaxAge: Number(process.env.INITDATA_MAX_AGE_SEC) || 3 * 86400
+    initDataMaxAge: Number.isFinite(maxAge) && maxAge > 0 ? maxAge : 3 * 86400
   };
 }
 
@@ -85,6 +86,7 @@ function wrap(fn) {
 function verifyInitData(initData, botToken, maxAgeSec) {
   if (!initData || typeof initData !== 'string' || !botToken) return { ok: false, reason: 'missing' };
   const params = new URLSearchParams(initData);
+  if (new Set(params.keys()).size !== [...params.keys()].length) return { ok: false, reason: 'bad_signature' };
   const hash = params.get('hash');
   if (!hash || !/^[0-9a-f]{64}$/i.test(hash)) return { ok: false, reason: 'missing' };
   params.delete('hash');
@@ -109,7 +111,7 @@ function verifyInitData(initData, botToken, maxAgeSec) {
 
   const authDate = Number(params.get('auth_date'));
   const age = Date.now() / 1000 - authDate;
-  if (!Number.isFinite(authDate) || age < -300) return { ok: false, reason: 'bad_signature' };
+  if (!Number.isSafeInteger(authDate) || authDate <= 0 || age < -300) return { ok: false, reason: 'bad_signature' };
   if (age > (maxAgeSec || 86400)) return { ok: false, reason: 'expired' };
 
   let user = null;
@@ -118,7 +120,7 @@ function verifyInitData(initData, botToken, maxAgeSec) {
   } catch (e) {
     user = null;
   }
-  if (!user || typeof user !== 'object' || !/^\d{1,15}$/.test(String(user.id))) return { ok: false, reason: 'bad_signature' };
+  if (!user || typeof user !== 'object' || !/^[1-9]\d{0,14}$/.test(String(user.id))) return { ok: false, reason: 'bad_signature' };
   return { ok: true, user };
 }
 

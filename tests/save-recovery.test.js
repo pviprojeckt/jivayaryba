@@ -1,0 +1,82 @@
+'use strict';
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const { app } = require('./app-harness.cjs');
+const seed = ui => ui.run('userId="42"; tables={"Стол 1":createEmptyTableObj(2)}; cloudReady=true');
+test('edits persist immediately while an earlier cloud write is still pending', async () => {
+  const ui = app(); seed(ui);
+  ui.run('sent=[]; sendStateToCloud=state=>new Promise(resolve=>{sent.push(state); release=resolve}); saveData()');
+  await Promise.resolve();
+  ui.run('tables["Стол 1"].items.push({name:"Чай",price:100}); second=saveData()');
+  const local = JSON.parse(ui.storage.get('fish_pro_state_v3:42'));
+  assert.equal(local.state.tables['Стол 1'].items.length, 1);
+  assert.equal(local.pending, true);
+  assert.equal(ui.run('sent[0].tables["Стол 1"].items.length'), 0);
+  ui.run('release({updatedAt:"v1"})');
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(JSON.parse(ui.storage.get('fish_pro_state_v3:42')).pending, true);
+  ui.run('release({updatedAt:"v2"})'); await ui.run('second');
+  assert.equal(JSON.parse(ui.storage.get('fish_pro_state_v3:42')).pending, false);
+});
+test('storage quota failure still saves to cloud and never claims a local copy', async () => {
+  const ui = app({ storageThrows: true }); seed(ui);
+  ui.run('sendStateToCloud=async state=>{saved=state; return {updatedAt:"v1"}}');
+  assert.equal(await ui.run('saveData()'), true);
+  assert.ok(ui.run('saved.tables["Стол 1"]'));
+  assert.equal(ui.get('cloudStatusText').innerText, 'Облако ОК, нет копии');
+  ui.run('cloudReady=true; sendStateToCloud=async()=>{throw new Error("offline")}');
+  assert.equal(await ui.run('saveData()'), false);
+  assert.equal(ui.get('cloudStatusText').innerText, 'Не сохранено');
+});
+test('local cache is isolated by account and legacy data is imported only for its known owner', () => {
+  const ui = app(); seed(ui);
+  ui.run('menuItems=[{name:"Личное меню",price:99}]; cloudReady=false; saveData()');
+  const other = app({ storage: ui.storage }); other.run('userId="43"; loadLocalFallback()');
+  assert.notEqual(other.run('menuItems[0].name'), 'Личное меню');
+  const owner = app({ storage: ui.storage }); owner.run('userId="42"; loadLocalFallback()');
+  assert.equal(owner.run('menuItems[0].name'), 'Личное меню');
+  assert.equal(owner.run('localPending'), true);
+  const legacy = new Map([['fish_pro_cache_v2','{"userId":"42"}'], ['fish_pro_menu','[{"name":"Старое меню","price":50}]']]);
+  const migrated = app({ storage: legacy }); migrated.run('userId="42"; loadLocalFallback()');
+  assert.equal(migrated.run('menuItems[0].name'), 'Старое меню');
+  assert.equal(migrated.run('hourlyRate'), 280);
+  assert.equal(migrated.run('shiftTipGoal'), 3000);
+  assert.ok(legacy.has('fish_pro_menu'));
+});
+test('cloud load cannot silently overwrite edits made while loading; both copies are backed up', async () => {
+  const ui = app(); seed(ui);
+  ui.run('remote=captureAppState(); remote.hourlyRate=500; cloudReady=false; loadStateFromCloud=()=>new Promise(resolve=>{finishLoad=resolve}); sendStateToCloud=async state=>{saved=state; return {updatedAt:"v2"}}');
+  const sync = ui.run('reconcileCloudData()');
+  await Promise.resolve();
+  ui.run('hourlyRate=800; saveData(); confirm=()=>true; finishLoad({state:remote,updatedAt:"v1"})');
+  await sync;
+  assert.equal(ui.run('saved.hourlyRate'), 800);
+  const key = [...ui.storage.keys()].find(k => k.includes(':recovery:'));
+  const backup = JSON.parse(ui.storage.get(key));
+  assert.equal(backup.local.hourlyRate, 800);
+  assert.equal(backup.cloud.hourlyRate, 500);
+});
+test('choosing cloud preserves a recovery copy and does not upload the rejected local data', async () => {
+  const ui = app(); seed(ui);
+  ui.run('remote=captureAppState(); remote.hourlyRate=500; localPending=true; hourlyRate=800; loadStateFromCloud=async()=>({state:remote,updatedAt:"v1"}); sendStateToCloud=async()=>{throw new Error("Must not upload")}; confirm=()=>false');
+  assert.equal(await ui.run('reconcileCloudData()'), true);
+  assert.equal(ui.run('hourlyRate'), 500);
+  assert.equal(ui.run('localPending'), false);
+  assert.ok([...ui.storage.keys()].some(k => k.includes(':recovery:')));
+});
+test('a conflict stops queued writes until reconciliation', async () => {
+  const ui = app(); seed(ui);
+  ui.run('calls=0; sendStateToCloud=async()=>{calls++; const e=new Error("conflict"); e.status=409; throw e}; first=saveData(); second=saveData()');
+  await ui.run('Promise.all([first,second])');
+  assert.equal(ui.run('calls'), 1);
+  assert.equal(ui.run('cloudReady'), false);
+  assert.equal(JSON.parse(ui.storage.get('fish_pro_state_v3:42')).pending, true);
+});
+test('an unreadable local record is backed up before a replacement is written', () => {
+  const storage=new Map([['fish_pro_state_v3:42','{broken-json']]);
+  const ui=app({storage});
+  ui.run('userId="42"; loadLocalFallback(); saveData()');
+  const key=[...storage.keys()].find(k=>k.includes(':unreadable:'));
+  assert.equal(storage.get(key),'{broken-json');
+  assert.ok(JSON.parse(storage.get('fish_pro_state_v3:42')).state.tables);
+});

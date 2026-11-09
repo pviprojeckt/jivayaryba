@@ -507,6 +507,13 @@
 
         <!-- ВКЛАДКА 5: ПРОФИЛЬ -->
         <div id="tabProfile" class="tab-content space-y-4 hidden">
+            <div id="homeScreenShortcut" class="hidden glass-panel rounded-2xl p-3 border border-emerald-500/25">
+                <button type="button" id="homeScreenShortcutButton" onclick="addAppToHomeScreen()" disabled aria-describedby="homeScreenShortcutHint" class="w-full flex items-center justify-center gap-2 bg-emerald-600 text-white rounded-xl px-3 py-3 text-xs font-extrabold tap-scale disabled:opacity-60 disabled:cursor-default">
+                    <svg class="ic w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M9 10h6m-3-3v6m-1 5h2"/></svg>
+                    <span id="homeScreenShortcutLabel">Добавить на главный экран</span>
+                </button>
+                <p id="homeScreenShortcutHint" aria-live="polite" class="text-[10px] text-slate-400 text-center mt-2 leading-relaxed">Открывайте «Пульт» с экрана телефона.</p>
+            </div>
             <!-- ВЕРХНЯЯ ПАНЕЛЬ НАСТРОЕК ПРОФИЛЯ И ТЕМЫ -->
             <div class="glass-panel rounded-2xl p-3 flex flex-wrap gap-2 justify-between items-center shadow border border-slate-700/50">
                 <div class="flex items-center space-x-2.5">
@@ -1447,6 +1454,12 @@
         let userId = 'default_user';
         let lastCloudError = null;
         let saveQueue = Promise.resolve();
+        let cloudReady = false;
+        let cloudVersion = null;
+        let localRevision = 0;
+        let localPending = false;
+        let cloudSyncBusy = false;
+        let localCacheProtected = false;
         let appTheme = 'dark'; // 'dark' или 'light'
 
         let menuItems = [
@@ -1471,6 +1484,10 @@
         let hallViewMode = 'grid';
         let isMapEditMode = false;
         let stockToastTimer = null;
+        let homeScreenStatus = 'unsupported';
+        let homeScreenBusy = false;
+        let homeScreenEventsBound = false;
+        let homeScreenConfirmed = false;
         let aiScannedParsedItems = [];
         let isMenuSearchActive = false;
 
@@ -1719,24 +1736,106 @@
             lbl.innerText = text;
         }
 
-        function handleCloudStatusClick() {
+        async function handleCloudStatusClick() {
             if (lastCloudError) {
-                alert(`Ошибка облака (ID: ${userId}):\n${lastCloudError.message || ''}`);
+                if (!cloudReady) return reconcileCloudData();
+                await saveData();
+                if (lastCloudError) alert(`Ошибка облака (ID: ${userId}):\n${lastCloudError.message || ''}`);
             } else {
                 alert(`Облако активно!\nВаш ID: ${userId}\nСтатус: ${getProHumanStatusText()}`);
             }
-            saveData();
         }
 
-        function copyMyUserId() {
-            navigator.clipboard.writeText(userId);
-            alert(`Ваш ID (${userId}) скопирован!`);
+        async function copyMyUserId() {
+            try {
+                await navigator.clipboard.writeText(userId);
+                alert(`Ваш ID (${userId}) скопирован!`);
+            } catch (e) { alert(`Не удалось скопировать автоматически. Ваш ID: ${userId}`); }
+        }
+
+        function localStateKey() {
+            return 'fish_pro_state_v3:' + userId;
+        }
+
+        function readLocal(key) {
+            try { return localStorage.getItem(key); } catch (e) { return null; }
+        }
+
+        function captureAppState() {
+            return JSON.parse(JSON.stringify({ tables, menuItems, closedHistory, shiftArchive,
+                stopListSet: [...stopListSet], hourlyRate, salesPercent, shiftTipGoal, appTheme, hallViewMode }));
+        }
+
+        function writeLocalState(state, pending) {
+            if (localCacheProtected) throw new Error('Исходная локальная копия повреждена. Не перезаписываю её без резервной копии.');
+            localStorage.setItem(localStateKey(), JSON.stringify({ userId, state, pending,
+                savedAt: Date.now(), baseVersion: cloudVersion }));
+        }
+
+        function applyAppState(s) {
+            if (!s || typeof s !== 'object' || Array.isArray(s)) throw new Error('Повреждена структура сохранённых данных.');
+            const validItem = item => item && typeof item === 'object' && typeof item.name === 'string'
+                && Number.isFinite(item.price) && item.price >= 0;
+            const validBill = bill => bill && typeof bill === 'object' && Number.isFinite(bill.tip)
+                && Number.isFinite(bill.subtotal) && (!bill.items || (Array.isArray(bill.items) && bill.items.every(validItem)));
+            if ((s.menuItems !== undefined && (!Array.isArray(s.menuItems) || !s.menuItems.every(validItem)))
+                || (s.tables !== undefined && (!s.tables || typeof s.tables !== 'object' || Array.isArray(s.tables)
+                    || !Object.values(s.tables).every(t => t && Array.isArray(t.items) && t.items.every(validItem)
+                        && Number.isInteger(t.guests) && t.guests >= 1 && t.guests <= 100
+                        && (!t.guestNames || (typeof t.guestNames === 'object' && !Array.isArray(t.guestNames)))
+                        && (!t.splitGroups || (typeof t.splitGroups === 'object' && !Array.isArray(t.splitGroups)
+                            && Object.values(t.splitGroups).every(g => Array.isArray(g) && g.every(n => typeof n === 'string')))))))
+                || (s.closedHistory !== undefined && (!Array.isArray(s.closedHistory) || !s.closedHistory.every(validBill)))
+                || (s.shiftArchive !== undefined && (!Array.isArray(s.shiftArchive) || !s.shiftArchive.every(shift =>
+                    shift && typeof shift.dateKey === 'string' && Number.isFinite(shift.totalEarned)
+                    && (!shift.items || (Array.isArray(shift.items) && shift.items.every(validBill))))))) {
+                throw new Error('Не удалось прочитать сохранённые данные. Исходная копия не изменена. Напишите разработчику.');
+            }
+            if (s.tables && typeof s.tables === 'object' && !Array.isArray(s.tables)) tables = s.tables;
+            if (Array.isArray(s.menuItems)) menuItems = s.menuItems;
+            closedHistory = Array.isArray(s.closedHistory) ? s.closedHistory : [];
+            shiftArchive = Array.isArray(s.shiftArchive) ? s.shiftArchive : [];
+            hourlyRate = Number.isFinite(s.hourlyRate) && s.hourlyRate >= 0 ? s.hourlyRate : 280;
+            shiftTipGoal = Number.isFinite(s.shiftTipGoal) && s.shiftTipGoal >= 0 ? s.shiftTipGoal : 3000;
+            const sp = normalizeSalesPercent(s.salesPercent);
+            salesPercent = Number.isFinite(sp) ? sp : 3;
+            stopListSet = new Set(Array.isArray(s.stopListSet) ? s.stopListSet : []);
+            normalizeMenuStock();
+            hallViewMode = s.hallViewMode === 'map' ? 'map' : 'grid';
+            appTheme = s.appTheme === 'light' ? 'light' : 'dark';
+            if (Object.keys(tables).length === 0) {
+                for (let i = 1; i <= 15; i++) tables[`Стол ${i}`] = createEmptyTableObj(2);
+            }
+            if (!Object.hasOwn(tables, currentTable)) currentTable = Object.keys(tables)[0];
         }
 
         function loadLocalFallback() {
+            // Копии разделены по аккаунтам. Старые общие ключи сохраняем для восстановления.
+            const rawRecord = readLocal(localStateKey());
+            try {
+                const record = JSON.parse(rawRecord || 'null');
+                if (record && String(record.userId) === userId && record.state) {
+                    applyAppState(record.state);
+                    localPending = record.pending === true;
+                    cloudVersion = record.baseVersion || null;
+                    return;
+                }
+            } catch (e) {
+                if (rawRecord) {
+                    try { localStorage.setItem(localStateKey() + ':unreadable:' + Date.now(), rawRecord); }
+                    catch (backupError) { localCacheProtected = true; }
+                }
+                console.warn('Не удалось прочитать локальную копию. Исходник сохранён.', e);
+            }
+            let legacyOwner = null;
+            try { legacyOwner = JSON.parse(readLocal('fish_pro_cache_v2') || 'null'); } catch (e) { /* исходник остаётся */ }
+            if (!legacyOwner || String(legacyOwner.userId) !== userId) {
+                applyAppState({});
+                return;
+            }
             const readJSON = (key, fallback) => {
                 try {
-                    const raw = localStorage.getItem(key);
+                    const raw = readLocal(key);
                     return raw === null ? fallback : JSON.parse(raw);
                 } catch (err) {
                     console.warn(`Повреждён локальный параметр ${key}; использовано значение по умолчанию.`, err);
@@ -1758,21 +1857,24 @@
             shiftArchive = readJSON('fish_pro_shift_archive', []);
             if (!Array.isArray(shiftArchive)) shiftArchive = [];
 
-            const rate = Number(localStorage.getItem('fish_pro_hourly_rate'));
+            const rawRate = readLocal('fish_pro_hourly_rate');
+            const rate = rawRate === null ? 280 : Number(rawRate);
             hourlyRate = Number.isFinite(rate) && rate >= 0 ? rate : 280;
-            const savedPercent = localStorage.getItem('fish_pro_sales_percent');
+            const savedPercent = readLocal('fish_pro_sales_percent');
             if (savedPercent !== null) {
                 const sp = normalizeSalesPercent(savedPercent);
                 salesPercent = Number.isFinite(sp) ? sp : 3;
             }
-            const goal = Number(localStorage.getItem('fish_pro_goal'));
+            const rawGoal = readLocal('fish_pro_goal');
+            const goal = rawGoal === null ? 3000 : Number(rawGoal);
             shiftTipGoal = Number.isFinite(goal) && goal >= 0 ? goal : 3000;
 
             const stopList = readJSON('fish_pro_stoplist', []);
             stopListSet = new Set(Array.isArray(stopList) ? stopList : []);
             normalizeMenuStock();
-            hallViewMode = localStorage.getItem('fish_pro_hall_view_mode') === 'map' ? 'map' : 'grid';
-            appTheme = localStorage.getItem('fish_pro_theme') === 'light' ? 'light' : 'dark';
+            hallViewMode = readLocal('fish_pro_hall_view_mode') === 'map' ? 'map' : 'grid';
+            appTheme = readLocal('fish_pro_theme') === 'light' ? 'light' : 'dark';
+            localPending = true; // Старый формат не знает, успела ли последняя запись попасть в облако.
         }
 
 
@@ -1899,20 +2001,20 @@
             const json = JSON.stringify(statePayload);
             if (GZ_SUPPORTED && !gzSyncDisabled && json.length > GZ_MIN_CHARS) {
                 try {
-                    await apiPost('/api/state', { action: 'save', stateGz: await gzipToBase64(json) }, 40000);
-                    return;
+                    return await apiPost('/api/state', { action: 'save', stateGz: await gzipToBase64(json), expectedUpdatedAt: cloudVersion }, 40000);
                 } catch (e) {
                     if (!(e && e.status === 400)) throw e;
                     gzSyncDisabled = true; // старый сервер: дальше шлём без сжатия
                 }
             }
-            await apiPost('/api/state', { action: 'save', state: statePayload }, 40000);
+            return await apiPost('/api/state', { action: 'save', state: statePayload, expectedUpdatedAt: cloudVersion }, 40000);
         }
 
         async function loadStateFromCloud() {
             const resp = await apiPost('/api/state', { action: 'load', gz: GZ_SUPPORTED }, 40000);
-            if (resp && typeof resp.stateGz === 'string') return JSON.parse(await gunzipFromBase64(resp.stateGz));
-            return resp ? resp.state : null;
+            if (!resp || !Object.hasOwn(resp, 'updatedAt')) throw new Error('Сервер обновляется. Попробуйте синхронизацию позже.');
+            return { state: typeof resp.stateGz === 'string' ? JSON.parse(await gunzipFromBase64(resp.stateGz)) : resp.state,
+                updatedAt: resp.updatedAt };
         }
 
         async function initCloudData() {
@@ -1935,75 +2037,78 @@
 
             await refreshProStatus();
 
+            await reconcileCloudData();
+        }
+
+        async function reconcileCloudData() {
+            if (cloudSyncBusy) return false;
+            cloudSyncBusy = true;
+            cloudReady = false;
             try {
-                const s = await loadStateFromCloud();
-
-                if (s) {
-                    if (s.tables && typeof s.tables === 'object' && !Array.isArray(s.tables)) tables = s.tables;
-                    if (Array.isArray(s.menuItems)) menuItems = s.menuItems;
-                    closedHistory = Array.isArray(s.closedHistory) ? s.closedHistory : [];
-                    shiftArchive = Array.isArray(s.shiftArchive) ? s.shiftArchive : [];
-                    hourlyRate = s.hourlyRate !== undefined ? s.hourlyRate : 280;
-                    shiftTipGoal = s.shiftTipGoal !== undefined ? s.shiftTipGoal : 3000;
-                    if (s.salesPercent !== undefined) {
-                        const sp = normalizeSalesPercent(s.salesPercent);
-                        salesPercent = Number.isFinite(sp) ? sp : 3;
-                    }
-                    stopListSet = new Set(Array.isArray(s.stopListSet) ? s.stopListSet : []);
-                    normalizeMenuStock();
-                    hallViewMode = s.hallViewMode === 'map' ? 'map' : 'grid';
-                    localStorage.setItem('fish_pro_hall_view_mode', hallViewMode);
-                    if (s.appTheme !== undefined) {
-                        appTheme = s.appTheme;
-                        applyAppThemeUI();
-                    }
-
-                    const tableKeys = Object.keys(tables);
-                    if (tableKeys.length > 0 && !tables[currentTable]) currentTable = tableKeys[0];
-
-                    updateHeaderTips();
-                    renderTables();
-                    updateProStatusUI();
-                    setCloudIndicator('ok', 'Облако ОК');
-                } else {
-                    await saveData();
+                await saveQueue;
+                const remote = await loadStateFromCloud();
+                let useLocal = localPending || !remote.state;
+                if (localPending && remote.state && JSON.stringify(captureAppState()) !== JSON.stringify(remote.state)) {
+                    // Сохраняем ОБЕ копии перед выбором. При нехватке места ничего не заменяем.
+                    localStorage.setItem(localStateKey() + ':recovery:' + Date.now(), JSON.stringify({
+                        local: captureAppState(), cloud: remote.state, cloudVersion: remote.updatedAt
+                    }));
+                    useLocal = confirm('На устройстве есть несинхронизированные изменения. Восстановить их в облаке?\n\nОК — использовать данные этого устройства.\nОтмена — загрузить данные из облака.\nОбе копии сохранены на устройстве для восстановления.');
                 }
+                cloudVersion = remote.updatedAt;
+                if (!useLocal && remote.state) applyAppState(remote.state);
+                cloudReady = true;
+                localPending = useLocal;
+                applyAppThemeUI();
+                updateHeaderTips();
+                const visibleTab = ['hall', 'myTables', 'history', 'stopList', 'profile'].find(id => {
+                    const suffix = { hall: 'Hall', myTables: 'MyTables', history: 'History', stopList: 'StopList', profile: 'Profile' }[id];
+                    return !document.getElementById('tab' + suffix).classList.contains('hidden');
+                });
+                switchTab(visibleTab || 'hall');
+                if (useLocal) return await saveData();
+                try { writeLocalState(captureAppState(), false); }
+                catch (e) { setCloudIndicator('error', 'Облако ОК, нет копии', e); return true; }
+                setCloudIndicator('ok', 'Облако ОК');
+                return true;
             } catch (e) {
-                setCloudIndicator('error', 'Ошибка БД', e);
-            }
+                setCloudIndicator('error', 'Нужна синхронизация', e);
+                return false;
+            } finally { cloudSyncBusy = false; }
         }
 
         async function saveData() {
+            ensureTableMapCoords();
+            const snapshot = captureAppState();
+            const revision = ++localRevision;
+            localPending = true;
+            let localError = null;
+            // Синхронно и атомарно, до ожидания любой сетевой операции.
+            try { writeLocalState(snapshot, true); } catch (e) { localError = e; }
+            if (!cloudReady) {
+                setCloudIndicator('error', localError ? 'Не сохранено' : 'На устройстве',
+                    localError || new Error('Нажмите на статус облака, чтобы повторить синхронизацию.'));
+                return false;
+            }
+            setCloudIndicator('sync', 'Сохраняем...');
             const persistSnapshot = async () => {
+                if (!cloudReady) return false;
                 try {
-                    ensureTableMapCoords();
-                    // Локальная копия сохраняется первой, чтобы работа не терялась при проблемах сети.
-                    localStorage.setItem('fish_pro_tables', JSON.stringify(tables));
-                    localStorage.setItem('fish_pro_menu', JSON.stringify(menuItems));
-                    localStorage.setItem('fish_pro_history', JSON.stringify(closedHistory));
-                    localStorage.setItem('fish_pro_shift_archive', JSON.stringify(shiftArchive));
-                    localStorage.setItem('fish_pro_stoplist', JSON.stringify([...stopListSet]));
-                    localStorage.setItem('fish_pro_goal', String(shiftTipGoal));
-                    localStorage.setItem('fish_pro_hourly_rate', String(hourlyRate));
-                    localStorage.setItem('fish_pro_sales_percent', String(salesPercent));
-                    localStorage.setItem('fish_pro_theme', appTheme);
-                    localStorage.setItem('fish_pro_hall_view_mode', hallViewMode);
-
-                    // Статус подписки в облако не отправляется: его знает только сервер.
-                    await sendStateToCloud({
-                        tables, menuItems, closedHistory, shiftArchive,
-                        stopListSet: [...stopListSet], hourlyRate, salesPercent, shiftTipGoal, appTheme, hallViewMode
-                    });
-
-                    setCloudIndicator('ok', 'Облако ОК');
+                    const result = await sendStateToCloud(snapshot);
+                    cloudVersion = result && result.updatedAt || cloudVersion;
+                    if (revision === localRevision) {
+                        localPending = false;
+                        try { writeLocalState(snapshot, false); localError = null; } catch (e) { localError = e; }
+                        setCloudIndicator(localError ? 'error' : 'ok', localError ? 'Облако ОК, нет копии' : 'Облако ОК', localError);
+                    }
                     return true;
                 } catch (e) {
-                    setCloudIndicator('error', 'Локально сохранено', e);
+                    // После конфликта/неясного исхода запроса сперва читаем актуальную версию.
+                    cloudReady = false;
+                    setCloudIndicator('error', localError ? 'Не сохранено' : 'На устройстве', e);
                     return false;
                 }
             };
-
-            // Последовательная запись предотвращает гонки при частых изменениях состояния.
             saveQueue = saveQueue.then(persistSnapshot, persistSnapshot);
             return saveQueue;
         }
@@ -2549,7 +2654,6 @@
 
             aiScannerBusy = true;
             if (input) input.disabled = true;
-            setCloudIndicator('sync', 'ИИ сканирует...');
 
             const collected = [];
             const failures = [];
@@ -2615,7 +2719,6 @@
                 if (resultsBox) resultsBox.classList.remove('hidden');
                 const partial = failures.length > 0 ? ` (не обработано фото: ${failures.length})` : '';
                 setProgress(100, `Готово! Распознано позиций: ${aiScannedParsedItems.length}${partial}`);
-                setCloudIndicator('ok', 'Облако ОК');
                 triggerHaptic('success');
                 if (failures.length > 0) {
                     alert(`Часть фото обработать не удалось (${failures.length} из ${files.length}): ${failures[0]}\nЗагрузите их ещё раз отдельно.`);
@@ -2625,7 +2728,6 @@
                 }
             } catch (err) {
                 setProgress(0, 'Не удалось распознать меню');
-                setCloudIndicator('ok', 'Облако ОК');
                 alert('Ошибка ИИ-сканера: ' + (err && err.message ? err.message : 'Неизвестная ошибка'));
             } finally {
                 aiScannerBusy = false;
@@ -2938,6 +3040,87 @@
             });
         }
 
+        // ================= ЯРЛЫК TELEGRAM MINI APP =================
+
+        function getHomeScreenApi() {
+            const tg = window.Telegram && window.Telegram.WebApp;
+            return tg && tg.initData && typeof tg.isVersionAtLeast === 'function'
+                && tg.isVersionAtLeast('8.0') && typeof tg.checkHomeScreenStatus === 'function'
+                && typeof tg.addToHomeScreen === 'function' ? tg : null;
+        }
+
+        function renderHomeScreenShortcut() {
+            const box = document.getElementById('homeScreenShortcut');
+            const button = document.getElementById('homeScreenShortcutButton');
+            if (!box || !button) return;
+            const supported = ['missed', 'unknown', 'added'].includes(homeScreenStatus);
+            box.classList.toggle('hidden', !supported);
+            button.disabled = !supported || homeScreenBusy || homeScreenStatus === 'added';
+            document.getElementById('homeScreenShortcutLabel').textContent = homeScreenStatus === 'added'
+                ? 'Уже на главном экране' : 'Добавить на главный экран';
+            document.getElementById('homeScreenShortcutHint').textContent = homeScreenStatus === 'added'
+                ? 'Открывайте «Пульт» с ярлыка на экране телефона.'
+                : homeScreenBusy ? 'Подтвердите добавление в окне Telegram.'
+                : 'Открывайте «Пульт» с экрана телефона.';
+        }
+
+        function refreshHomeScreenStatus() {
+            const tg = getHomeScreenApi();
+            if (!tg) {
+                homeScreenStatus = 'unsupported';
+                renderHomeScreenShortcut();
+                return;
+            }
+            try {
+                tg.checkHomeScreenStatus(status => {
+                    // Некоторые устройства не умеют определять наличие ярлыка.
+                    if (status === 'missed') homeScreenConfirmed = false;
+                    if (status === 'added') homeScreenConfirmed = true;
+                    homeScreenStatus = status === 'unknown' && homeScreenConfirmed ? 'added' : status;
+                    renderHomeScreenShortcut();
+                });
+            } catch (e) {
+                homeScreenStatus = 'unsupported';
+                renderHomeScreenShortcut();
+            }
+        }
+
+        function initHomeScreenShortcut() {
+            const tg = getHomeScreenApi();
+            if (tg && !homeScreenEventsBound && typeof tg.onEvent === 'function') {
+                tg.onEvent('homeScreenAdded', () => {
+                    homeScreenConfirmed = true;
+                    homeScreenBusy = false;
+                    homeScreenStatus = 'added';
+                    renderHomeScreenShortcut();
+                });
+                tg.onEvent('activated', refreshHomeScreenStatus);
+                homeScreenEventsBound = true;
+            }
+            refreshHomeScreenStatus();
+        }
+
+        function addAppToHomeScreen() {
+            const tg = getHomeScreenApi();
+            if (!tg || homeScreenBusy || !['missed', 'unknown'].includes(homeScreenStatus)) return;
+            homeScreenBusy = true;
+            renderHomeScreenShortcut();
+            try {
+                tg.addToHomeScreen(); // Важно: непосредственно в обработчике нажатия.
+            } catch (e) {
+                homeScreenBusy = false;
+                renderHomeScreenShortcut();
+                document.getElementById('homeScreenShortcutHint').textContent = 'Не удалось открыть окно добавления. Попробуйте ещё раз.';
+                return;
+            }
+            // Telegram не отправляет событие отмены на всех устройствах. Разрешаем повтор.
+            setTimeout(() => {
+                homeScreenBusy = false;
+                renderHomeScreenShortcut();
+                refreshHomeScreenStatus();
+            }, 2000);
+        }
+
         // ================= НАВИГАЦИЯ И ПРОФИЛЬ =================
 
         function getTodayDateKey() {
@@ -3002,6 +3185,7 @@
             } else if(tabId === 'profile') {
                 document.getElementById('tabProfile').classList.remove('hidden');
                 renderProfileAll();
+                refreshHomeScreenStatus();
             }
 
             document.getElementById('mainScrollContainer').scrollTop = 0;
@@ -3080,9 +3264,10 @@
         function confirmSaveShiftToArchive() {
             const dateKey = document.getElementById('finishShiftDateInput').value || getTodayDateKey();
             const hours = Number(document.getElementById('finishShiftHoursInput').value) || 0;
-            const rate = Number(document.getElementById('finishShiftRateInput').value) || hourlyRate;
+            const rateInput = document.getElementById('finishShiftRateInput').value;
+            const rate = rateInput === '' ? hourlyRate : Number(rateInput);
             
-            if (hours <= 0) {
+            if (!Number.isFinite(hours) || hours <= 0 || hours > 24 || !Number.isFinite(rate) || rate < 0) {
                 alert("Укажите количество отработанных часов!");
                 return;
             }
@@ -3094,6 +3279,11 @@
                 return;
             }
             const revenue = Math.round(readFinishShiftRevenue());
+            if (!Number.isFinite(revenue)) { alert('Укажите корректную выручку.'); return; }
+            if (isAddingPastShiftMode && ['pastShiftCashTipsInput', 'pastShiftCardTipsInput'].some(id => {
+                const amount = Number(document.getElementById(id).value);
+                return !Number.isFinite(amount) || amount < 0;
+            })) { alert('Чаевые должны быть числом не меньше нуля.'); return; }
             const commission = calcCommission(revenue, percent);
 
             // Смена за эту дату уже есть: молча затирать её нельзя.
@@ -3218,7 +3408,7 @@
         function openRateModal() {
             openSimpleModal("Почасовая ставка", "Введите ставку в рублях за 1 час:", "", (val) => {
                 const num = Number(val);
-                if (num && num > 0) {
+                if (Number.isFinite(num) && num > 0) {
                     hourlyRate = num;
                     saveData();
                     renderProfileAll();
@@ -3325,7 +3515,7 @@
 
                 cell.innerHTML = `
                     <span class="text-[11px] leading-none">${day}</span>
-                    ${shift ? `<span class="text-[8px] leading-none font-extrabold ${isSelected ? 'text-slate-950' : 'text-emerald-400'}">${sumShort}</span>` : `<span class="text-[8px] opacity-20">•</span>`}
+                    ${shift ? `<span class="text-[8px] leading-none font-extrabold ${isSelected ? 'text-slate-950' : 'text-emerald-400'}">${escapeHtml(sumShort)}</span>` : `<span class="text-[8px] opacity-20">•</span>`}
                 `;
                 grid.appendChild(cell);
             }
@@ -3381,10 +3571,10 @@
                     div.onclick = () => openArchiveBillDetail(shift.dateKey, idx);
                     div.innerHTML = `
                         <div>
-                            <span class="font-extrabold text-slate-200">${escapeHtml(h.tableName)}</span> <span class="text-[10px] text-slate-400">(${h.time || ''})</span>
-                            <div class="text-[10px] text-slate-400 mt-0.5">Чек: ${h.subtotal} ₽ • Чай: <span class="text-amber-300">${escapeHtml(h.tipType)}</span></div>
+                            <span class="font-extrabold text-slate-200">${escapeHtml(h.tableName)}</span> <span class="text-[10px] text-slate-400">(${escapeHtml(h.time || '')})</span>
+                            <div class="text-[10px] text-slate-400 mt-0.5">Чек: ${escapeHtml(h.subtotal)} ₽ • Чай: <span class="text-amber-300">${escapeHtml(h.tipType)}</span></div>
                         </div>
-                        <span class="text-emerald-400 font-extrabold">+${h.tip} ₽</span>
+                        <span class="text-emerald-400 font-extrabold">+${escapeHtml(h.tip)} ₽</span>
                     `;
                     billsList.appendChild(div);
                 });
@@ -3534,7 +3724,7 @@
                     <div class="flex justify-between items-center gap-2">
                         <div class="pr-1 min-w-0 flex-1">
                             <div class="font-bold text-xs break-words ${isStopped ? 'text-rose-300 line-through' : 'text-slate-200'}">${escapeHtml(item.name)}</div>
-                            <div class="text-[10px] text-slate-400">${item.price} ₽${item.isHosper ? ' / 100 г' : ''}</div>
+                            <div class="text-[10px] text-slate-400">${escapeHtml(item.price)} ₽${item.isHosper ? ' / 100 г' : ''}</div>
                             ${sheetNote}
                         </div>
                         <button onclick="toggleStopItemByIdx(${idx})" class="px-3.5 py-2 rounded-xl text-xs font-extrabold tap-scale shadow shrink-0 ${isStopped ? 'bg-rose-600 text-white' : 'glass-panel text-slate-300'}">
@@ -3928,7 +4118,7 @@
             if (dishPhotoBusy || !dishPhotoNeedsSync) return;
             setDishPhotoBusy(true);
             try {
-                const synced = await saveData();
+                const synced = cloudReady ? await saveData() : await reconcileCloudData();
                 setDishPhotoSyncPending(!synced);
                 showDishPhotoError(synced ? '' : 'Меню пока не синхронизировалось. Проверьте интернет и повторите.');
             } finally {
@@ -4091,8 +4281,8 @@
                 widget.style.touchAction = isMapEditMode ? 'none' : 'auto';
                 widget.setAttribute('aria-label', `${name}, ${hasOrder ? `${totalSum} рублей` : 'свободен'}${isMapEditMode ? ', перетащите для расстановки' : ''}`);
                 widget.innerHTML = `<span class="flex justify-between items-center w-full gap-1 min-w-0"><span class="font-extrabold text-[10px] truncate">${escapeHtml(name)}</span><span class="w-2 h-2 rounded-full shrink-0 ${dotClasses[status.key]}"></span></span>
-                    <span class="text-[9px] opacity-75">${svgIcon('users', 'w-3 h-3')} ${t.guests} гост. ${isMapEditMode ? svgIcon('move', 'w-3 h-3 text-sky-300') : ''}</span>
-                    <span class="font-extrabold text-[10px] truncate">${hasOrder ? totalSum.toLocaleString('ru-RU') + ' ₽' : 'Свободен'}</span>`;
+                    <span class="text-[9px] opacity-75">${svgIcon('users', 'w-3 h-3')} ${escapeHtml(t.guests)} гост. ${isMapEditMode ? svgIcon('move', 'w-3 h-3 text-sky-300') : ''}</span>
+                    <span class="font-extrabold text-[10px] truncate">${hasOrder ? escapeHtml(totalSum.toLocaleString('ru-RU')) + ' ₽' : 'Свободен'}</span>`;
                 widget.onclick = () => { if (!isMapEditMode) handleTableClick(name); };
                 widget.onkeydown = event => {
                     if (!isMapEditMode || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return;
@@ -4189,8 +4379,8 @@
                         </span>
                     </div>
                     <div>
-                        <div class="flex items-center gap-1 text-[10px] font-medium opacity-70">${svgIcon('users', 'w-3 h-3')} ${t.guests}</div>
-                        <div class="font-extrabold tabular-nums ${hasOrder ? 'text-sm' : 'text-xs opacity-50'}">${hasOrder ? totalSum.toLocaleString('ru-RU') + ' ₽' : 'Свободен'}</div>
+                        <div class="flex items-center gap-1 text-[10px] font-medium opacity-70">${svgIcon('users', 'w-3 h-3')} ${escapeHtml(t.guests)}</div>
+                        <div class="font-extrabold tabular-nums ${hasOrder ? 'text-sm' : 'text-xs opacity-50'}">${hasOrder ? escapeHtml(totalSum.toLocaleString('ru-RU')) + ' ₽' : 'Свободен'}</div>
                     </div>
                 `;
                 grid.appendChild(btn);
@@ -4213,6 +4403,10 @@
         }
 
         function confirmGuestsCount(count) {
+            if (!Number.isSafeInteger(count) || count < 1 || count > 100) {
+                alert('Укажите целое число гостей от 1 до 100.');
+                return;
+            }
             if(!tableToOpenGuests || !tables[tableToOpenGuests]) {
                 closeGuestsModal();
                 return;
@@ -4342,7 +4536,7 @@
                             </div>
                         </div>
                         <div class="flex items-center space-x-2 shrink-0">
-                            <span class="font-extrabold text-slate-100 text-xs">${item.price} ₽</span>
+                            <span class="font-extrabold text-slate-100 text-xs">${escapeHtml(item.price)} ₽</span>
                             <button onclick="removeItem(${idx})" class="w-6 h-6 rounded-full bg-rose-500/10 text-rose-400 font-bold flex items-center justify-center">${svgIcon('x', 'w-3 h-3')}</button>
                         </div>
                     `;
@@ -4431,7 +4625,7 @@
                 div.innerHTML = `
                     <div class="flex justify-between items-center">
                         <span class="font-extrabold text-slate-200 text-xs">${escapeHtml(groupName)}</span>
-                        <span class="font-extrabold text-emerald-400">${groupSum} ₽</span>
+                        <span class="font-extrabold text-emerald-400">${escapeHtml(groupSum)} ₽</span>
                     </div>
                     <div class="grid grid-cols-2 gap-1.5 pt-1">${guestsCheckboxesHtml}</div>
                     ${groupKeys.length > 1 ? `<button onclick="removeSplitGroupByIdx(${gIdx})" class="text-[10px] text-rose-400 hover:underline pt-1">Удалить счет</button>` : ''}
@@ -4495,6 +4689,10 @@
             openSimpleModal("Примета или имя гостя", "Например: Бородач, Девушка в очках, Папа:", "", (newName) => {
                 if(newName && newName.trim() !== "") {
                     const trimmed = newName.trim();
+                    if (Object.entries(t.guestNames).some(([key, label]) => Number(key) !== index && label === trimmed)) {
+                        alert('Такое имя уже есть за столом. Добавьте отличительную примету, чтобы не смешать счета.');
+                        return;
+                    }
                     if(t.activeGuest === oldName) t.activeGuest = trimmed;
                     t.guestNames[index] = trimmed;
                     t.items.forEach(it => { if(it.guest === oldName) it.guest = trimmed; });
@@ -4572,7 +4770,7 @@
                     <div class="pr-2 flex-1">
                         <div class="font-bold text-xs ${isStopped ? 'text-rose-300 line-through' : 'text-slate-200'}">${escapeHtml(item.name)}</div>
                         <div class="text-[10px] ${isStopped ? 'text-rose-400 font-extrabold' : 'text-slate-300 font-extrabold'} mt-0.5">
-                            ${isStopped ? svgIcon('ban', 'w-3 h-3') + ' В СТОПЕ' : item.price + ' ₽' + (item.isHosper ? ' / 100 г' : '')}
+                            ${isStopped ? svgIcon('ban', 'w-3 h-3') + ' В СТОПЕ' : escapeHtml(item.price) + ' ₽' + (item.isHosper ? ' / 100 г' : '')}
                         </div>
                         ${stock !== null && stock > 0 ? `<div class="inline-flex mt-1 px-2 py-0.5 rounded-lg bg-amber-500/15 text-amber-300 text-[9px] font-extrabold">Осталось: ${stock} шт.</div>` : ''}
                     </div>
@@ -4647,6 +4845,7 @@
 
         function selectHosperWeight(weight) {
             if(!pendingHosperItem || !currentTable) return;
+            if (!Number.isFinite(weight) || weight <= 0) return;
             const finalPrice = Math.round((pendingHosperItem.price * weight) / 100);
             if (addItemToTableDirect(`${pendingHosperItem.name} (${weight}г)`, finalPrice, null, pendingHosperItem.stockId)) {
                 triggerHaptic('dish');
@@ -4666,6 +4865,7 @@
         }
 
         function addItemToTableDirect(name, price, modifier, stockMenuId = null) {
+            if (typeof name !== 'string' || !name.trim() || !Number.isFinite(price) || price < 0) return false;
             const t = tables[currentTable];
             if (!t) return false;
             const menuItem = stockMenuId ? menuItems.find(item => item.stockId === stockMenuId) : null;
@@ -4791,9 +4991,9 @@
                             <span class="font-extrabold text-sm text-slate-100">${escapeHtml(name)}</span>
                             <span data-live-timer-table="${escapeHtml(name)}" class="text-xs px-3 py-1 rounded-full font-mono font-extrabold border shadow ${timerColors}">${svgIcon('timer', 'w-3 h-3')} ${timerText}</span>
                         </div>
-                        <span class="font-extrabold text-sm text-emerald-400">${total} ₽</span>
+                        <span class="font-extrabold text-sm text-emerald-400">${escapeHtml(total)} ₽</span>
                     </div>
-                    <div class="text-xs text-slate-400">Позиций: ${t.items.length} • Гостей: ${t.guests}</div>
+                    <div class="text-xs text-slate-400">Позиций: ${t.items.length} • Гостей: ${escapeHtml(t.guests)}</div>
                     <div class="inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-[10px] font-extrabold ${servedCount === t.items.length ? 'bg-emerald-500/15 text-emerald-400' : 'bg-amber-500/15 text-amber-300'}">${servedCount === t.items.length ? svgIcon('check-circle', 'w-3 h-3') + ' Всё подано' : `Подано: ${servedCount}/${t.items.length}`}</div>
                     <div class="max-h-40 overflow-y-auto space-y-1.5 pr-1" aria-label="Подача блюд стола">
                         ${t.items.map((item, itemIdx) => {
@@ -4882,7 +5082,7 @@
                 div.innerHTML = `
                     <div class="flex justify-between items-center font-extrabold text-slate-200 text-xs">
                         <span>${svgIcon('receipt', 'w-3.5 h-3.5')} ${escapeHtml(groupName)} <span class="text-[10px] text-slate-400 font-normal">(${escapeHtml(groupGuests.join(', ')) || 'нет'})</span></span>
-                        <span class="text-emerald-400">${groupSum} ₽</span>
+                        <span class="text-emerald-400">${escapeHtml(groupSum)} ₽</span>
                     </div>
                     <div class="text-[10px] text-slate-400 truncate mt-0.5">${escapeHtml(itemsListText)}</div>
                 `;
@@ -4959,6 +5159,10 @@
 
         function confirmBillCheckout() {
             if(!currentTable || !selectedCheckoutGroup) return;
+            if (!Number.isFinite(currentTipAmount) || currentTipAmount < 0) {
+                alert('Чаевые должны быть числом не меньше нуля.');
+                return;
+            }
             const t = tables[currentTable];
             const groupGuests = t.splitGroups[selectedCheckoutGroup] || [];
             
@@ -4993,7 +5197,7 @@
             updateHeaderTips();
 
             if (t.items.length === 0) {
-                tables[currentTable] = createEmptyTableObj(2);
+                tables[currentTable] = { ...createEmptyTableObj(2), x: t.x, y: t.y };
                 saveData();
                 document.getElementById('activeTableCard').classList.add('hidden');
                 document.getElementById('hallGridView').classList.remove('hidden');
@@ -5036,10 +5240,10 @@
                     div.onclick = () => openHistoryDetail(index);
                     div.innerHTML = `
                         <div>
-                            <span class="font-extrabold text-slate-200">${escapeHtml(h.tableName)}</span> <span class="text-[10px] text-slate-400">(${h.time})</span>
+                            <span class="font-extrabold text-slate-200">${escapeHtml(h.tableName)}</span> <span class="text-[10px] text-slate-400">(${escapeHtml(h.time)})</span>
                             <div class="text-[10px] text-slate-400 mt-0.5">Оплата: <span class="text-slate-200 font-bold">${escapeHtml(h.paymentMethod || 'Нал')}</span> • Чай: <span class="text-amber-300">${escapeHtml(h.tipType)}</span></div>
                         </div>
-                        <span class="text-emerald-400 font-extrabold">+${h.tip} ₽</span>
+                        <span class="text-emerald-400 font-extrabold">+${escapeHtml(h.tip)} ₽</span>
                     `;
                     container.appendChild(div);
                 });
@@ -5073,7 +5277,7 @@
                             <div class="text-slate-200 font-bold">${escapeHtml(item.name)}</div>
                             <div class="text-[10px] text-slate-400"><span class="text-slate-300">${escapeHtml(displayCourse(item.course))}</span> • <span class="text-emerald-400">${escapeHtml(item.guest)}</span> ${item.modifier ? '('+escapeHtml(item.modifier)+')' : ''}</div>
                         </div>
-                        <span class="font-bold text-slate-200">${item.price} ₽</span>
+                        <span class="font-bold text-slate-200">${escapeHtml(item.price)} ₽</span>
                     `;
                     listEl.appendChild(row);
                 });
@@ -5109,7 +5313,7 @@
 
         function confirmManualTipModal() {
             const sum = Number(document.getElementById('manualTipSumInput').value);
-            if(!sum || sum <= 0) return;
+            if(!Number.isFinite(sum) || sum <= 0) return;
 
             triggerHaptic('success');
             closedHistory.unshift({
@@ -5143,6 +5347,8 @@
         setInterval(() => { if (!document.hidden && proStatusLoaded) refreshProStatus(); }, 10 * 60 * 1000);
         document.addEventListener('visibilitychange', () => { if (!document.hidden && proStatusLoaded) refreshProStatus(); });
         
+        document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshHomeScreenStatus(); });
+        initHomeScreenShortcut();
         initCloudData();
     </script>
 </body>

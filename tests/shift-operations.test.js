@@ -117,9 +117,9 @@ test('map places old tables separately and saves pointer placement and view mode
   assert.equal(ui.run('tables["Стол 1"].x'), 50);
   assert.equal(ui.run('tables["Стол 1"].y'), 40);
 
-  ui.run('sendStateToCloud=async state=>{savedState=JSON.parse(JSON.stringify(state))}; hallViewMode="map"; saveData()');
+  ui.run('cloudReady=true; sendStateToCloud=async state=>{savedState=JSON.parse(JSON.stringify(state))}; hallViewMode="map"; saveData()');
   await ui.run('saveQueue');
-  assert.equal(ui.storage.get('fish_pro_hall_view_mode'), 'map');
+  assert.equal(JSON.parse(ui.storage.get('fish_pro_state_v3:default_user')).state.hallViewMode, 'map');
   assert.equal(ui.run('savedState.hallViewMode'), 'map');
   assert.equal(ui.run('savedState.tables["Стол 1"].y'), 40);
 });

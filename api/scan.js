@@ -256,6 +256,7 @@ function readBody(req) {
 }
 
 async function handler(req, res) {
+  const requestStarted = Date.now();
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return send(res, 405, { error: 'Метод не поддерживается.' });
@@ -300,6 +301,7 @@ async function handler(req, res) {
   if (imageBase64.length > MAX_BASE64_CHARS) return send(res, 413, { error: 'Фото слишком большое. Сделайте снимок поменьше.' });
 
   // 4) Сканирование с повторами и запасными моделями
+  cfg.budgetMs = Math.max(0, Math.min(cfg.budgetMs, 55000 - (Date.now() - requestStarted)));
   const result = await scanWithFallback(cfg, imageBase64, mimeType);
 
   if (result.items) {
@@ -327,7 +329,7 @@ async function handler(req, res) {
   return send(res, 503, { error: 'ИИ-сервис Google сейчас перегружен. Мы уже пробовали несколько раз — повторите через минуту.' });
 }
 
-module.exports = handler;
+module.exports = lib.wrap(handler);
 module.exports._internals = {
   parseModelJson,
   sanitizeItems,
